@@ -1,6 +1,7 @@
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use aws_config::BehaviorVersion;
+use aws_credential_types::provider::ProvideCredentials;
 use aws_sdk_sts::Client as StsClient;
 use chrono::{DateTime, Utc};
 use tokio::time::sleep;
@@ -44,13 +45,13 @@ impl MfaCredentials {
 
 pub struct MfaSessionManager {
     base_profile: String,
-    serial: String,
-    secret: String,
+    serial: Option<String>,
+    secret: Option<String>,
     cached: Option<MfaCredentials>,
 }
 
 impl MfaSessionManager {
-    pub fn new(base_profile: String, serial: String, secret: String) -> Self {
+    pub fn new(base_profile: String, serial: Option<String>, secret: Option<String>) -> Self {
         Self {
             base_profile,
             serial,
@@ -63,19 +64,36 @@ impl MfaSessionManager {
         if let Some(ref creds) = self.cached {
             if creds.is_valid() {
                 let mins = (creds.expiration - Utc::now()).num_seconds() / 60;
-                info!("Reusing cached MFA session ({}m remaining)", mins);
+                info!("Reusing cached MFA/SSO session ({}m remaining)", mins);
                 return Ok(creds.clone());
             }
-            info!("Cached MFA session expiring soon — refreshing");
+            info!("Cached session expiring soon — refreshing");
         }
-        let creds = self.acquire_session_token(spinner).await?;
+
+        let creds = if self.serial.is_some() && self.secret.is_some() {
+            // IAM User MFA mode
+            self.acquire_session_token(spinner).await?
+        } else {
+            // SSO or direct profile mode
+            self.load_from_profile(spinner).await?
+        };
+
         self.cached = Some(creds.clone());
         Ok(creds)
     }
 
     async fn acquire_session_token(&self, spinner: Option<&Spinner>) -> Result<MfaCredentials> {
+        let serial = self
+            .serial
+            .as_ref()
+            .ok_or_else(|| AppError::Mfa("MFA serial required for STS flow".into()))?;
+        let secret = self
+            .secret
+            .as_ref()
+            .ok_or_else(|| AppError::Mfa("TOTP secret required for STS flow".into()))?;
+
         info!("Requesting new AWS session token via MFA...");
-        let otp = self.safe_totp(spinner).await?;
+        let otp = self.safe_totp(secret, spinner).await?;
 
         let config = aws_config::defaults(BehaviorVersion::latest())
             .profile_name(&self.base_profile)
@@ -84,7 +102,7 @@ impl MfaSessionManager {
 
         let response = StsClient::new(&config)
             .get_session_token()
-            .serial_number(&self.serial)
+            .serial_number(serial)
             .token_code(&otp)
             .send()
             .await
@@ -95,7 +113,6 @@ impl MfaSessionManager {
             .ok_or_else(|| AppError::Mfa("STS response contained no credentials".into()))?;
 
         let expiry_secs = creds.expiration().secs();
-
         let expiration = DateTime::from_timestamp(expiry_secs, 0)
             .ok_or_else(|| AppError::Mfa("Invalid expiration timestamp from STS".into()))?;
 
@@ -107,9 +124,52 @@ impl MfaSessionManager {
         })
     }
 
+    async fn load_from_profile(&self, _spinner: Option<&Spinner>) -> Result<MfaCredentials> {
+        info!(
+            "Retrieving credentials from AWS profile `{}`...",
+            self.base_profile
+        );
+
+        let config = aws_config::defaults(BehaviorVersion::latest())
+            .profile_name(&self.base_profile)
+            .load()
+            .await;
+
+        let provider = config.credentials_provider().ok_or_else(|| {
+            AppError::Mfa(format!(
+                "No credential provider found for profile `{}`",
+                self.base_profile
+            ))
+        })?;
+
+        let creds = provider.provide_credentials().await.map_err(|e| {
+            AppError::Mfa(format!(
+                "Failed to retrieve credentials for profile `{}`: {e}",
+                self.base_profile
+            ))
+        })?;
+
+        let expiration = creds
+            .expiry()
+            .and_then(|e| {
+                e.duration_since(UNIX_EPOCH)
+                    .ok()
+                    .map(|d| d.as_secs() as i64)
+            })
+            .and_then(|secs| DateTime::from_timestamp(secs, 0))
+            .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
+
+        Ok(MfaCredentials {
+            access_key_id: creds.access_key_id().to_owned(),
+            secret_access_key: creds.secret_access_key().to_owned(),
+            session_token: creds.session_token().unwrap_or_default().to_owned(),
+            expiration,
+        })
+    }
+
     /// Generate a TOTP code, waiting safely away from the window boundary.
-    pub async fn safe_totp(&self, spinner: Option<&Spinner>) -> Result<String> {
-        let totp = build_totp(self.secret.as_bytes())?;
+    pub async fn safe_totp(&self, secret: &str, spinner: Option<&Spinner>) -> Result<String> {
+        let totp = build_totp(secret.as_bytes())?;
 
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)

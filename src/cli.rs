@@ -64,7 +64,7 @@ pub enum ConfigCommand {
         #[arg(long)]
         profile: String,
         #[arg(long)]
-        serial: String,
+        serial: Option<String>,
         #[arg(long)]
         secret: Option<String>,
         #[arg(long)]

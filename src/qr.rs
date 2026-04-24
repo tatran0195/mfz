@@ -1,9 +1,3 @@
-//! Three capabilities:
-//!   1. `decode`    — read a QR image → extract OTP secret
-//!   2. `generate`  — build a TOTP URI → render QR PNG + terminal preview
-//!   3. `register`  — generate + call AWS IAM CreateVirtualMFADevice /
-//!                    EnableMFADevice in one flow
-
 use std::io::Write;
 
 use aws_config::BehaviorVersion;
@@ -282,7 +276,8 @@ pub async fn register(
         } else {
             crate::config::EnvironmentConfig {
                 profile: profile.to_owned(),
-                serial: serial_number.clone(),
+                auth_type: crate::config::AuthType::Mfa,
+                serial: Some(serial_number.clone()),
                 secret: Some(qr.secret_b32.clone()),
                 instance: Some("REPLACE_ME".into()),
                 instance_tag: None,
@@ -294,7 +289,7 @@ pub async fn register(
             }
         };
 
-        new_config.serial = serial_number;
+        new_config.serial = Some(serial_number);
         new_config.secret = Some(qr.secret_b32);
 
         if let Err(e) = loader.save(target, &new_config) {

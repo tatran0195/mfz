@@ -2145,8 +2145,11 @@ name = "mfz"
 version = "0.1.0"
 dependencies = [
  "aws-config",
+ "aws-credential-types",
  "aws-sdk-ec2",
  "aws-sdk-iam",
+ "aws-sdk-sso",
+ "aws-sdk-ssooidc",
  "aws-sdk-sts",
  "base32",
  "chrono",

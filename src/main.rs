@@ -96,19 +96,22 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                         println!("      {:<12} {}", "Inst Tag:".dimmed(), tag);
                     }
                     println!("      {:<12} {}", "Profile:".dimmed(), env.profile);
+                    println!("      {:<12} {:?}", "Auth Type:".dimmed(), env.auth_type);
 
-                    let has_secret = env.secret.is_some()
-                        || crate::credentials::CredentialStore::get_totp_secret(&name)
-                            .map(|s| s.is_some())
-                            .unwrap_or(false);
-                    let secret_loc = if env.secret.is_some() {
-                        "mfz.ini (Plaintext)".yellow()
-                    } else if has_secret {
-                        "System Keyring (Secure)".green()
-                    } else {
-                        "Missing".red()
-                    };
-                    println!("      {:<12} {}", "MFA Secret:".dimmed(), secret_loc);
+                    if env.auth_type == crate::config::AuthType::Mfa {
+                        let has_secret = env.secret.is_some()
+                            || crate::credentials::CredentialStore::get_totp_secret(&name)
+                                .map(|s| s.is_some())
+                                .unwrap_or(false);
+                        let secret_loc = if env.secret.is_some() {
+                            "mfz.ini (Plaintext)".yellow()
+                        } else if has_secret {
+                            "System Keyring (Secure)".green()
+                        } else {
+                            "Missing".red()
+                        };
+                        println!("      {:<12} {}", "MFA Secret:".dimmed(), secret_loc);
+                    }
 
                     let has_pass = env.rdp_password.is_some()
                         || crate::credentials::CredentialStore::get_rdp_password(&name)
@@ -164,8 +167,15 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                 ));
             }
 
+            let auth_type = if serial.is_some() {
+                crate::config::AuthType::Mfa
+            } else {
+                crate::config::AuthType::Sso
+            };
+
             let new_env = crate::config::EnvironmentConfig {
                 profile,
+                auth_type,
                 serial,
                 secret,
                 instance,
@@ -203,7 +213,8 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                 env.profile = p;
             }
             if let Some(s) = serial {
-                env.serial = s;
+                env.serial = Some(s);
+                env.auth_type = crate::config::AuthType::Mfa;
             }
             if let Some(s) = secret {
                 env.secret = Some(s);
@@ -322,12 +333,22 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
     );
 
     // Resolve Secret & Password from Keyring if missing in config
-    let totp_secret = if let Some(s) = env.secret {
-        s
+    let totp_secret = if env.auth_type == crate::config::AuthType::Mfa {
+        if let Some(s) = env.secret {
+            Some(s)
+        } else {
+            Some(
+                crate::credentials::CredentialStore::get_totp_secret(&env_name)?.ok_or_else(
+                    || {
+                        crate::error::AppError::Config(
+                            "No MFA secret found in config or keyring".into(),
+                        )
+                    },
+                )?,
+            )
+        }
     } else {
-        crate::credentials::CredentialStore::get_totp_secret(&env_name)?.ok_or_else(|| {
-            crate::error::AppError::Config("No MFA secret found in config or keyring".into())
-        })?
+        None
     };
 
     let rdp_password = if env.rdp_password.is_some() {
@@ -336,7 +357,7 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
         crate::credentials::CredentialStore::get_rdp_password(&env_name)?
     };
 
-    print_section("MFA Authentication");
+    print_section("MFA/SSO Authentication");
     let mut mfa = MfaSessionManager::new(env.profile.clone(), env.serial.clone(), totp_secret);
 
     // Resolve instance ID if needed

@@ -4,12 +4,21 @@ use configparser::ini::Ini;
 
 use crate::error::{AppError, Result};
 
-const REQUIRED_KEYS: &[&str] = &["profile", "serial", "remote_port", "local_port", "rdp_host"];
+const REQUIRED_KEYS: &[&str] = &["profile", "remote_port", "local_port", "rdp_host"];
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum AuthType {
+    /// IAM user + TOTP MFA device. Requires `serial` and `secret`.
+    Mfa,
+    /// AWS IAM Identity Center (SSO). SDK resolves creds from the SSO token cache.
+    Sso,
+}
 
 #[derive(Debug, Clone)]
 pub struct EnvironmentConfig {
     pub profile: String,
-    pub serial: String,
+    pub auth_type: AuthType,
+    pub serial: Option<String>,
     pub secret: Option<String>,
     pub instance: Option<String>,
     pub instance_tag: Option<String>,
@@ -68,9 +77,17 @@ impl EnvironmentConfig {
                 .map_err(|_| AppError::Config(format!("`{key}` must be a valid port (1–65535)")))
         };
 
+        let serial = get_opt("serial");
+        let auth_type = if serial.is_some() {
+            AuthType::Mfa
+        } else {
+            AuthType::Sso
+        };
+
         Ok(Self {
             profile: get("profile")?,
-            serial: get("serial")?,
+            auth_type,
+            serial,
             secret: get_opt("secret"),
             instance: get_opt("instance"),
             instance_tag: get_opt("instance_tag"),
@@ -85,7 +102,9 @@ impl EnvironmentConfig {
     pub fn to_map(&self) -> std::collections::HashMap<String, String> {
         let mut m = std::collections::HashMap::new();
         m.insert("profile".into(), self.profile.clone());
-        m.insert("serial".into(), self.serial.clone());
+        if let Some(serial) = &self.serial {
+            m.insert("serial".into(), serial.clone());
+        }
         if let Some(sec) = &self.secret {
             m.insert("secret".into(), sec.clone());
         }

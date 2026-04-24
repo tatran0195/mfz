@@ -1,154 +1,99 @@
-# MFZ — AWS MFA + SSM Port Forwarding + RDP Session Manager
+# MFZ — The Easiest Way to Connect to AWS Windows Servers 🚀
 
-[![Rust](https://img.shields.io/badge/rust-stable-brightgreen.svg)](https://www.rust-lang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+**MFZ** is a powerful yet simple tool designed for anyone who needs to access Windows servers in AWS. It handles all the complex "under-the-hood" stuff like security tokens (MFA), encrypted tunnels, and server discovery, so you can just focus on your work.
 
-**MFZ** (RDP Launcher) is a sleek Rust-powered CLI tool designed to eliminate the friction of connecting to Windows instances in AWS private subnets. It automates the entire chain: MFA authentication, SSM port forwarding, and launching your Remote Desktop client.
-
----
-
-## ✨ Features
-
-- 🔐 **Integrated MFA**: Seamlessly handles AWS MFA device authentication with in-memory credential caching.
-- 🚀 **One-Command Launch**: Bridges the gap from `mfz launch` to a live RDP session in seconds.
-- 🏗️ **SSM Tunneling**: Automatically establishes secure AWS Systems Manager (SSM) port-forwarding tunnels.
-- 📱 **Built-in TOTP Utilities**:
-  - **Registration**: Link new Virtual MFA devices to IAM users directly from the CLI.
-  - **Generation**: Show scannable QR codes in your terminal (using Unicode half-blocks).
-  - **Decoding**: Scan existing QR code images to extract TOTP secrets.
-- 📝 **Hosts Management**: Quickly sync your local `hosts` file with aliases like `stg-rdp` or `prd-rdp`.
-- 🎨 **Modern UX**: Professional terminal UI with spinners, progress feedback, and color-coded logging.
+> 🛠️ **Developer?** Looking for technical details, schema, or build instructions? Check out the [Developer Guide](./README.dev.md).
 
 ---
 
-## 🛠️ Prerequisites
+## 🌟 Why use MFZ?
 
-Before using MFZ, ensure you have the following installed:
+If you've ever found connecting to an AWS Windows server frustrating because of MFA codes, command-line tunnels, or searching for Instance IDs—**MFZ was built for you.**
 
-1. **AWS CLI**: Configured with at least one named profile.
-2. **AWS Session Manager Plugin**: Required for SSM port forwarding ([Install Guide](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html)).
-3. **mstsc (Windows)**: The default Remote Desktop Connection client.
+- 🎯 **No more searching**: Find your server by its name (Tags), not a random ID.
+- ⌨️ **Less typing**: Interactive menus let you pick your environment with a single click.
+- � **Super secure**: Keep your passwords in the Windows Credential Manager, not in text files.
+- � **One-click launch**: One command opens your Remote Desktop client automatically.
 
 ---
 
-## 🚀 Installation
+## ⚡ Quick Start (3 Steps)
 
-Install from source using Cargo:
+### 1. Installation
+
+If you have Rust installed, simply run:
 
 ```bash
-# Clone the repository
-git clone https://github.com/youruser/mfz.git
-cd mfz
-
-# Build and install
 cargo install --path .
 ```
 
----
+### 2. Add your first Environment
 
-## ⚙️ Configuration
+Tell MFZ about your server. Replace the values with your actual AWS details:
 
-MFZ uses a simple INI-style configuration file (default: `mfz.ini`) to manage your target instances.
-
-### Example `mfz.ini`
-
-```ini
-[stg]
-profile     = my-aws-staging
-serial      = arn:aws:iam::123456789012:mfa/waka-totp
-secret      = JBSWY3DPEHPK3PXP
-instance    = i-0123456789abcdef0
-remote_port = 3389
-local_port  = 13389
-rdp_host    = stg-rdp
-
-[prd]
-profile     = my-aws-production
-serial      = arn:aws:iam::123456789012:mfa/waka-totp
-secret      = JBSWY3DPEHPK3PXP
-instance    = i-0fedcba9876543210
-remote_port = 3389
-local_port  = 23389
-rdp_host    = prd-rdp
+```bash
+mfz config add my-server --profile my-aws-profile --instance-tag Name=MyServerName
 ```
 
-| Key | Description |
-| :--- | :--- |
-| `profile` | The AWS CLI profile to use. |
-| `serial` | Your virtual MFA device ARN. |
-| `secret` | The Base-32 TOTP secret seed for MFA. |
-| `instance` | The AWS Instance ID of the target server. |
-| `remote_port` | The port on the instance (default RDP is 3389). |
-| `local_port` | The local port to bind the tunnel to. |
-| `rdp_host` | The hostname to use in the RDP client (use `mfz hosts add` to setup). |
+### 3. Launch
+
+Just type `mfz launch`, select your server from the list, and press **Enter**.
+
+```bash
+mfz launch
+```
 
 ---
 
-## 📖 Usage Reference
+## 🛠️ Essential Setup
 
-### Launching a Session
+Before you start, make sure your computer is ready:
 
-Connect to an environment defined in your config:
+1. **AWS CLI**: You need the AWS Command Line Interface installed and configured.
+2. **SSM Plugin**: This is what lets MFZ "tunnel" through the internet securely. [Download here](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html).
+3. **Remote Desktop (mstsc)**: Standard on all Windows PCs.
+
+---
+
+## � Daily Usage Guide
+
+### 🗂️ Managed Environments
+
+Don't want to type names? Just run `mfz launch`. A beautiful interactive menu will appear where you can search for and select your server.
+
+### 🛡️ Secure Your Passwords
+
+By default, MFZ stores settings in a file named `mfz.ini`. To move sensitive data (like MFA secrets or RDP passwords) to the secure Windows safe-box:
 
 ```bash
-mfz launch stg
-mfz launch prd --fullscreen
-mfz launch stg --ssm-only
+mfz config secure my-server
 ```
 
-### Configuration Management
+### 📝 Hostname Shortcuts
 
-Manage your `mfz.ini` environments directly from the CLI:
-
-```bash
-# List all environments with their details
-mfz config list
-
-# Add a new environment
-mfz config add stg --profile dev --serial arn:aws:... --secret JBSW... --instance i-0123... --local-port 13389 --rdp-host stg-rdp
-
-# Edit an existing environment
-mfz config edit stg --local-port 14489 --rdp-host new-stg
-
-# Remove an environment
-mfz config remove stg
-```
-
-### Managing Hosts
-
-Map your local ports to friendly hostnames:
+Tired of typing `127.0.0.1:13389`? Setup friendly names like `stg-rdp` or `prd-rdp`:
 
 ```bash
-# Add default stg-rdp and prd-rdp entries to 127.0.0.1
+# Run as Administrator once
 mfz hosts add
-
-# Add a custom entry
-mfz hosts custom 127.0.0.1 my-custom-server
-```
-
-### MFA & QR Utilities
-
-```bash
-# Register a NEW MFA device in AWS IAM and generate a secret
-mfz qr register --profile dev --username waka
-
-# Build a TOTP QR for an existing secret and show it in terminal
-mfz qr generate --account waka@example.com --secret JBSWY3DPEHPK3PXP --out qr.png
-
-# Extract a secret from a QR code image
-mfz qr decode path/to/qr.png
 ```
 
 ---
 
-## 🤝 Contribution
+## ❓ Frequently Asked Questions
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+**"I use SSO / AWS Identity Center. Does it work?"**
+Yes! MFZ automatically detects SSO profiles. Just make sure you are logged in using `aws sso login` and MFZ will handle the rest.
 
-## 👤 Author
+**"Where are my settings stored?"**
+Settings are kept in `mfz.ini` in the same folder as the program. You can easily share this file with teammates (just make sure to secure your secrets first!).
 
-**Waka** — [ta@e-technostar.com](mailto:ta@e-technostar.com)
+---
+
+## 👤 Author & Support
+
+Created by **Waka** — [ta@e-technostar.com](mailto:ta@e-technostar.com)
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Licensed under the MIT License. Safe for personal and commercial use.
