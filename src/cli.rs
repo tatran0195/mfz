@@ -129,7 +129,7 @@ pub enum ConfigCommand {
 #[derive(Debug, Parser)]
 pub struct LaunchArgs {
     /// Environment name defined in mfz.ini (e.g. stg, prd)
-    pub environment: String,
+    pub environment: Option<String>,
 
     /// Open RDP in fullscreen mode
     #[arg(short, long)]

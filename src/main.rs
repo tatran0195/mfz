@@ -16,6 +16,7 @@ use colored::Colorize;
 use config::ConfigLoader;
 use error::Result;
 use hosts::HostsManager;
+use inquire::Select;
 use mfa::MfaSessionManager;
 use ssm::{start_with_retries, SsmSession};
 use tracing::info;
@@ -277,10 +278,28 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
 // ─── launch ───────────────────────────────────────────────────────────────────
 
 async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
-    print_section("Configuration");
-    let env = ConfigLoader::new(&args.config).load(&args.environment)?;
+    let loader = ConfigLoader::new(&args.config);
 
-    print_kv("Environment", &args.environment);
+    let env_name = match args.environment {
+        Some(name) => name,
+        None => {
+            let envs = loader.list_environments()?;
+            if envs.is_empty() {
+                return Err(crate::error::AppError::Config(
+                    "No environments found in config file".into(),
+                ));
+            }
+
+            Select::new("Select environment to launch:", envs)
+                .prompt()
+                .map_err(|e| crate::error::AppError::Config(format!("Selection failed: {e}")))?
+        }
+    };
+
+    print_section("Configuration");
+    let env = loader.load(&env_name)?;
+
+    print_kv("Environment", &env_name);
     if let Some(ref inst) = env.instance {
         print_kv("Instance (Fixed)", inst);
     }
@@ -306,15 +325,15 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
     let totp_secret = if let Some(s) = env.secret {
         s
     } else {
-        crate::credentials::CredentialStore::get_totp_secret(&args.environment)?.ok_or_else(
-            || crate::error::AppError::Config("No MFA secret found in config or keyring".into()),
-        )?
+        crate::credentials::CredentialStore::get_totp_secret(&env_name)?.ok_or_else(|| {
+            crate::error::AppError::Config("No MFA secret found in config or keyring".into())
+        })?
     };
 
     let rdp_password = if env.rdp_password.is_some() {
         env.rdp_password
     } else {
-        crate::credentials::CredentialStore::get_rdp_password(&args.environment)?
+        crate::credentials::CredentialStore::get_rdp_password(&env_name)?
     };
 
     print_section("MFA Authentication");
