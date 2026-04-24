@@ -23,6 +23,8 @@ pub struct EnvironmentConfig {
     pub remote_port: u16,
     pub local_port: u16,
     pub rdp_host: String,
+    pub rdp_user: Option<String>,
+    pub rdp_password: Option<String>,
 }
 
 impl EnvironmentConfig {
@@ -32,6 +34,9 @@ impl EnvironmentConfig {
                 .map(|v| v.trim().to_owned())
                 .ok_or_else(|| AppError::Config(format!("[{name}] missing required key: `{key}`")))
         };
+
+        let get_opt =
+            |key: &str| -> Option<String> { ini.get(name, key).map(|v| v.trim().to_owned()) };
 
         let present: HashSet<String> = ini
             .get_map()
@@ -68,6 +73,8 @@ impl EnvironmentConfig {
             remote_port: parse_port("remote_port")?,
             local_port: parse_port("local_port")?,
             rdp_host: get("rdp_host")?,
+            rdp_user: get_opt("rdp_user"),
+            rdp_password: get_opt("rdp_password"),
         })
     }
 
@@ -80,6 +87,13 @@ impl EnvironmentConfig {
         m.insert("remote_port".into(), self.remote_port.to_string());
         m.insert("local_port".into(), self.local_port.to_string());
         m.insert("rdp_host".into(), self.rdp_host.clone());
+
+        if let Some(user) = &self.rdp_user {
+            m.insert("rdp_user".into(), user.clone());
+        }
+        if let Some(pass) = &self.rdp_password {
+            m.insert("rdp_password".into(), pass.clone());
+        }
         m
     }
 }

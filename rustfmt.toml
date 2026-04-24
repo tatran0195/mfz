@@ -12,10 +12,9 @@ reorder_modules = true
 edition = "2021"
 
 # --- Import Grouping (Requires Nightly) ---
-# The following options are currently unstable in rustfmt 1.x stable
-# and require a nightly toolchain or 'unstable_features = true'
-# group_imports = "StdExternalCrate"
-# imports_granularity = "Crate"
+# cargo +nightly fmt
+group_imports = "StdExternalCrate"
+imports_granularity = "Crate"
 
 # --- General Style ---
 # Max line length

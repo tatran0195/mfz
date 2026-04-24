@@ -99,6 +99,9 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                         "Local:".dimmed(),
                         env.local_port
                     );
+                    if let Some(user) = env.rdp_user {
+                        println!("      {:<12} {}", "RDP User:".dimmed(), user);
+                    }
                     println!();
                 }
             }
@@ -112,6 +115,8 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             remote_port,
             local_port,
             rdp_host,
+            user,
+            pass,
             config,
         } => {
             print_section(&format!("Adding Environment: {name}"));
@@ -124,6 +129,8 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                 remote_port,
                 local_port,
                 rdp_host,
+                rdp_user: user,
+                rdp_password: pass,
             };
 
             let spinner = Spinner::new(format!("Saving `{name}` to `{config}`…"));
@@ -139,6 +146,8 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             remote_port,
             local_port,
             rdp_host,
+            user,
+            pass,
             config,
         } => {
             print_section(&format!("Editing Environment: {name}"));
@@ -165,6 +174,12 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             }
             if let Some(rh) = rdp_host {
                 env.rdp_host = rh;
+            }
+            if user.is_some() {
+                env.rdp_user = user;
+            }
+            if pass.is_some() {
+                env.rdp_password = pass;
             }
 
             let spinner = Spinner::new(format!("Updating `{name}` in `{config}`…"));
@@ -261,7 +276,13 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
         "Launching mstsc → {}:{}…",
         env.rdp_host, env.local_port
     ));
-    rdp::launch(&env.rdp_host, env.local_port, args.fullscreen)?;
+    rdp::launch(
+        &env.rdp_host,
+        env.local_port,
+        args.fullscreen,
+        env.rdp_user.as_deref(),
+        env.rdp_password.as_deref(),
+    )?;
     spinner.success("RDP session ended");
 
     Ok(())

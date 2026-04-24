@@ -288,6 +288,8 @@ pub async fn register(
                 remote_port: 3389,
                 local_port: 3389,
                 rdp_host: "REPLACE_ME".into(),
+                rdp_user: None,
+                rdp_password: None,
             }
         };
 

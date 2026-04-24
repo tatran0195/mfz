@@ -75,6 +75,10 @@ pub enum ConfigCommand {
         local_port: u16,
         #[arg(long)]
         rdp_host: String,
+        #[arg(long)]
+        user: Option<String>,
+        #[arg(long)]
+        pass: Option<String>,
         #[arg(short, long, default_value = "mfz.ini")]
         config: String,
     },
@@ -95,6 +99,10 @@ pub enum ConfigCommand {
         local_port: Option<u16>,
         #[arg(long)]
         rdp_host: Option<String>,
+        #[arg(long)]
+        user: Option<String>,
+        #[arg(long)]
+        pass: Option<String>,
         #[arg(short, long, default_value = "mfz.ini")]
         config: String,
     },
