@@ -202,8 +202,9 @@ pub async fn register(
         .ok_or_else(|| AppError::Iam("No device in CreateVirtualMFADevice response".into()))?;
 
     let serial_number = device.serial_number().to_owned();
-
+ 
     // AWS returns the raw Base-32 secret seed (not a URI).
+    spinner.set_message("Parsing MFA secret seed...");
     let seed_b32 = device
         .base32_string_seed()
         .ok_or_else(|| AppError::Iam("No Base32 seed in response".into()))
@@ -212,6 +213,8 @@ pub async fn register(
                 .map(|s| s.to_uppercase())
                 .map_err(|_| AppError::Iam("Seed bytes are not valid UTF-8".into()))
         })?;
+ 
+    spinner.set_message("Linking device to authenticator app...");
 
     spinner.success(format!("Device created: {serial_number}"));
     info!("Virtual MFA device ARN: {}", serial_number);
@@ -259,7 +262,7 @@ pub async fn register(
 
     // ── 6. Summary ────────────────────────────────────────────────────────
     print_separator();
-    print_section("Summary — save these values in environment.txt");
+    print_section("Summary — save these values in mfz.ini");
     print_kv("SERIAL", &serial_number);
     print_kv("SECRET", &qr.secret_b32);
     println!();

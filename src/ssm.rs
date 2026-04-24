@@ -34,7 +34,11 @@ impl SsmSession {
         Self { instance: instance.into(), remote_port, local_port, region, process: None }
     }
 
-    pub async fn start(&mut self, mfa: &mut MfaSessionManager) -> Result<()> {
+    pub async fn start(
+        &mut self,
+        mfa: &mut MfaSessionManager,
+        spinner: Option<&Spinner>,
+    ) -> Result<()> {
         if self.is_running() {
             warn!("SSM session already running — stopping first");
             self.stop();
@@ -42,7 +46,7 @@ impl SsmSession {
 
         info!("Starting SSM: {} → 127.0.0.1:{}", self.instance, self.local_port);
 
-        let creds = mfa.get_credentials().await?;
+        let creds = mfa.get_credentials(spinner).await?;
 
         let mut cmd = Command::new("aws");
         cmd.args([
@@ -101,7 +105,7 @@ impl SsmSession {
             .unwrap_or(false)
     }
 
-    pub async fn wait_for_port(&mut self) -> bool {
+    pub async fn wait_for_port(&mut self, spinner: Option<&Spinner>) -> bool {
         let deadline = Instant::now() + Duration::from_secs(PORT_WAIT_TIMEOUT);
         while Instant::now() < deadline {
             if !self.is_running() {
@@ -116,6 +120,9 @@ impl SsmSession {
             }
             if self.port_open() {
                 return true;
+            }
+            if let Some(s) = spinner {
+                s.set_message("Verifying connection to 127.0.0.1...");
             }
             sleep(Duration::from_millis(PORT_POLL_INTERVAL_MS)).await;
         }
@@ -145,9 +152,9 @@ pub async fn start_with_retries(
             ssm.local_port
         ));
 
-        ssm.start(mfa).await?;
-
-        if ssm.wait_for_port().await {
+        ssm.start(mfa, Some(&spinner)).await?;
+ 
+        if ssm.wait_for_port(Some(&spinner)).await {
             spinner.success(format!(
                 "Port forwarding ready → 127.0.0.1:{}",
                 ssm.local_port
@@ -164,7 +171,7 @@ pub async fn start_with_retries(
                 attempt + 1
             ));
             sleep(Duration::from_secs(RETRY_BACKOFF_SECS)).await;
-            mfa.get_credentials().await?;
+            mfa.get_credentials(Some(&ws)).await?;
             ws.warning("Retrying…");
         }
     }

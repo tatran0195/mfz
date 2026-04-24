@@ -1,4 +1,5 @@
 use crate::error::{AppError, Result};
+use crate::ui::Spinner;
 use aws_config::BehaviorVersion;
 use aws_sdk_sts::Client as StsClient;
 use chrono::{DateTime, Utc};
@@ -49,7 +50,7 @@ impl MfaSessionManager {
         Self { base_profile, serial, secret, cached: None }
     }
 
-    pub async fn get_credentials(&mut self) -> Result<MfaCredentials> {
+    pub async fn get_credentials(&mut self, spinner: Option<&Spinner>) -> Result<MfaCredentials> {
         if let Some(ref creds) = self.cached {
             if creds.is_valid() {
                 let mins = (creds.expiration - Utc::now()).num_seconds() / 60;
@@ -58,14 +59,14 @@ impl MfaSessionManager {
             }
             info!("Cached MFA session expiring soon — refreshing");
         }
-        let creds = self.acquire_session_token().await?;
+        let creds = self.acquire_session_token(spinner).await?;
         self.cached = Some(creds.clone());
         Ok(creds)
     }
 
-    async fn acquire_session_token(&self) -> Result<MfaCredentials> {
+    async fn acquire_session_token(&self, spinner: Option<&Spinner>) -> Result<MfaCredentials> {
         info!("Requesting new AWS session token via MFA...");
-        let otp = self.safe_totp().await?;
+        let otp = self.safe_totp(spinner).await?;
 
         let config = aws_config::defaults(BehaviorVersion::latest())
             .profile_name(&self.base_profile)
@@ -98,22 +99,28 @@ impl MfaSessionManager {
     }
 
     /// Generate a TOTP code, waiting safely away from the window boundary.
-    pub async fn safe_totp(&self) -> Result<String> {
+    pub async fn safe_totp(&self, spinner: Option<&Spinner>) -> Result<String> {
         let totp = build_totp(self.secret.as_bytes())?;
-
+ 
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs_f64();
         let remaining = TOTP_INTERVAL_SECS - (now % TOTP_INTERVAL_SECS);
-
+ 
         if remaining < TOTP_SAFETY_MARGIN_SECS {
             let wait = remaining + 0.5;
             warn!(
                 "TOTP window expiring in {:.1}s — waiting {:.1}s",
                 remaining, wait
             );
+            if let Some(s) = spinner {
+                s.set_message(format!("Waiting {:.1}s for new TOTP window...", wait));
+            }
             sleep(Duration::from_secs_f64(wait)).await;
+            if let Some(s) = spinner {
+                s.set_message("Refreshing MFA credentials...");
+            }
         }
 
         totp.generate_current()

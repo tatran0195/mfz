@@ -52,7 +52,7 @@ pub enum TopCommand {
 
 #[derive(Debug, Parser)]
 pub struct LaunchArgs {
-    /// Environment name defined in environment.txt (e.g. stg, prd)
+    /// Environment name defined in mfz.ini (e.g. stg, prd)
     pub environment: String,
 
     /// Open RDP in fullscreen mode
@@ -68,7 +68,7 @@ pub struct LaunchArgs {
     pub region: Option<String>,
 
     /// Path to the environment config file
-    #[arg(short, long, default_value = "environment.txt")]
+    #[arg(short, long, default_value = "mfz.ini")]
     pub config: String,
 }
 
@@ -76,7 +76,7 @@ pub struct LaunchArgs {
 
 #[derive(Debug, Parser)]
 pub struct ListArgs {
-    #[arg(short, long, default_value = "environment.txt")]
+    #[arg(short, long, default_value = "mfz.ini")]
     pub config: String,
 }
 

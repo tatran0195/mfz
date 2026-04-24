@@ -99,7 +99,7 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
     let mut mfa =
         MfaSessionManager::new(env.profile.clone(), env.serial.clone(), env.secret.clone());
     let spinner = Spinner::new("Acquiring MFA session token…");
-    let creds = match mfa.get_credentials().await {
+    let creds = match mfa.get_credentials(Some(&spinner)).await {
         Ok(c) => {
             spinner.success(format!(
                 "Session valid until {} UTC",
