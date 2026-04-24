@@ -96,6 +96,24 @@ mfz launch prd --fullscreen
 mfz launch stg --ssm-only
 ```
 
+### Configuration Management
+
+Manage your `mfz.ini` environments directly from the CLI:
+
+```bash
+# List all environments with their details
+mfz config list
+
+# Add a new environment
+mfz config add stg --profile dev --serial arn:aws:... --secret JBSW... --instance i-0123... --local-port 13389 --rdp-host stg-rdp
+
+# Edit an existing environment
+mfz config edit stg --local-port 14489 --rdp-host new-stg
+
+# Remove an environment
+mfz config remove stg
+```
+
 ### Managing Hosts
 
 Map your local ports to friendly hostnames:

@@ -65,6 +65,18 @@ impl EnvironmentConfig {
             rdp_host:    get("rdp_host")?,
         })
     }
+
+    pub fn to_map(&self) -> std::collections::HashMap<String, String> {
+        let mut m = std::collections::HashMap::new();
+        m.insert("profile".into(),     self.profile.clone());
+        m.insert("serial".into(),      self.serial.clone());
+        m.insert("secret".into(),      self.secret.clone());
+        m.insert("instance".into(),    self.instance.clone());
+        m.insert("remote_port".into(), self.remote_port.to_string());
+        m.insert("local_port".into(),  self.local_port.to_string());
+        m.insert("rdp_host".into(),    self.rdp_host.clone());
+        m
+    }
 }
 
 pub struct ConfigLoader {
@@ -93,6 +105,62 @@ impl ConfigLoader {
             return Ok(vec![]);
         }
         Ok(self.parse()?.sections())
+    }
+
+    pub fn get_all(&self) -> Result<std::collections::HashMap<String, EnvironmentConfig>> {
+        let ini = self.parse()?;
+        let mut all = std::collections::HashMap::new();
+        for section in ini.sections() {
+            if let Ok(config) = EnvironmentConfig::from_section(&section, &ini) {
+                all.insert(section, config);
+            }
+        }
+        Ok(all)
+    }
+
+    pub fn save(&self, env_name: &str, config: &EnvironmentConfig) -> Result<()> {
+        let mut ini = if self.path.exists() {
+            self.parse()?
+        } else {
+            Ini::new()
+        };
+
+        let map = config.to_map();
+        for (k, v) in map {
+            ini.set(env_name, &k, Some(v));
+        }
+
+        ini.write(self.path.to_str().unwrap_or_default())
+            .map_err(|e| AppError::Config(format!("Failed to save config: {e}")))?;
+        
+        Ok(())
+    }
+
+    pub fn delete(&self, env_name: &str) -> Result<()> {
+        let ini = self.parse()?;
+        if !ini.sections().contains(&env_name.to_string()) {
+            return Err(AppError::Config(format!("Environment `{env_name}` not found")));
+        }
+
+        // configparser doesn't have a direct section delete? 
+        // Let's check docs or just rebuild the ini without that section.
+        let mut new_ini = Ini::new();
+        for section in ini.sections() {
+            if section != env_name {
+                if let Some(map) = ini.get_map() {
+                    if let Some(sec_map) = map.get(&section) {
+                        for (k, v) in sec_map {
+                            new_ini.set(&section, k, v.clone());
+                        }
+                    }
+                }
+            }
+        }
+
+        new_ini.write(self.path.to_str().unwrap_or_default())
+            .map_err(|e| AppError::Config(format!("Failed to save config after delete: {e}")))?;
+
+        Ok(())
     }
 
     fn parse(&self) -> Result<Ini> {

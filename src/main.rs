@@ -25,7 +25,7 @@ use ui::*;
 // ─── Logging ──────────────────────────────────────────────────────────────────
 
 fn setup_logging() {
-    let file_appender = rolling::daily(".", "rdp-launcher.log");
+    let file_appender = rolling::daily(".", "mfz.log");
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
 
     tracing_subscriber::registry()
@@ -69,7 +69,96 @@ async fn dispatch(cli: Cli) -> Result<()> {
         TopCommand::List(args) => cmd_list(args),
         TopCommand::Hosts(sub) => cmd_hosts(sub),
         TopCommand::Qr(sub) => cmd_qr(sub).await,
+        TopCommand::Config(sub) => cmd_config(sub).await,
     }
+}
+
+// ─── config ───────────────────────────────────────────────────────────────────
+
+async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
+    match sub {
+        cli::ConfigCommand::List { config } => {
+            print_section("Environment Configurations");
+            let loader = ConfigLoader::new(&config);
+            let envs = loader.get_all()?;
+
+            if envs.is_empty() {
+                print_warning("No environments configured.");
+            } else {
+                for (name, env) in envs {
+                    println!("    {} {}", "▸".cyan(), name.white().bold());
+                    println!("      {:<12} {}", "Instance:".dimmed(), env.instance);
+                    println!("      {:<12} {}", "Profile:".dimmed(), env.profile);
+                    println!("      {:<12} {}:{}", "Remote:".dimmed(), env.rdp_host, env.remote_port);
+                    println!("      {:<12} 127.0.0.1:{}", "Local:".dimmed(), env.local_port);
+                    println!();
+                }
+            }
+        }
+        cli::ConfigCommand::Add {
+            name,
+            profile,
+            serial,
+            secret,
+            instance,
+            remote_port,
+            local_port,
+            rdp_host,
+            config,
+        } => {
+            print_section(&format!("Adding Environment: {name}"));
+            let loader = ConfigLoader::new(&config);
+            let new_env = crate::config::EnvironmentConfig {
+                profile,
+                serial,
+                secret,
+                instance,
+                remote_port,
+                local_port,
+                rdp_host,
+            };
+
+            let spinner = Spinner::new(format!("Saving `{name}` to `{config}`…"));
+            loader.save(&name, &new_env)?;
+            spinner.success(format!("Environment `{name}` added successfully."));
+        }
+        cli::ConfigCommand::Edit {
+            name,
+            profile,
+            serial,
+            secret,
+            instance,
+            remote_port,
+            local_port,
+            rdp_host,
+            config,
+        } => {
+            print_section(&format!("Editing Environment: {name}"));
+            let loader = ConfigLoader::new(&config);
+            let mut env = loader.load(&name)?;
+
+            if let Some(p) = profile { env.profile = p; }
+            if let Some(s) = serial { env.serial = s; }
+            if let Some(s) = secret { env.secret = s; }
+            if let Some(i) = instance { env.instance = i; }
+            if let Some(rp) = remote_port { env.remote_port = rp; }
+            if let Some(lp) = local_port { env.local_port = lp; }
+            if let Some(rh) = rdp_host { env.rdp_host = rh; }
+
+            let spinner = Spinner::new(format!("Updating `{name}` in `{config}`…"));
+            loader.save(&name, &env)?;
+            spinner.success(format!("Environment `{name}` updated successfully."));
+        }
+        cli::ConfigCommand::Remove { name, config } => {
+            print_section(&format!("Removing Environment: {name}"));
+            let loader = ConfigLoader::new(&config);
+            
+            let spinner = Spinner::new(format!("Deleting `{name}` from `{config}`…"));
+            loader.delete(&name)?;
+            spinner.success(format!("Environment `{name}` removed."));
+        }
+    }
+    Ok(())
 }
 
 // ─── launch ───────────────────────────────────────────────────────────────────
@@ -170,7 +259,7 @@ fn cmd_list(args: cli::ListArgs) -> Result<()> {
         }
         println!();
         print_info(&format!(
-            "Run: rdp-launcher launch {} [--fullscreen] [--ssm-only]",
+            "Run: mfz launch {} [--fullscreen] [--ssm-only]",
             envs.first().map(String::as_str).unwrap_or("<env>")
         ));
     }
@@ -283,6 +372,7 @@ async fn cmd_qr(sub: QrCommand) -> Result<()> {
                 &args.issuer,
                 args.out.as_deref(),
                 args.region.as_deref(),
+                args.save.as_deref(),
             )
             .await?;
         }

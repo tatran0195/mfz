@@ -175,6 +175,7 @@ pub async fn register(
     issuer:     &str,
     out_png:    Option<&str>,
     region:     Option<&str>,
+    save_env:   Option<&str>,
 ) -> Result<()> {
     // ── 1. Build AWS IAM client ───────────────────────────────────────────
     let mut builder = aws_config::defaults(BehaviorVersion::latest())
@@ -266,6 +267,35 @@ pub async fn register(
     print_kv("SERIAL", &serial_number);
     print_kv("SECRET", &qr.secret_b32);
     println!();
+
+    if let Some(target) = save_env {
+        let spinner = Spinner::new(format!("Saving to mfz.ini under `[{target}]`…"));
+        let loader = crate::config::ConfigLoader::new("mfz.ini");
+        
+        let mut new_config = if let Ok(existing) = loader.load(target) {
+            existing
+        } else {
+            crate::config::EnvironmentConfig {
+                profile:     profile.to_owned(),
+                serial:      serial_number.clone(),
+                secret:      qr.secret_b32.clone(),
+                instance:    "REPLACE_ME".into(),
+                remote_port: 3389,
+                local_port:  3389,
+                rdp_host:    "REPLACE_ME".into(),
+            }
+        };
+
+        new_config.serial = serial_number;
+        new_config.secret = qr.secret_b32;
+        
+        if let Err(e) = loader.save(target, &new_config) {
+            spinner.failure(format!("Failed to save config: {e}"));
+        } else {
+            spinner.success(format!("Credentials saved to `[{target}]` section."));
+        }
+    }
+
     print_success("Registration complete. Your authenticator is now linked.");
     println!();
 

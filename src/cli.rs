@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 
 #[derive(Debug, Parser)]
 #[command(
-    name        = "rdp-launcher",
+    name        = "mfz",
     version,
     about       = "AWS MFA + SSM port forwarding + RDP session manager",
     long_about  = "\
@@ -12,16 +12,15 @@ and optional RDP session launch.
 Temporary MFA credentials are held in memory only — never written to disk.",
     after_help  = "\
 EXAMPLES:
-    rdp-launcher launch stg
-    rdp-launcher launch prd --fullscreen
-    rdp-launcher launch stg --ssm-only
-    rdp-launcher list
-    rdp-launcher hosts add
-    rdp-launcher hosts custom 10.0.0.5 my-server
-    rdp-launcher qr decode   path/to/qr.png
-    rdp-launcher qr generate --account alice@example.com --issuer MyOrg
-    rdp-launcher qr generate --secret JBSWY3DPEHPK3PXP --out totp.png
-    rdp-launcher qr register --profile dev --username alice --account alice@example.com",
+    mfz launch stg
+    mfz launch prd --fullscreen
+    mfz launch stg --ssm-only
+    mfz list
+    mfz config list
+    mfz config add my-env --profile dev --instance i-0123... --local-port 13389 --rdp-host my-host
+    mfz hosts add
+    mfz qr decode   path/to/qr.png
+    mfz qr register --profile dev --username alice",
     propagate_version = true,
 )]
 pub struct Cli {
@@ -46,6 +45,65 @@ pub enum TopCommand {
     /// QR code & MFA device utilities
     #[command(subcommand)]
     Qr(QrCommand),
+
+    /// Manage environment configurations in mfz.ini
+    #[command(subcommand)]
+    Config(ConfigCommand),
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ConfigCommand {
+    /// List all environments and their details
+    List {
+        #[arg(short, long, default_value = "mfz.ini")]
+        config: String,
+    },
+    /// Add a new environment
+    Add {
+        name: String,
+        #[arg(long)]
+        profile: String,
+        #[arg(long)]
+        serial: String,
+        #[arg(long)]
+        secret: String,
+        #[arg(long)]
+        instance: String,
+        #[arg(long, default_value = "3389")]
+        remote_port: u16,
+        #[arg(long)]
+        local_port: u16,
+        #[arg(long)]
+        rdp_host: String,
+        #[arg(short, long, default_value = "mfz.ini")]
+        config: String,
+    },
+    /// Edit an existing environment (only specified fields will be updated)
+    Edit {
+        name: String,
+        #[arg(long)]
+        profile: Option<String>,
+        #[arg(long)]
+        serial: Option<String>,
+        #[arg(long)]
+        secret: Option<String>,
+        #[arg(long)]
+        instance: Option<String>,
+        #[arg(long)]
+        remote_port: Option<u16>,
+        #[arg(long)]
+        local_port: Option<u16>,
+        #[arg(long)]
+        rdp_host: Option<String>,
+        #[arg(short, long, default_value = "mfz.ini")]
+        config: String,
+    },
+    /// Remove an environment
+    Remove {
+        name: String,
+        #[arg(short, long, default_value = "mfz.ini")]
+        config: String,
+    },
 }
 
 // ─── Launch ───────────────────────────────────────────────────────────────────
@@ -161,4 +219,8 @@ pub struct RegisterArgs {
     /// AWS region override
     #[arg(short, long)]
     pub region: Option<String>,
+
+    /// Automatically save the new serial and secret to this environment in mfz.ini
+    #[arg(long)]
+    pub save: Option<String>,
 }
