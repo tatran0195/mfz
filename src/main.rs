@@ -1,3 +1,4 @@
+mod aws;
 mod cli;
 mod config;
 mod error;
@@ -86,7 +87,12 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             } else {
                 for (name, env) in envs {
                     println!("    {} {}", "▸".cyan(), name.white().bold());
-                    println!("      {:<12} {}", "Instance:".dimmed(), env.instance);
+                    if let Some(inst) = env.instance {
+                        println!("      {:<12} {}", "Instance:".dimmed(), inst);
+                    }
+                    if let Some(tag) = env.instance_tag {
+                        println!("      {:<12} {}", "Inst Tag:".dimmed(), tag);
+                    }
                     println!("      {:<12} {}", "Profile:".dimmed(), env.profile);
                     println!(
                         "      {:<12} {}:{}",
@@ -112,6 +118,7 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             serial,
             secret,
             instance,
+            instance_tag,
             remote_port,
             local_port,
             rdp_host,
@@ -121,11 +128,19 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
         } => {
             print_section(&format!("Adding Environment: {name}"));
             let loader = ConfigLoader::new(&config);
+
+            if instance.is_none() && instance_tag.is_none() {
+                return Err(crate::error::AppError::Config(
+                    "Must specify either `--instance` or `--instance-tag`".into(),
+                ));
+            }
+
             let new_env = crate::config::EnvironmentConfig {
                 profile,
                 serial,
                 secret,
                 instance,
+                instance_tag,
                 remote_port,
                 local_port,
                 rdp_host,
@@ -143,6 +158,7 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             serial,
             secret,
             instance,
+            instance_tag,
             remote_port,
             local_port,
             rdp_host,
@@ -164,7 +180,10 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                 env.secret = s;
             }
             if let Some(i) = instance {
-                env.instance = i;
+                env.instance = Some(i);
+            }
+            if let Some(it) = instance_tag {
+                env.instance_tag = Some(it);
             }
             if let Some(rp) = remote_port {
                 env.remote_port = rp;
@@ -205,7 +224,12 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
     let env = ConfigLoader::new(&args.config).load(&args.environment)?;
 
     print_kv("Environment", &args.environment);
-    print_kv("Instance", &env.instance);
+    if let Some(ref inst) = env.instance {
+        print_kv("Instance (Fixed)", inst);
+    }
+    if let Some(ref tag) = env.instance_tag {
+        print_kv("Instance Tag", tag);
+    }
     print_kv("Profile", &env.profile);
     print_kv("Remote port", &env.remote_port.to_string());
     print_kv("Local port", &env.local_port.to_string());
@@ -224,6 +248,44 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
     print_section("MFA Authentication");
     let mut mfa =
         MfaSessionManager::new(env.profile.clone(), env.serial.clone(), env.secret.clone());
+
+    // Resolve instance ID if needed
+    let instance_id = if let Some(id) = env.instance {
+        id
+    } else if let Some(tag) = env.instance_tag {
+        print_section("Instance Resolution");
+        let spinner = Spinner::new(format!("Resolving tag `{}`…", tag));
+        // Split tag Key=Value
+        let parts: Vec<&str> = tag.split('=').collect();
+        if parts.len() != 2 {
+            spinner.failure("Invalid tag format — must be Key=Value");
+            return Err(crate::error::AppError::Config("Invalid tag format".into()));
+        }
+        let id = match aws::resolve_instance_by_tag(
+            &mut mfa,
+            parts[0],
+            parts[1],
+            args.region.as_deref(),
+            Some(&spinner),
+        )
+        .await
+        {
+            Ok(id) => {
+                spinner.success(format!("Resolved to {}", id));
+                id
+            }
+            Err(e) => {
+                spinner.failure(e.to_string());
+                return Err(e);
+            }
+        };
+        id
+    } else {
+        return Err(crate::error::AppError::Config(
+            "No instance ID or tag".into(),
+        ));
+    };
+
     let spinner = Spinner::new("Acquiring MFA session token…");
     let creds = match mfa.get_credentials(Some(&spinner)).await {
         Ok(c) => {
@@ -242,7 +304,7 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
 
     print_section("SSM Port Forwarding");
     let mut ssm = SsmSession::new(
-        &env.instance,
+        instance_id,
         env.remote_port,
         env.local_port,
         args.region.clone(),

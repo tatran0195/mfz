@@ -8,7 +8,6 @@ const REQUIRED_KEYS: &[&str] = &[
     "profile",
     "serial",
     "secret",
-    "instance",
     "remote_port",
     "local_port",
     "rdp_host",
@@ -19,7 +18,8 @@ pub struct EnvironmentConfig {
     pub profile: String,
     pub serial: String,
     pub secret: String,
-    pub instance: String,
+    pub instance: Option<String>,
+    pub instance_tag: Option<String>,
     pub remote_port: u16,
     pub local_port: u16,
     pub rdp_host: String,
@@ -59,6 +59,12 @@ impl EnvironmentConfig {
             )));
         }
 
+        if ini.get(name, "instance").is_none() && ini.get(name, "instance_tag").is_none() {
+            return Err(AppError::Config(format!(
+                "[{name}] must specify either `instance` or `instance_tag`"
+            )));
+        }
+
         let parse_port = |key: &str| -> Result<u16> {
             get(key)?
                 .parse::<u16>()
@@ -69,7 +75,8 @@ impl EnvironmentConfig {
             profile: get("profile")?,
             serial: get("serial")?,
             secret: get("secret")?,
-            instance: get("instance")?,
+            instance: get_opt("instance"),
+            instance_tag: get_opt("instance_tag"),
             remote_port: parse_port("remote_port")?,
             local_port: parse_port("local_port")?,
             rdp_host: get("rdp_host")?,
@@ -83,7 +90,12 @@ impl EnvironmentConfig {
         m.insert("profile".into(), self.profile.clone());
         m.insert("serial".into(), self.serial.clone());
         m.insert("secret".into(), self.secret.clone());
-        m.insert("instance".into(), self.instance.clone());
+        if let Some(inst) = &self.instance {
+            m.insert("instance".into(), inst.clone());
+        }
+        if let Some(tag) = &self.instance_tag {
+            m.insert("instance_tag".into(), tag.clone());
+        }
         m.insert("remote_port".into(), self.remote_port.to_string());
         m.insert("local_port".into(), self.local_port.to_string());
         m.insert("rdp_host".into(), self.rdp_host.clone());

@@ -68,7 +68,9 @@ pub enum ConfigCommand {
         #[arg(long)]
         secret: String,
         #[arg(long)]
-        instance: String,
+        instance: Option<String>,
+        #[arg(long)]
+        instance_tag: Option<String>,
         #[arg(long, default_value = "3389")]
         remote_port: u16,
         #[arg(long)]
@@ -93,6 +95,8 @@ pub enum ConfigCommand {
         secret: Option<String>,
         #[arg(long)]
         instance: Option<String>,
+        #[arg(long)]
+        instance_tag: Option<String>,
         #[arg(long)]
         remote_port: Option<u16>,
         #[arg(long)]
