@@ -1,25 +1,38 @@
+use std::{
+    fs::{self, OpenOptions},
+    io::Write,
+};
+
 use crate::{
     error::{AppError, Result},
     ui::{print_success, print_warning},
 };
-use std::{fs::{self, OpenOptions}, io::Write};
 
 #[cfg(target_os = "windows")]
 const HOSTS_PATH: &str = r"C:\Windows\System32\drivers\etc\hosts";
 #[cfg(not(target_os = "windows"))]
 const HOSTS_PATH: &str = "/etc/hosts";
 
-pub struct HostsManager { path: &'static str }
+pub struct HostsManager {
+    path: &'static str,
+}
 
 impl HostsManager {
-    pub fn new() -> Self { Self { path: HOSTS_PATH } }
+    pub fn new() -> Self {
+        Self { path: HOSTS_PATH }
+    }
 
     pub fn ensure_writable(&self) -> Result<()> {
-        OpenOptions::new().append(true).open(self.path).map(|_| ()).map_err(|_| {
-            AppError::Hosts(format!(
-                "Cannot write to {} — run as administrator / sudo", self.path
-            ))
-        })
+        OpenOptions::new()
+            .append(true)
+            .open(self.path)
+            .map(|_| ())
+            .map_err(|_| {
+                AppError::Hosts(format!(
+                    "Cannot write to {} — run as administrator / sudo",
+                    self.path
+                ))
+            })
     }
 
     pub fn add_host(&self, ip: &str, hostname: &str) -> Result<()> {
@@ -40,7 +53,9 @@ impl HostsManager {
             return Ok(());
         }
 
-        let mut file = OpenOptions::new().append(true).open(self.path)
+        let mut file = OpenOptions::new()
+            .append(true)
+            .open(self.path)
             .map_err(|e| AppError::Hosts(format!("Cannot open hosts file: {e}")))?;
 
         writeln!(file, "\n{ip}\t{hostname}")
@@ -60,5 +75,7 @@ impl HostsManager {
 }
 
 impl Default for HostsManager {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }

@@ -1,0 +1,25 @@
+# Rustfmt configuration
+# See: https://rust-lang.github.io/rustfmt/
+
+# --- Standard Ordering ---
+# Sort imports alphabetically (Stable)
+reorder_imports = true
+
+# Sort modules (Stable)
+reorder_modules = true
+
+# Use 2021 edition rules
+edition = "2021"
+
+# --- Import Grouping (Requires Nightly) ---
+# The following options are currently unstable in rustfmt 1.x stable
+# and require a nightly toolchain or 'unstable_features = true'
+# group_imports = "StdExternalCrate"
+# imports_granularity = "Crate"
+
+# --- General Style ---
+# Max line length
+max_width = 100
+
+# Use field-init shorthand where possible: { x: x } -> { x }
+use_field_init_shorthand = true

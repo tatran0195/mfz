@@ -4,27 +4,29 @@
 //!   3. `register`  — generate + call AWS IAM CreateVirtualMFADevice /
 //!                    EnableMFADevice in one flow
 
+use std::io::Write;
+
+use aws_config::BehaviorVersion;
+use aws_sdk_iam::Client as IamClient;
+use base32::{decode as b32decode, encode as b32encode, Alphabet};
+use colored::Colorize;
+use image::{GrayImage, Luma};
+use qrcode::QrCode;
+use rand::{thread_rng, RngCore};
+use regex::Regex;
+use rxing::Reader;
+use tracing::info;
+
 use crate::{
     error::{AppError, Result},
     ui::{print_info, print_kv, print_section, print_separator, print_success, Spinner},
 };
-use aws_config::BehaviorVersion;
-use aws_sdk_iam::Client as IamClient;
-use base32::{Alphabet, decode as b32decode, encode as b32encode};
-use colored::Colorize;
-use image::{GrayImage, Luma};
-use qrcode::QrCode;
-use regex::Regex;
-use rand::{RngCore, thread_rng};
-use rxing::Reader;
-use std::{io::Write};
-use tracing::info;
 
 // ─── Decode ──────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Clone)]
 pub struct OtpSecret {
-    pub uri:    String,
+    pub uri: String,
     pub secret: String,
 }
 
@@ -39,18 +41,19 @@ pub fn decode(image_path: &str) -> Result<OtpSecret> {
     let binarizer = rxing::common::HybridBinarizer::new(source);
     let mut bitmap = rxing::BinaryBitmap::new(binarizer);
     let mut reader = rxing::qrcode::QRCodeReader::default();
-    
-    let result = reader.decode(&mut bitmap)
+
+    let result = reader
+        .decode(&mut bitmap)
         .map_err(|e| AppError::QrCode(format!("QR decode failed: {e}")))?;
-    
+
     let uri = result.getText().to_string();
 
     extract_secret_from_uri(&uri)
 }
 
 fn extract_secret_from_uri(uri: &str) -> Result<OtpSecret> {
-    let re = Regex::new(r"secret=([^&]+)")
-        .map_err(|e| AppError::QrCode(format!("Regex error: {e}")))?;
+    let re =
+        Regex::new(r"secret=([^&]+)").map_err(|e| AppError::QrCode(format!("Regex error: {e}")))?;
 
     let secret = re
         .captures(uri)
@@ -58,7 +61,10 @@ fn extract_secret_from_uri(uri: &str) -> Result<OtpSecret> {
         .map(|m| m.as_str().to_owned())
         .ok_or_else(|| AppError::QrCode("No `secret=…` parameter in OTP URI".into()))?;
 
-    Ok(OtpSecret { uri: uri.to_owned(), secret })
+    Ok(OtpSecret {
+        uri: uri.to_owned(),
+        secret,
+    })
 }
 
 // ─── Generate ─────────────────────────────────────────────────────────────────
@@ -68,9 +74,9 @@ pub struct GeneratedQr {
     /// Base-32 encoded secret (what goes into the authenticator app)
     pub secret_b32: String,
     /// Full otpauth:// URI
-    pub uri:        String,
+    pub uri: String,
     /// PNG bytes
-    pub png_bytes:  Vec<u8>,
+    pub png_bytes: Vec<u8>,
 }
 
 /// Build a TOTP QR code.
@@ -78,11 +84,7 @@ pub struct GeneratedQr {
 /// * `secret_b32` — supply an existing Base-32 secret, or `None` to generate a fresh 20-byte one.
 /// * `account`    — label shown in the authenticator (e.g. "alice@example.com").
 /// * `issuer`     — issuer prefix (e.g. "AWS", "MyOrg").
-pub fn generate(
-    secret_b32: Option<&str>,
-    account:    &str,
-    issuer:     &str,
-) -> Result<GeneratedQr> {
+pub fn generate(secret_b32: Option<&str>, account: &str, issuer: &str) -> Result<GeneratedQr> {
     // ── Secret ────────────────────────────────────────────────────────────
     let secret_b32 = match secret_b32 {
         Some(s) => {
@@ -120,7 +122,11 @@ pub fn generate(
     for y_mod in 0..width {
         for x_mod in 0..width {
             let color = code[(x_mod, y_mod)];
-            let val: u8 = if color == qrcode::types::Color::Dark { 0 } else { 255 };
+            let val: u8 = if color == qrcode::types::Color::Dark {
+                0
+            } else {
+                255
+            };
             let luma = Luma([val]);
             let x0 = x_mod as u32 * module_size + quiet;
             let y0 = y_mod as u32 * module_size + quiet;
@@ -139,7 +145,11 @@ pub fn generate(
     )
     .map_err(|e| AppError::QrCode(format!("PNG encoding failed: {e}")))?;
 
-    Ok(GeneratedQr { secret_b32, uri, png_bytes })
+    Ok(GeneratedQr {
+        secret_b32,
+        uri,
+        png_bytes,
+    })
 }
 
 /// Save a `GeneratedQr`'s PNG to disk and print confirmation.
@@ -169,17 +179,16 @@ pub fn print_terminal(qr: &GeneratedQr) {
 ///   3. Prompt user for two consecutive TOTP codes
 ///   4. EnableMFADevice          → activate the device on the IAM user
 pub async fn register(
-    profile:    &str,
-    username:   &str,
-    account:    &str,
-    issuer:     &str,
-    out_png:    Option<&str>,
-    region:     Option<&str>,
-    save_env:   Option<&str>,
+    profile: &str,
+    username: &str,
+    account: &str,
+    issuer: &str,
+    out_png: Option<&str>,
+    region: Option<&str>,
+    save_env: Option<&str>,
 ) -> Result<()> {
     // ── 1. Build AWS IAM client ───────────────────────────────────────────
-    let mut builder = aws_config::defaults(BehaviorVersion::latest())
-        .profile_name(profile);
+    let mut builder = aws_config::defaults(BehaviorVersion::latest()).profile_name(profile);
     if let Some(r) = region {
         builder = builder.region(aws_config::Region::new(r.to_owned()));
     }
@@ -203,7 +212,7 @@ pub async fn register(
         .ok_or_else(|| AppError::Iam("No device in CreateVirtualMFADevice response".into()))?;
 
     let serial_number = device.serial_number().to_owned();
- 
+
     // AWS returns the raw Base-32 secret seed (not a URI).
     spinner.set_message("Parsing MFA secret seed...");
     let seed_b32 = device
@@ -214,7 +223,7 @@ pub async fn register(
                 .map(|s| s.to_uppercase())
                 .map_err(|_| AppError::Iam("Seed bytes are not valid UTF-8".into()))
         })?;
- 
+
     spinner.set_message("Linking device to authenticator app...");
 
     spinner.success(format!("Device created: {serial_number}"));
@@ -227,7 +236,7 @@ pub async fn register(
     print_terminal(&qr);
 
     print_kv("Secret (Base-32)", &qr.secret_b32);
-    print_kv("Serial",           &serial_number);
+    print_kv("Serial", &serial_number);
     println!();
 
     if let Some(path) = out_png {
@@ -253,11 +262,7 @@ pub async fn register(
         .authentication_code2(&code2)
         .send()
         .await
-        .map_err(|e| {
-            AppError::Iam(format!(
-                "EnableMFADevice failed (wrong codes?): {e}"
-            ))
-        })?;
+        .map_err(|e| AppError::Iam(format!("EnableMFADevice failed (wrong codes?): {e}")))?;
 
     spinner.success("MFA device activated successfully!");
 
@@ -271,24 +276,24 @@ pub async fn register(
     if let Some(target) = save_env {
         let spinner = Spinner::new(format!("Saving to mfz.ini under `[{target}]`…"));
         let loader = crate::config::ConfigLoader::new("mfz.ini");
-        
+
         let mut new_config = if let Ok(existing) = loader.load(target) {
             existing
         } else {
             crate::config::EnvironmentConfig {
-                profile:     profile.to_owned(),
-                serial:      serial_number.clone(),
-                secret:      qr.secret_b32.clone(),
-                instance:    "REPLACE_ME".into(),
+                profile: profile.to_owned(),
+                serial: serial_number.clone(),
+                secret: qr.secret_b32.clone(),
+                instance: "REPLACE_ME".into(),
                 remote_port: 3389,
-                local_port:  3389,
-                rdp_host:    "REPLACE_ME".into(),
+                local_port: 3389,
+                rdp_host: "REPLACE_ME".into(),
             }
         };
 
         new_config.serial = serial_number;
         new_config.secret = qr.secret_b32;
-        
+
         if let Err(e) = loader.save(target, &new_config) {
             spinner.failure(format!("Failed to save config: {e}"));
         } else {
@@ -308,9 +313,7 @@ pub async fn register(
 fn prompt_totp(prompt: &str) -> Result<String> {
     loop {
         print!("  {} {}: ", "›".cyan().bold(), prompt.white().bold());
-        std::io::stdout()
-            .flush()
-            .map_err(|e| AppError::Io(e))?;
+        std::io::stdout().flush().map_err(|e| AppError::Io(e))?;
 
         let mut input = String::new();
         std::io::stdin()

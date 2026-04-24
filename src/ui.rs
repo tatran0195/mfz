@@ -1,7 +1,8 @@
+use std::time::Duration;
+
 use colored::Colorize;
 use console::Term;
 use indicatif::{ProgressBar, ProgressStyle};
-use std::time::Duration;
 
 // ─── Spinner ──────────────────────────────────────────────────────────────────
 
@@ -27,27 +28,18 @@ impl Spinner {
     }
 
     pub fn success(self, msg: impl Into<String>) {
-        self.pb.finish_with_message(format!(
-            "{} {}",
-            "✔".green().bold(),
-            msg.into().green()
-        ));
+        self.pb
+            .finish_with_message(format!("{} {}", "✔".green().bold(), msg.into().green()));
     }
 
     pub fn failure(self, msg: impl Into<String>) {
-        self.pb.finish_with_message(format!(
-            "{} {}",
-            "✘".red().bold(),
-            msg.into().red()
-        ));
+        self.pb
+            .finish_with_message(format!("{} {}", "✘".red().bold(), msg.into().red()));
     }
 
     pub fn warning(self, msg: impl Into<String>) {
-        self.pb.finish_with_message(format!(
-            "{} {}",
-            "⚠".yellow().bold(),
-            msg.into().yellow()
-        ));
+        self.pb
+            .finish_with_message(format!("{} {}", "⚠".yellow().bold(), msg.into().yellow()));
     }
 }
 

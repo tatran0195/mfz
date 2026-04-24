@@ -2,15 +2,15 @@ use clap::{Parser, Subcommand};
 
 #[derive(Debug, Parser)]
 #[command(
-    name        = "mfz",
+    name = "mfz",
     version,
-    about       = "AWS MFA + SSM port forwarding + RDP session manager",
-    long_about  = "\
+    about = "AWS MFA + SSM port forwarding + RDP session manager",
+    long_about = "\
 RDP Launcher manages AWS MFA authentication, SSM port forwarding,
 and optional RDP session launch.
 
 Temporary MFA credentials are held in memory only — never written to disk.",
-    after_help  = "\
+    after_help = "\
 EXAMPLES:
     mfz launch stg
     mfz launch prd --fullscreen
@@ -21,7 +21,7 @@ EXAMPLES:
     mfz hosts add
     mfz qr decode   path/to/qr.png
     mfz qr register --profile dev --username alice",
-    propagate_version = true,
+    propagate_version = true
 )]
 pub struct Cli {
     #[command(subcommand)]

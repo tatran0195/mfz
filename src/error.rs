@@ -33,13 +33,13 @@ impl AppError {
     pub fn exit_code(&self) -> i32 {
         match self {
             Self::Config(_) => 1,
-            Self::Mfa(_)    => 2,
-            Self::Ssm(_)    => 3,
+            Self::Mfa(_) => 2,
+            Self::Ssm(_) => 3,
             Self::QrCode(_) => 4,
-            Self::Hosts(_)  => 5,
-            Self::Rdp(_)    => 6,
-            Self::Iam(_)    => 7,
-            Self::Io(_)     => 8,
+            Self::Hosts(_) => 5,
+            Self::Rdp(_) => 6,
+            Self::Iam(_) => 7,
+            Self::Io(_) => 8,
         }
     }
 }

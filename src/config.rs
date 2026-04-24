@@ -1,21 +1,28 @@
-use crate::error::{AppError, Result};
-use configparser::ini::Ini;
 use std::{collections::HashSet, path::PathBuf};
 
+use configparser::ini::Ini;
+
+use crate::error::{AppError, Result};
+
 const REQUIRED_KEYS: &[&str] = &[
-    "profile", "serial", "secret", "instance",
-    "remote_port", "local_port", "rdp_host",
+    "profile",
+    "serial",
+    "secret",
+    "instance",
+    "remote_port",
+    "local_port",
+    "rdp_host",
 ];
 
 #[derive(Debug, Clone)]
 pub struct EnvironmentConfig {
-    pub profile:     String,
-    pub serial:      String,
-    pub secret:      String,
-    pub instance:    String,
+    pub profile: String,
+    pub serial: String,
+    pub secret: String,
+    pub instance: String,
     pub remote_port: u16,
-    pub local_port:  u16,
-    pub rdp_host:    String,
+    pub local_port: u16,
+    pub rdp_host: String,
 }
 
 impl EnvironmentConfig {
@@ -23,9 +30,7 @@ impl EnvironmentConfig {
         let get = |key: &str| -> Result<String> {
             ini.get(name, key)
                 .map(|v| v.trim().to_owned())
-                .ok_or_else(|| {
-                    AppError::Config(format!("[{name}] missing required key: `{key}`"))
-                })
+                .ok_or_else(|| AppError::Config(format!("[{name}] missing required key: `{key}`")))
         };
 
         let present: HashSet<String> = ini
@@ -56,25 +61,25 @@ impl EnvironmentConfig {
         };
 
         Ok(Self {
-            profile:     get("profile")?,
-            serial:      get("serial")?,
-            secret:      get("secret")?,
-            instance:    get("instance")?,
+            profile: get("profile")?,
+            serial: get("serial")?,
+            secret: get("secret")?,
+            instance: get("instance")?,
             remote_port: parse_port("remote_port")?,
-            local_port:  parse_port("local_port")?,
-            rdp_host:    get("rdp_host")?,
+            local_port: parse_port("local_port")?,
+            rdp_host: get("rdp_host")?,
         })
     }
 
     pub fn to_map(&self) -> std::collections::HashMap<String, String> {
         let mut m = std::collections::HashMap::new();
-        m.insert("profile".into(),     self.profile.clone());
-        m.insert("serial".into(),      self.serial.clone());
-        m.insert("secret".into(),      self.secret.clone());
-        m.insert("instance".into(),    self.instance.clone());
+        m.insert("profile".into(), self.profile.clone());
+        m.insert("serial".into(), self.serial.clone());
+        m.insert("secret".into(), self.secret.clone());
+        m.insert("instance".into(), self.instance.clone());
         m.insert("remote_port".into(), self.remote_port.to_string());
-        m.insert("local_port".into(),  self.local_port.to_string());
-        m.insert("rdp_host".into(),    self.rdp_host.clone());
+        m.insert("local_port".into(), self.local_port.to_string());
+        m.insert("rdp_host".into(), self.rdp_host.clone());
         m
     }
 }
@@ -94,7 +99,11 @@ impl ConfigLoader {
             let available = ini.sections().join(", ");
             return Err(AppError::Config(format!(
                 "Environment `{env_name}` not found. Available: {}",
-                if available.is_empty() { "(none)".into() } else { available }
+                if available.is_empty() {
+                    "(none)".into()
+                } else {
+                    available
+                }
             )));
         }
         EnvironmentConfig::from_section(env_name, &ini)
@@ -132,17 +141,19 @@ impl ConfigLoader {
 
         ini.write(self.path.to_str().unwrap_or_default())
             .map_err(|e| AppError::Config(format!("Failed to save config: {e}")))?;
-        
+
         Ok(())
     }
 
     pub fn delete(&self, env_name: &str) -> Result<()> {
         let ini = self.parse()?;
         if !ini.sections().contains(&env_name.to_string()) {
-            return Err(AppError::Config(format!("Environment `{env_name}` not found")));
+            return Err(AppError::Config(format!(
+                "Environment `{env_name}` not found"
+            )));
         }
 
-        // configparser doesn't have a direct section delete? 
+        // configparser doesn't have a direct section delete?
         // Let's check docs or just rebuild the ini without that section.
         let mut new_ini = Ini::new();
         for section in ini.sections() {
@@ -157,7 +168,8 @@ impl ConfigLoader {
             }
         }
 
-        new_ini.write(self.path.to_str().unwrap_or_default())
+        new_ini
+            .write(self.path.to_str().unwrap_or_default())
             .map_err(|e| AppError::Config(format!("Failed to save config after delete: {e}")))?;
 
         Ok(())

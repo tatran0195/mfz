@@ -1,12 +1,16 @@
-use crate::error::{AppError, Result};
 use std::process::Command;
+
 use tracing::info;
+
+use crate::error::{AppError, Result};
 
 pub fn launch(host: &str, port: u16, fullscreen: bool) -> Result<()> {
     let target = format!("{host}:{port}");
     let mut cmd = Command::new("mstsc");
     cmd.arg(format!("/v:{target}"));
-    if fullscreen { cmd.arg("/f"); }
+    if fullscreen {
+        cmd.arg("/f");
+    }
 
     info!("Launching RDP → {}", target);
     cmd.status()

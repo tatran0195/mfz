@@ -18,8 +18,7 @@ use mfa::MfaSessionManager;
 use ssm::{start_with_retries, SsmSession};
 use tracing::info;
 use tracing_appender::rolling;
-use tracing_subscriber::Layer;
-use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
 use ui::*;
 
 // ─── Logging ──────────────────────────────────────────────────────────────────
@@ -89,8 +88,17 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                     println!("    {} {}", "▸".cyan(), name.white().bold());
                     println!("      {:<12} {}", "Instance:".dimmed(), env.instance);
                     println!("      {:<12} {}", "Profile:".dimmed(), env.profile);
-                    println!("      {:<12} {}:{}", "Remote:".dimmed(), env.rdp_host, env.remote_port);
-                    println!("      {:<12} 127.0.0.1:{}", "Local:".dimmed(), env.local_port);
+                    println!(
+                        "      {:<12} {}:{}",
+                        "Remote:".dimmed(),
+                        env.rdp_host,
+                        env.remote_port
+                    );
+                    println!(
+                        "      {:<12} 127.0.0.1:{}",
+                        "Local:".dimmed(),
+                        env.local_port
+                    );
                     println!();
                 }
             }
@@ -137,13 +145,27 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             let loader = ConfigLoader::new(&config);
             let mut env = loader.load(&name)?;
 
-            if let Some(p) = profile { env.profile = p; }
-            if let Some(s) = serial { env.serial = s; }
-            if let Some(s) = secret { env.secret = s; }
-            if let Some(i) = instance { env.instance = i; }
-            if let Some(rp) = remote_port { env.remote_port = rp; }
-            if let Some(lp) = local_port { env.local_port = lp; }
-            if let Some(rh) = rdp_host { env.rdp_host = rh; }
+            if let Some(p) = profile {
+                env.profile = p;
+            }
+            if let Some(s) = serial {
+                env.serial = s;
+            }
+            if let Some(s) = secret {
+                env.secret = s;
+            }
+            if let Some(i) = instance {
+                env.instance = i;
+            }
+            if let Some(rp) = remote_port {
+                env.remote_port = rp;
+            }
+            if let Some(lp) = local_port {
+                env.local_port = lp;
+            }
+            if let Some(rh) = rdp_host {
+                env.rdp_host = rh;
+            }
 
             let spinner = Spinner::new(format!("Updating `{name}` in `{config}`…"));
             loader.save(&name, &env)?;
@@ -152,7 +174,7 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
         cli::ConfigCommand::Remove { name, config } => {
             print_section(&format!("Removing Environment: {name}"));
             let loader = ConfigLoader::new(&config);
-            
+
             let spinner = Spinner::new(format!("Deleting `{name}` from `{config}`…"));
             loader.delete(&name)?;
             spinner.success(format!("Environment `{name}` removed."));

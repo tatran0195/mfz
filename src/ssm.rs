@@ -1,37 +1,45 @@
-use crate::{
-    error::{AppError, Result},
-    mfa::MfaSessionManager,
-    ui::Spinner,
-};
 use std::{
     net::TcpStream,
     process::{Child, Command, Stdio},
     time::{Duration, Instant},
 };
+
 use tokio::time::sleep;
 use tracing::{error, info, warn};
 
-const MAX_RETRIES:           u32 = 3;
-const PORT_WAIT_TIMEOUT:     u64 = 30;
+use crate::{
+    error::{AppError, Result},
+    mfa::MfaSessionManager,
+    ui::Spinner,
+};
+
+const MAX_RETRIES: u32 = 3;
+const PORT_WAIT_TIMEOUT: u64 = 30;
 const PORT_POLL_INTERVAL_MS: u64 = 500;
-const RETRY_BACKOFF_SECS:    u64 = 3;
+const RETRY_BACKOFF_SECS: u64 = 3;
 
 pub struct SsmSession {
-    pub instance:    String,
+    pub instance: String,
     pub remote_port: u16,
-    pub local_port:  u16,
-    region:          Option<String>,
-    process:         Option<Child>,
+    pub local_port: u16,
+    region: Option<String>,
+    process: Option<Child>,
 }
 
 impl SsmSession {
     pub fn new(
-        instance:    impl Into<String>,
+        instance: impl Into<String>,
         remote_port: u16,
-        local_port:  u16,
-        region:      Option<String>,
+        local_port: u16,
+        region: Option<String>,
     ) -> Self {
-        Self { instance: instance.into(), remote_port, local_port, region, process: None }
+        Self {
+            instance: instance.into(),
+            remote_port,
+            local_port,
+            region,
+            process: None,
+        }
     }
 
     pub async fn start(
@@ -44,15 +52,21 @@ impl SsmSession {
             self.stop();
         }
 
-        info!("Starting SSM: {} → 127.0.0.1:{}", self.instance, self.local_port);
+        info!(
+            "Starting SSM: {} → 127.0.0.1:{}",
+            self.instance, self.local_port
+        );
 
         let creds = mfa.get_credentials(spinner).await?;
 
         let mut cmd = Command::new("aws");
         cmd.args([
-            "ssm", "start-session",
-            "--target",        &self.instance,
-            "--document-name", "AWS-StartPortForwardingSession",
+            "ssm",
+            "start-session",
+            "--target",
+            &self.instance,
+            "--document-name",
+            "AWS-StartPortForwardingSession",
             "--parameters",
             &format!(
                 "portNumber={},localPortNumber={}",
@@ -139,13 +153,12 @@ impl SsmSession {
 }
 
 impl Drop for SsmSession {
-    fn drop(&mut self) { self.stop(); }
+    fn drop(&mut self) {
+        self.stop();
+    }
 }
 
-pub async fn start_with_retries(
-    ssm: &mut SsmSession,
-    mfa: &mut MfaSessionManager,
-) -> Result<()> {
+pub async fn start_with_retries(ssm: &mut SsmSession, mfa: &mut MfaSessionManager) -> Result<()> {
     for attempt in 1..=MAX_RETRIES {
         let spinner = Spinner::new(format!(
             "SSM attempt {attempt}/{MAX_RETRIES} — forwarding 127.0.0.1:{}…",
@@ -153,7 +166,7 @@ pub async fn start_with_retries(
         ));
 
         ssm.start(mfa, Some(&spinner)).await?;
- 
+
         if ssm.wait_for_port(Some(&spinner)).await {
             spinner.success(format!(
                 "Port forwarding ready → 127.0.0.1:{}",
@@ -176,5 +189,7 @@ pub async fn start_with_retries(
         }
     }
 
-    Err(AppError::Ssm(format!("SSM failed after {MAX_RETRIES} attempts")))
+    Err(AppError::Ssm(format!(
+        "SSM failed after {MAX_RETRIES} attempts"
+    )))
 }
