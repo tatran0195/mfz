@@ -62,6 +62,8 @@ async fn main() {
         let _ = std::process::Command::new("cmd")
             .args(&["/C", "chcp 65001"])
             .output();
+        // Attempt to set a modern font (Consolas) for better symbol rendering
+        setup_console_font();
     }
 
     setup_logging();
@@ -605,4 +607,51 @@ async fn cmd_qr(sub: QrCommand) -> Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(windows)]
+fn setup_console_font() {
+    use windows_sys::Win32::System::Console::{
+        GetCurrentConsoleFontEx, GetStdHandle, SetCurrentConsoleFontEx, CONSOLE_FONT_INFOEX, COORD,
+        STD_OUTPUT_HANDLE,
+    };
+
+    unsafe {
+        let handle = GetStdHandle(STD_OUTPUT_HANDLE);
+        if handle == 0 || handle == -1isize as _ {
+            return;
+        }
+
+        let mut font_info = CONSOLE_FONT_INFOEX {
+            cbSize: std::mem::size_of::<CONSOLE_FONT_INFOEX>() as u32,
+            nFont: 0,
+            dwFontSize: COORD { X: 0, Y: 18 },
+            FontFamily: 54, // FF_MODERN
+            FontWeight: 400,
+            FaceName: [0; 32],
+        };
+
+        // Check current font to avoid redundant sets (optional but good practice)
+        let mut current_font = CONSOLE_FONT_INFOEX {
+            cbSize: std::mem::size_of::<CONSOLE_FONT_INFOEX>() as u32,
+            nFont: 0,
+            dwFontSize: COORD { X: 0, Y: 0 },
+            FontFamily: 0,
+            FontWeight: 0,
+            FaceName: [0; 32],
+        };
+
+        if GetCurrentConsoleFontEx(handle, 0, &mut current_font) != 0 {
+            // If already Consolas, we might skip, but setting it anyway ensures size
+        }
+
+        let font_name = "Consolas";
+        for (i, c) in font_name.encode_utf16().enumerate() {
+            if i < 31 {
+                font_info.FaceName[i] = c;
+            }
+        }
+
+        SetCurrentConsoleFontEx(handle, 0, &font_info);
+    }
 }
