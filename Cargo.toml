@@ -1,0 +1,54 @@
+# Cargo.toml
+[package]
+name = "mfz"
+version = "0.1.0"
+edition = "2021"
+authors = ["Waka <ta@e-technostar.com>"]
+description = "MFZ — AWS MFA + SSM port forwarding + RDP session manager"
+
+[[bin]]
+name = "mfz"
+path = "src/main.rs"
+
+[dependencies]
+# CLI
+clap = { version = "4", features = ["derive", "color"] }
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# AWS SDK
+aws-config = { version = "1", features = ["behavior-version-latest"] }
+aws-sdk-sts  = "1"
+aws-sdk-iam  = "1"
+
+# TOTP / OTP
+totp-rs = { version = "5", features = ["gen_secret", "otpauth"] }
+base32  = "0.5.1"
+
+# QR encode + decode
+qrcode  = "0.14"
+rxing   = { version = "0.8.5", features = ["image"] }
+image   = { version = "0.25", features = ["png"] }
+
+# Terminal QR (inline Unicode blocks)
+qr2term = "0.3"
+
+# Config file parsing
+configparser = "3"
+
+# Spinner / terminal UI
+indicatif = "0.18.4"
+console   = "0.16.3"
+colored   = "3.1.1"
+
+# Logging
+tracing             = "0.1"
+tracing-subscriber  = { version = "0.3", features = ["env-filter", "fmt"] }
+tracing-appender    = "0.2"
+
+# Utilities
+thiserror = "2.0.18"
+chrono    = { version = "0.4", features = ["serde"] }
+regex     = "1"
+rand      = "0.8.5"
