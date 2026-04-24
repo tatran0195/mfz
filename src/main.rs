@@ -54,6 +54,16 @@ fn setup_logging() {
 
 #[tokio::main]
 async fn main() {
+    #[cfg(windows)]
+    {
+        // Enable ANSI support
+        colored::control::set_virtual_terminal(true).ok();
+        // Force UTF-8 code page for better symbol support in CMD
+        let _ = std::process::Command::new("cmd")
+            .args(&["/C", "chcp 65001"])
+            .output();
+    }
+
     setup_logging();
     print_banner();
 

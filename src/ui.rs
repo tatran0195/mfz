@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use colored::Colorize;
-use console::Term;
+use console::{Emoji, Term};
 use indicatif::{ProgressBar, ProgressStyle};
 
 // ─── Spinner ──────────────────────────────────────────────────────────────────
@@ -28,18 +28,30 @@ impl Spinner {
     }
 
     pub fn success(self, msg: impl Into<String>) {
-        self.pb
-            .finish_with_message(format!("{} {}", "✔".green().bold(), msg.into().green()));
+        let symbol = Emoji("✔", "OK");
+        self.pb.finish_with_message(format!(
+            "{} {}",
+            symbol.to_string().green().bold(),
+            msg.into().green()
+        ));
     }
 
     pub fn failure(self, msg: impl Into<String>) {
-        self.pb
-            .finish_with_message(format!("{} {}", "✘".red().bold(), msg.into().red()));
+        let symbol = Emoji("✘", "X");
+        self.pb.finish_with_message(format!(
+            "{} {}",
+            symbol.to_string().red().bold(),
+            msg.into().red()
+        ));
     }
 
     pub fn warning(self, msg: impl Into<String>) {
-        self.pb
-            .finish_with_message(format!("{} {}", "⚠".yellow().bold(), msg.into().yellow()));
+        let symbol = Emoji("⚠", "!");
+        self.pb.finish_with_message(format!(
+            "{} {}",
+            symbol.to_string().yellow().bold(),
+            msg.into().yellow()
+        ));
     }
 }
 
@@ -73,33 +85,43 @@ pub fn print_banner() {
 }
 
 pub fn print_section(title: &str) {
-    println!("\n  {} {}", "▶".cyan().bold(), title.white().bold());
+    let symbol = Emoji("▶", ">");
+    println!(
+        "\n  {} {}",
+        symbol.to_string().cyan().bold(),
+        title.white().bold()
+    );
     println!("  {}", "─".repeat(52).dimmed());
 }
 
 pub fn print_kv(label: &str, value: &str) {
+    let symbol = Emoji("•", "-");
     println!(
         "    {} {:<24} {}",
-        "•".dimmed(),
+        symbol.to_string().dimmed(),
         label.dimmed(),
         value.white()
     );
 }
 
 pub fn print_success(msg: &str) {
-    println!("  {} {}", "✔".green().bold(), msg.green());
+    let symbol = Emoji("✔", "OK");
+    println!("  {} {}", symbol.to_string().green().bold(), msg.green());
 }
 
 pub fn print_error(msg: &str) {
-    println!("  {} {}", "✘".red().bold(), msg.red());
+    let symbol = Emoji("✘", "X");
+    println!("  {} {}", symbol.to_string().red().bold(), msg.red());
 }
 
 pub fn print_warning(msg: &str) {
-    println!("  {} {}", "⚠".yellow().bold(), msg.yellow());
+    let symbol = Emoji("⚠", "!");
+    println!("  {} {}", symbol.to_string().yellow().bold(), msg.yellow());
 }
 
 pub fn print_info(msg: &str) {
-    println!("  {} {}", "ℹ".cyan(), msg.white());
+    let symbol = Emoji("ℹ", "i");
+    println!("  {} {}", symbol.to_string().cyan(), msg.white());
 }
 
 pub fn print_separator() {
