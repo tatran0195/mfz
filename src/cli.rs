@@ -66,7 +66,7 @@ pub enum ConfigCommand {
         #[arg(long)]
         serial: String,
         #[arg(long)]
-        secret: String,
+        secret: Option<String>,
         #[arg(long)]
         instance: Option<String>,
         #[arg(long)]
@@ -112,6 +112,12 @@ pub enum ConfigCommand {
     },
     /// Remove an environment
     Remove {
+        name: String,
+        #[arg(short, long, default_value = "mfz.ini")]
+        config: String,
+    },
+    /// Move plain-text secrets and passwords from mfz.ini to the secure system keyring
+    Secure {
         name: String,
         #[arg(short, long, default_value = "mfz.ini")]
         config: String,

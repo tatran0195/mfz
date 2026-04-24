@@ -1,6 +1,7 @@
 mod aws;
 mod cli;
 mod config;
+mod credentials;
 mod error;
 mod hosts;
 mod mfa;
@@ -94,6 +95,33 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                         println!("      {:<12} {}", "Inst Tag:".dimmed(), tag);
                     }
                     println!("      {:<12} {}", "Profile:".dimmed(), env.profile);
+
+                    let has_secret = env.secret.is_some()
+                        || crate::credentials::CredentialStore::get_totp_secret(&name)
+                            .map(|s| s.is_some())
+                            .unwrap_or(false);
+                    let secret_loc = if env.secret.is_some() {
+                        "mfz.ini (Plaintext)".yellow()
+                    } else if has_secret {
+                        "System Keyring (Secure)".green()
+                    } else {
+                        "Missing".red()
+                    };
+                    println!("      {:<12} {}", "MFA Secret:".dimmed(), secret_loc);
+
+                    let has_pass = env.rdp_password.is_some()
+                        || crate::credentials::CredentialStore::get_rdp_password(&name)
+                            .map(|s| s.is_some())
+                            .unwrap_or(false);
+                    if has_pass {
+                        let pass_loc = if env.rdp_password.is_some() {
+                            "mfz.ini (Plaintext)".yellow()
+                        } else {
+                            "System Keyring (Secure)".green()
+                        };
+                        println!("      {:<12} {}", "RDP Pass:".dimmed(), pass_loc);
+                    }
+
                     println!(
                         "      {:<12} {}:{}",
                         "Remote:".dimmed(),
@@ -177,7 +205,7 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                 env.serial = s;
             }
             if let Some(s) = secret {
-                env.secret = s;
+                env.secret = Some(s);
             }
             if let Some(i) = instance {
                 env.instance = Some(i);
@@ -211,7 +239,36 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
 
             let spinner = Spinner::new(format!("Deleting `{name}` from `{config}`…"));
             loader.delete(&name)?;
+            let _ = crate::credentials::CredentialStore::delete_secrets(&name);
             spinner.success(format!("Environment `{name}` removed."));
+        }
+        cli::ConfigCommand::Secure { name, config } => {
+            print_section(&format!("Securing Environment: {name}"));
+            let loader = ConfigLoader::new(&config);
+            let mut env = loader.load(&name)?;
+            let mut changed = false;
+
+            if let Some(secret) = env.secret.take() {
+                let spinner = Spinner::new(format!("Moving TOTP secret for `{name}` to keyring…"));
+                crate::credentials::CredentialStore::set_totp_secret(&name, &secret)?;
+                spinner.success("TOTP secret secured.");
+                changed = true;
+            }
+
+            if let Some(pass) = env.rdp_password.take() {
+                let spinner = Spinner::new(format!("Moving RDP password for `{name}` to keyring…"));
+                crate::credentials::CredentialStore::set_rdp_password(&name, &pass)?;
+                spinner.success("RDP password secured.");
+                changed = true;
+            }
+
+            if changed {
+                let spinner = Spinner::new(format!("Updating `{config}`…"));
+                loader.save(&name, &env)?;
+                spinner.success("Config file updated (secrets removed).");
+            } else {
+                print_warning("No plain-text secrets found to secure.");
+            }
         }
     }
     Ok(())
@@ -245,9 +302,23 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
         },
     );
 
+    // Resolve Secret & Password from Keyring if missing in config
+    let totp_secret = if let Some(s) = env.secret {
+        s
+    } else {
+        crate::credentials::CredentialStore::get_totp_secret(&args.environment)?.ok_or_else(
+            || crate::error::AppError::Config("No MFA secret found in config or keyring".into()),
+        )?
+    };
+
+    let rdp_password = if env.rdp_password.is_some() {
+        env.rdp_password
+    } else {
+        crate::credentials::CredentialStore::get_rdp_password(&args.environment)?
+    };
+
     print_section("MFA Authentication");
-    let mut mfa =
-        MfaSessionManager::new(env.profile.clone(), env.serial.clone(), env.secret.clone());
+    let mut mfa = MfaSessionManager::new(env.profile.clone(), env.serial.clone(), totp_secret);
 
     // Resolve instance ID if needed
     let instance_id = if let Some(id) = env.instance {
@@ -343,7 +414,7 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
         env.local_port,
         args.fullscreen,
         env.rdp_user.as_deref(),
-        env.rdp_password.as_deref(),
+        rdp_password.as_deref(),
     )?;
     spinner.success("RDP session ended");
 

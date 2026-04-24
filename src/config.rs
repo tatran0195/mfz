@@ -4,20 +4,13 @@ use configparser::ini::Ini;
 
 use crate::error::{AppError, Result};
 
-const REQUIRED_KEYS: &[&str] = &[
-    "profile",
-    "serial",
-    "secret",
-    "remote_port",
-    "local_port",
-    "rdp_host",
-];
+const REQUIRED_KEYS: &[&str] = &["profile", "serial", "remote_port", "local_port", "rdp_host"];
 
 #[derive(Debug, Clone)]
 pub struct EnvironmentConfig {
     pub profile: String,
     pub serial: String,
-    pub secret: String,
+    pub secret: Option<String>,
     pub instance: Option<String>,
     pub instance_tag: Option<String>,
     pub remote_port: u16,
@@ -65,6 +58,10 @@ impl EnvironmentConfig {
             )));
         }
 
+        // We check for secret later as it might be in keyring,
+        // but we can't check keyring here easily without breaking purity.
+        // Actually, we'll let cmd_launch handle the "missing secret" error.
+
         let parse_port = |key: &str| -> Result<u16> {
             get(key)?
                 .parse::<u16>()
@@ -74,7 +71,7 @@ impl EnvironmentConfig {
         Ok(Self {
             profile: get("profile")?,
             serial: get("serial")?,
-            secret: get("secret")?,
+            secret: get_opt("secret"),
             instance: get_opt("instance"),
             instance_tag: get_opt("instance_tag"),
             remote_port: parse_port("remote_port")?,
@@ -89,7 +86,9 @@ impl EnvironmentConfig {
         let mut m = std::collections::HashMap::new();
         m.insert("profile".into(), self.profile.clone());
         m.insert("serial".into(), self.serial.clone());
-        m.insert("secret".into(), self.secret.clone());
+        if let Some(sec) = &self.secret {
+            m.insert("secret".into(), sec.clone());
+        }
         if let Some(inst) = &self.instance {
             m.insert("instance".into(), inst.clone());
         }

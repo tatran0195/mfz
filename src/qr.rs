@@ -283,7 +283,7 @@ pub async fn register(
             crate::config::EnvironmentConfig {
                 profile: profile.to_owned(),
                 serial: serial_number.clone(),
-                secret: qr.secret_b32.clone(),
+                secret: Some(qr.secret_b32.clone()),
                 instance: Some("REPLACE_ME".into()),
                 instance_tag: None,
                 remote_port: 3389,
@@ -295,7 +295,7 @@ pub async fn register(
         };
 
         new_config.serial = serial_number;
-        new_config.secret = qr.secret_b32;
+        new_config.secret = Some(qr.secret_b32);
 
         if let Err(e) = loader.save(target, &new_config) {
             spinner.failure(format!("Failed to save config: {e}"));
