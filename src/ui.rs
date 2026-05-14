@@ -16,7 +16,7 @@ impl Spinner {
         pb.set_style(
             ProgressStyle::with_template("{spinner:.cyan.bold} {msg}")
                 .unwrap()
-                .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]),
+                .tick_strings(&["·", "o", "O", "o", "·", " "]),
         );
         pb.set_message(msg.into());
         pb.enable_steady_tick(Duration::from_millis(80));
@@ -28,7 +28,7 @@ impl Spinner {
     }
 
     pub fn success(self, msg: impl Into<String>) {
-        let symbol = Emoji("✔", "OK");
+        let symbol = Emoji("√", "OK");
         self.pb.finish_with_message(format!(
             "{} {}",
             symbol.to_string().green().bold(),
@@ -37,7 +37,7 @@ impl Spinner {
     }
 
     pub fn failure(self, msg: impl Into<String>) {
-        let symbol = Emoji("✘", "X");
+        let symbol = Emoji("×", "X");
         self.pb.finish_with_message(format!(
             "{} {}",
             symbol.to_string().red().bold(),
@@ -46,12 +46,17 @@ impl Spinner {
     }
 
     pub fn warning(self, msg: impl Into<String>) {
-        let symbol = Emoji("⚠", "!");
+        let symbol = Emoji("!", "!");
         self.pb.finish_with_message(format!(
             "{} {}",
             symbol.to_string().yellow().bold(),
             msg.into().yellow()
         ));
+    }
+
+    pub fn failure_no_pb(msg: impl Into<String>) {
+        let symbol = Emoji("×", "X");
+        println!("{} {}", symbol.to_string().red().bold(), msg.into().red());
     }
 }
 
@@ -85,7 +90,7 @@ pub fn print_banner() {
 }
 
 pub fn print_section(title: &str) {
-    let symbol = Emoji("▶", ">");
+    let symbol = Emoji("»", ">");
     println!(
         "\n  {} {}",
         symbol.to_string().cyan().bold(),
@@ -105,22 +110,22 @@ pub fn print_kv(label: &str, value: &str) {
 }
 
 pub fn print_success(msg: &str) {
-    let symbol = Emoji("✔", "OK");
+    let symbol = Emoji("√", "OK");
     println!("  {} {}", symbol.to_string().green().bold(), msg.green());
 }
 
 pub fn print_error(msg: &str) {
-    let symbol = Emoji("✘", "X");
+    let symbol = Emoji("×", "X");
     println!("  {} {}", symbol.to_string().red().bold(), msg.red());
 }
 
 pub fn print_warning(msg: &str) {
-    let symbol = Emoji("⚠", "!");
+    let symbol = Emoji("!", "!");
     println!("  {} {}", symbol.to_string().yellow().bold(), msg.yellow());
 }
 
 pub fn print_info(msg: &str) {
-    let symbol = Emoji("ℹ", "i");
+    let symbol = Emoji("i", "i");
     println!("  {} {}", symbol.to_string().cyan(), msg.white());
 }
 

@@ -24,6 +24,10 @@ EXAMPLES:
     propagate_version = true
 )]
 pub struct Cli {
+    /// Enable file logging (mfz.log)
+    #[arg(short, long)]
+    pub log: bool,
+
     #[command(subcommand)]
     pub command: TopCommand,
 }
@@ -60,6 +64,7 @@ pub enum ConfigCommand {
     },
     /// Add a new environment
     Add {
+        /// Environment identifier (e.g. stg, prd)
         name: String,
         #[arg(long)]
         profile: String,
@@ -86,6 +91,7 @@ pub enum ConfigCommand {
     },
     /// Edit an existing environment (only specified fields will be updated)
     Edit {
+        /// Environment identifier (e.g. stg, prd)
         name: String,
         #[arg(long)]
         profile: Option<String>,

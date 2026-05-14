@@ -22,6 +22,8 @@ pub fn launch(
                 &format!("/user:{u}"),
                 &format!("/pass:{p}"),
             ])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
             .status()
             .map_err(|e| AppError::Rdp(format!("Failed to cache credentials: {e}")))?;
     }
@@ -44,6 +46,8 @@ pub fn launch(
         info!("Cleaning up cached credentials for TERMSRV/{}", host);
         let _ = Command::new("cmdkey")
             .arg(format!("/delete:TERMSRV/{host}"))
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
             .status();
     }
 

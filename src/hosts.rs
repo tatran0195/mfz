@@ -1,6 +1,7 @@
 use std::{
     fs::{self, OpenOptions},
     io::Write,
+    path::PathBuf,
 };
 
 use crate::{
@@ -14,29 +15,35 @@ const HOSTS_PATH: &str = r"C:\Windows\System32\drivers\etc\hosts";
 const HOSTS_PATH: &str = "/etc/hosts";
 
 pub struct HostsManager {
-    path: &'static str,
+    path: PathBuf,
 }
 
 impl HostsManager {
     pub fn new() -> Self {
-        Self { path: HOSTS_PATH }
+        Self {
+            path: PathBuf::from(HOSTS_PATH),
+        }
+    }
+
+    pub fn with_path(path: PathBuf) -> Self {
+        Self { path }
     }
 
     pub fn ensure_writable(&self) -> Result<()> {
         OpenOptions::new()
             .append(true)
-            .open(self.path)
+            .open(&self.path)
             .map(|_| ())
             .map_err(|_| {
                 AppError::Hosts(format!(
                     "Cannot write to {} — run as administrator / sudo",
-                    self.path
+                    self.path.display()
                 ))
             })
     }
 
     pub fn add_host(&self, ip: &str, hostname: &str) -> Result<()> {
-        let content = fs::read_to_string(self.path)
+        let content = fs::read_to_string(&self.path)
             .map_err(|e| AppError::Hosts(format!("Cannot read hosts file: {e}")))?;
 
         let exists = content
@@ -55,7 +62,7 @@ impl HostsManager {
 
         let mut file = OpenOptions::new()
             .append(true)
-            .open(self.path)
+            .open(&self.path)
             .map_err(|e| AppError::Hosts(format!("Cannot open hosts file: {e}")))?;
 
         writeln!(file, "\n{ip}\t{hostname}")

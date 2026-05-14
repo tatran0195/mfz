@@ -1,15 +1,3 @@
-mod aws;
-mod cli;
-mod config;
-mod credentials;
-mod error;
-mod hosts;
-mod mfa;
-mod qr;
-mod rdp;
-mod ssm;
-mod ui;
-
 use clap::Parser;
 use cli::{Cli, HostsCommand, QrCommand, TopCommand};
 use colored::Colorize;
@@ -18,6 +6,7 @@ use error::Result;
 use hosts::HostsManager;
 use inquire::Select;
 use mfa::MfaSessionManager;
+use mfz::{aws, cli, config, credentials, error, hosts, mfa, qr, rdp, ssm, ui};
 use ssm::{start_with_retries, SsmSession};
 use tracing::info;
 use tracing_appender::rolling;
@@ -26,28 +15,36 @@ use ui::*;
 
 // ─── Logging ──────────────────────────────────────────────────────────────────
 
-fn setup_logging() {
-    let file_appender = rolling::daily(".", "mfz.log");
-    let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+fn setup_logging(enable_file: bool) {
+    let mut layers = Vec::new();
+
+    // Console layer (always on)
+    let console_layer = fmt::layer()
+        .with_writer(std::io::stderr)
+        .with_ansi(true)
+        .with_target(false)
+        .with_filter(EnvFilter::new("rdp_launcher=debug,warn"))
+        .boxed();
+    layers.push(console_layer);
+
+    // File layer (optional)
+    if enable_file {
+        let file_appender = rolling::daily(".", "mfz.log");
+        let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+        std::mem::forget(_guard); // keep flushing until process exits
+
+        let file_layer = fmt::layer()
+            .with_writer(non_blocking)
+            .with_ansi(false)
+            .with_target(false)
+            .boxed();
+        layers.push(file_layer);
+    }
 
     tracing_subscriber::registry()
         .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()))
-        .with(
-            fmt::layer()
-                .with_writer(non_blocking)
-                .with_ansi(false)
-                .with_target(false),
-        )
-        .with(
-            fmt::layer()
-                .with_writer(std::io::stderr)
-                .with_ansi(true)
-                .with_target(false)
-                .with_filter(EnvFilter::new("rdp_launcher=debug,warn")),
-        )
+        .with(layers)
         .init();
-
-    std::mem::forget(_guard); // keep flushing until process exits
 }
 
 // ─── Entry ────────────────────────────────────────────────────────────────────
@@ -66,10 +63,9 @@ async fn main() {
         setup_console_font();
     }
 
-    setup_logging();
-    print_banner();
-
     let cli = Cli::parse();
+    setup_logging(cli.log);
+    print_banner();
 
     if let Err(e) = dispatch(cli).await {
         print_error(&e.to_string());
@@ -370,7 +366,12 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
     };
 
     print_section("MFA/SSO Authentication");
-    let mut mfa = MfaSessionManager::new(env.profile.clone(), env.serial.clone(), totp_secret);
+    let mut mfa = MfaSessionManager::new(
+        env.profile.clone(),
+        args.region.clone(),
+        env.serial.clone(),
+        totp_secret,
+    );
 
     // Resolve instance ID if needed
     let instance_id = if let Some(id) = env.instance {

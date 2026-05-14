@@ -2,7 +2,11 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use aws_config::BehaviorVersion;
 use aws_credential_types::provider::ProvideCredentials;
-use aws_sdk_sts::Client as StsClient;
+use aws_sdk_sts::{
+    error::{ProvideErrorMetadata, SdkError},
+    Client as StsClient,
+};
+use base32::{decode as b32decode, Alphabet};
 use chrono::{DateTime, Utc};
 use tokio::time::sleep;
 use totp_rs::{Algorithm, TOTP};
@@ -45,15 +49,22 @@ impl MfaCredentials {
 
 pub struct MfaSessionManager {
     base_profile: String,
+    region: Option<String>,
     serial: Option<String>,
     secret: Option<String>,
     cached: Option<MfaCredentials>,
 }
 
 impl MfaSessionManager {
-    pub fn new(base_profile: String, serial: Option<String>, secret: Option<String>) -> Self {
+    pub fn new(
+        base_profile: String,
+        region: Option<String>,
+        serial: Option<String>,
+        secret: Option<String>,
+    ) -> Self {
         Self {
             base_profile,
+            region,
             serial,
             secret,
             cached: None,
@@ -95,10 +106,12 @@ impl MfaSessionManager {
         info!("Requesting new AWS session token via MFA...");
         let otp = self.safe_totp(secret, spinner).await?;
 
-        let config = aws_config::defaults(BehaviorVersion::latest())
-            .profile_name(&self.base_profile)
-            .load()
-            .await;
+        let mut config_loader =
+            aws_config::defaults(BehaviorVersion::latest()).profile_name(&self.base_profile);
+        if let Some(ref r) = self.region {
+            config_loader = config_loader.region(aws_config::Region::new(r.clone()));
+        }
+        let config = config_loader.load().await;
 
         let response = StsClient::new(&config)
             .get_session_token()
@@ -106,7 +119,10 @@ impl MfaSessionManager {
             .token_code(&otp)
             .send()
             .await
-            .map_err(|e| AppError::Mfa(format!("STS GetSessionToken failed: {e}")))?;
+            .map_err(|e| {
+                warn!("STS GetSessionToken error detail: {:?}", e);
+                AppError::Mfa(format!("STS GetSessionToken failed: {}", extract_msg(&e)))
+            })?;
 
         let creds = response
             .credentials()
@@ -130,10 +146,12 @@ impl MfaSessionManager {
             self.base_profile
         );
 
-        let config = aws_config::defaults(BehaviorVersion::latest())
-            .profile_name(&self.base_profile)
-            .load()
-            .await;
+        let mut config_loader =
+            aws_config::defaults(BehaviorVersion::latest()).profile_name(&self.base_profile);
+        if let Some(ref r) = self.region {
+            config_loader = config_loader.region(aws_config::Region::new(r.clone()));
+        }
+        let config = config_loader.load().await;
 
         let provider = config.credentials_provider().ok_or_else(|| {
             AppError::Mfa(format!(
@@ -144,8 +162,8 @@ impl MfaSessionManager {
 
         let creds = provider.provide_credentials().await.map_err(|e| {
             AppError::Mfa(format!(
-                "Failed to retrieve credentials for profile `{}`: {e}",
-                self.base_profile
+                "Failed to retrieve credentials for profile `{}`: {}",
+                self.base_profile, e
             ))
         })?;
 
@@ -169,7 +187,11 @@ impl MfaSessionManager {
 
     /// Generate a TOTP code, waiting safely away from the window boundary.
     pub async fn safe_totp(&self, secret: &str, spinner: Option<&Spinner>) -> Result<String> {
-        let totp = build_totp(secret.as_bytes())?;
+        let secret_bytes = b32decode(Alphabet::Rfc4648 { padding: false }, secret)
+            .or_else(|| b32decode(Alphabet::Rfc4648 { padding: true }, secret))
+            .ok_or_else(|| AppError::Mfa("MFA secret is not valid Base-32".into()))?;
+
+        let totp = build_totp(&secret_bytes)?;
 
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -209,4 +231,16 @@ pub fn build_totp(secret_bytes: &[u8]) -> Result<TOTP> {
         "".to_string(),
     )
     .map_err(|e| AppError::Mfa(format!("Invalid TOTP secret: {e}")))
+}
+
+fn extract_msg<E>(err: &SdkError<E>) -> String
+where
+    E: ProvideErrorMetadata,
+{
+    if let SdkError::ServiceError(context) = err {
+        if let Some(msg) = context.err().message() {
+            return msg.to_string();
+        }
+    }
+    err.to_string()
 }
