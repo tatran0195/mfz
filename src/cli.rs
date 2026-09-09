@@ -166,8 +166,12 @@ pub struct ListArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum HostsCommand {
-    /// Add the default RDP entries (stg-rdp, prd-rdp → 127.0.0.1)
-    Add,
+    /// Add RDP host entries for environments defined in config (defaults to mfz.ini)
+    Add {
+        /// Path to config file
+        #[arg(short, long, default_value = "mfz.ini")]
+        config: String,
+    },
 
     /// Add a single custom hostname entry
     Custom {
