@@ -71,10 +71,12 @@ mfz config secure my-server
 
 ### 📝 Hostname Shortcuts
 
-Tired of typing `127.0.0.1:13389`? Setup friendly names like `stg-rdp` or `prd-rdp`:
+Tired of typing `127.0.0.1:13389`? MFZ uses friendly names like `stg-rdp` or `prd-rdp`:
+
+- When you run `mfz config add`, MFZ **automatically adds** the hostname shortcut to your system hosts file (prompting for elevation via UAC if needed).
+- To sync all hostname shortcuts for existing environments in your configuration:
 
 ```bash
-# Run as Administrator once
 mfz hosts add
 ```
 
