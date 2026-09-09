@@ -93,3 +93,48 @@ fn test_hosts_ensure_hosts_batch() {
     fs::remove_file(&file_path).unwrap();
 }
 
+#[test]
+fn test_dynamic_profile_hosts_sync() {
+    let temp_dir = std::env::temp_dir();
+    let hosts_path = temp_dir.join(format!(
+        "hosts_dyn_{}.txt",
+        std::time::UNIX_EPOCH.elapsed().unwrap().as_nanos()
+    ));
+    fs::write(&hosts_path, "# hosts\n").unwrap();
+
+    let ini_path = temp_dir.join(format!(
+        "mfz_test_{}.ini",
+        std::time::UNIX_EPOCH.elapsed().unwrap().as_nanos()
+    ));
+    fs::write(
+        &ini_path,
+        "[stg]\ninstance=i-12345\nrdp_host=stg-rdp\nremote_port=3389\nlocal_port=13389\nprofile=dev\n\n[prd]\ninstance=i-67890\nrdp_host=prd-rdp\nremote_port=3389\nlocal_port=23389\nprofile=prod\n",
+    )
+    .unwrap();
+
+    let loader = mfz::config::ConfigLoader::new(ini_path.to_str().unwrap());
+    let envs = loader.get_all().unwrap();
+
+    let mut unique_hosts: Vec<String> = Vec::new();
+    for (_, env) in envs {
+        if !env.rdp_host.trim().is_empty() && !unique_hosts.contains(&env.rdp_host) {
+            unique_hosts.push(env.rdp_host);
+        }
+    }
+
+    let entries: Vec<(&str, &str)> = unique_hosts
+        .iter()
+        .map(|h| ("127.0.0.1", h.as_str()))
+        .collect();
+
+    let mgr = HostsManager::with_path(hosts_path.clone());
+    mgr.ensure_hosts(&entries, None).unwrap();
+
+    assert!(mgr.has_host("stg-rdp").unwrap());
+    assert!(mgr.has_host("prd-rdp").unwrap());
+
+    fs::remove_file(&hosts_path).unwrap();
+    fs::remove_file(&ini_path).unwrap();
+}
+
+

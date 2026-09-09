@@ -149,6 +149,10 @@ impl HostsManager {
     }
 
     pub fn ensure_hosts(&self, entries: &[(&str, &str)], config_path: Option<&str>) -> Result<()> {
+        if entries.is_empty() {
+            return Ok(());
+        }
+
         let missing: Vec<_> = entries
             .iter()
             .copied()
