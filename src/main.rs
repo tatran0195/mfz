@@ -198,6 +198,10 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             let spinner = Spinner::new(format!("Saving `{name}` to `{config}`…"));
             loader.save(&name, &new_env)?;
             spinner.success(format!("Environment `{name}` added successfully."));
+
+            // Automatically ensure host alias is in hosts file
+            let hosts_mgr = HostsManager::new();
+            hosts_mgr.ensure_host("127.0.0.1", &new_env.rdp_host)?;
         }
         cli::ConfigCommand::Edit {
             name,
