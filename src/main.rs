@@ -502,16 +502,44 @@ fn cmd_hosts(sub: HostsCommand) -> Result<()> {
     let mgr = HostsManager::new();
 
     match sub {
-        HostsCommand::Add => {
-            let spinner = Spinner::new("Adding default RDP host entries…");
-            mgr.add_hosts(&[("127.0.0.1", "stg-rdp"), ("127.0.0.1", "prd-rdp")])?;
+        HostsCommand::Add { config } => {
+            let loader = ConfigLoader::new(&config);
+            let envs = loader.get_all()?;
+
+            if envs.is_empty() {
+                print_warning(&format!("No environments found in `{config}`."));
+                return Ok(());
+            }
+
+            // Extract unique rdp_hosts mapped to 127.0.0.1
+            let mut unique_hosts: Vec<String> = Vec::new();
+            for (_, env) in envs {
+                if !env.rdp_host.trim().is_empty() && !unique_hosts.contains(&env.rdp_host) {
+                    unique_hosts.push(env.rdp_host);
+                }
+            }
+
+            if unique_hosts.is_empty() {
+                print_warning(&format!("No RDP hosts configured in `{config}`."));
+                return Ok(());
+            }
+
+            let entries: Vec<(&str, &str)> = unique_hosts
+                .iter()
+                .map(|h| ("127.0.0.1", h.as_str()))
+                .collect();
+
+            let spinner = Spinner::new(format!(
+                "Updating hosts for {} environment(s)…",
+                entries.len()
+            ));
+            mgr.ensure_hosts(&entries, Some(&config))?;
             spinner.success("Hosts file updated");
         }
         HostsCommand::Custom { ip, hostname } => {
             let spinner = Spinner::new(format!("Adding `{hostname}` → `{ip}`…"));
-            mgr.ensure_writable()?;
-            mgr.add_host(&ip, &hostname)?;
-            spinner.success("Custom host entry added");
+            mgr.ensure_host(&ip, &hostname)?;
+            spinner.success("Custom host entry processed");
         }
     }
     Ok(())
