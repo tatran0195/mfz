@@ -13,19 +13,26 @@ pub fn launch(
 ) -> Result<()> {
     let target = format!("{host}:{port}");
 
+    let generic_targets = [
+        format!("TERMSRV/{host}:{port}"),
+        format!("TERMSRV/{host}"),
+        format!("TERMSRV/127.0.0.1:{port}"),
+    ];
+
     // If both user and pass are provided, cache them using cmdkey
     if let (Some(u), Some(p)) = (username, password) {
-        info!("Caching credentials for TERMSRV/{}", host);
-        Command::new("cmdkey")
-            .args([
-                &format!("/generic:TERMSRV/{host}"),
-                &format!("/user:{u}"),
-                &format!("/pass:{p}"),
-            ])
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .status()
-            .map_err(|e| AppError::Rdp(format!("Failed to cache credentials: {e}")))?;
+        for target_name in &generic_targets {
+            info!("Caching credentials for {target_name}");
+            let _ = Command::new("cmdkey")
+                .args([
+                    &format!("/generic:{target_name}"),
+                    &format!("/user:{u}"),
+                    &format!("/pass:{p}"),
+                ])
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .status();
+        }
     }
 
     let mut cmd = Command::new("mstsc");
@@ -34,21 +41,19 @@ pub fn launch(
         cmd.arg("/f");
     }
 
-    // Not strictly necessary if cmdkey worked, but helps mstsc fill the field
-    // Note: mstsc doesn't have a /p (password) flag for security reasons.
-    // It relies on Credential Manager (populated by cmdkey).
-
     info!("Launching RDP → {}", target);
     let status = cmd.status();
 
     // Cleanup credentials after RDP session ends
     if username.is_some() && password.is_some() {
-        info!("Cleaning up cached credentials for TERMSRV/{}", host);
-        let _ = Command::new("cmdkey")
-            .arg(format!("/delete:TERMSRV/{host}"))
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .status();
+        for target_name in &generic_targets {
+            info!("Cleaning up cached credentials for {target_name}");
+            let _ = Command::new("cmdkey")
+                .arg(format!("/delete:{target_name}"))
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .status();
+        }
     }
 
     status.map_err(|e| AppError::Rdp(format!("Failed to launch mstsc: {e}")))?;

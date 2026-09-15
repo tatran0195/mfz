@@ -52,6 +52,14 @@ impl SsmSession {
             self.stop();
         }
 
+        // Check if the local port is already occupied by an orphaned or competing process
+        if Self::is_port_in_use(self.local_port) {
+            return Err(AppError::Ssm(format!(
+                "Local port {} is already in use by another process. Please close any lingering session or choose another port in mfz.ini.",
+                self.local_port
+            )));
+        }
+
         info!(
             "Starting SSM: {} → 127.0.0.1:{}",
             self.instance, self.local_port
@@ -96,7 +104,19 @@ impl SsmSession {
     pub fn stop(&mut self) {
         if let Some(mut child) = self.process.take() {
             info!("Terminating SSM session (PID {})", child.id());
-            let _ = child.kill();
+            #[cfg(target_os = "windows")]
+            {
+                let _ = Command::new("taskkill")
+                    .args(["/F", "/T", "/PID", &child.id().to_string()])
+                    .stdin(Stdio::null())
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::null())
+                    .status();
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                let _ = child.kill();
+            }
             let _ = child.wait();
         }
     }
@@ -143,12 +163,16 @@ impl SsmSession {
         false
     }
 
-    fn port_open(&self) -> bool {
+    pub fn is_port_in_use(port: u16) -> bool {
         TcpStream::connect_timeout(
-            &format!("127.0.0.1:{}", self.local_port).parse().unwrap(),
-            Duration::from_secs(1),
+            &format!("127.0.0.1:{port}").parse().unwrap(),
+            Duration::from_millis(500),
         )
         .is_ok()
+    }
+
+    fn port_open(&self) -> bool {
+        Self::is_port_in_use(self.local_port)
     }
 }
 

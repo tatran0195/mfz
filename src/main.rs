@@ -438,15 +438,15 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
         args.region.clone(),
     );
 
-    tokio::spawn(async {
-        if tokio::signal::ctrl_c().await.is_ok() {
-            println!(
-                "\n\n  {} Interrupt received — shutting down",
-                "⚡".yellow().bold()
-            );
-            std::process::exit(0);
-        }
-    });
+    // Verify hosts file contains rdp_host before connecting
+    let hosts_mgr = HostsManager::new();
+    if !hosts_mgr.has_host(&env.rdp_host).unwrap_or(false) {
+        print_warning(&format!(
+            "Host `{}` not found in hosts file — attempting to add…",
+            env.rdp_host
+        ));
+        let _ = hosts_mgr.ensure_host("127.0.0.1", &env.rdp_host);
+    }
 
     start_with_retries(&mut ssm, &mut mfa).await?;
 
@@ -457,12 +457,22 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
             env.local_port
         ));
         println!();
-        ssm.wait()?;
+        let _ = tokio::signal::ctrl_c().await;
+        println!(
+            "\n\n  {} Interrupt received — shutting down tunnel…",
+            "⚡".yellow().bold()
+        );
+        ssm.stop();
         return Ok(());
     }
 
     print_section("Remote Desktop");
     let spinner = Spinner::new(format!(
+        "Stabilizing SSM tunnel for {}:{}…",
+        env.rdp_host, env.local_port
+    ));
+    tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
+    spinner.set_message(format!(
         "Launching mstsc → {}:{}…",
         env.rdp_host, env.local_port
     ));
@@ -474,6 +484,7 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
         rdp_password.as_deref(),
     )?;
     spinner.success("RDP session ended");
+    ssm.stop();
 
     Ok(())
 }
