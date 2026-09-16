@@ -193,6 +193,9 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                 rdp_host,
                 rdp_user: user,
                 rdp_password: pass,
+                shared_drives: None,
+                shared_folder: None,
+                optimize_connection: None,
             };
 
             let spinner = Spinner::new(format!("Saving `{name}` to `{config}`…"));

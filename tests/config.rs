@@ -36,6 +36,9 @@ fn test_config_add_new() {
         rdp_host: "test_host".to_string(),
         rdp_user: None,
         rdp_password: None,
+        shared_drives: None,
+        shared_folder: None,
+        optimize_connection: None,
     };
 
     assert!(loader.save("test_env", &env_config).is_ok());
@@ -52,6 +55,9 @@ fn test_config_add_new() {
         rdp_host: "test_host2".to_string(),
         rdp_user: Some("admin".to_string()),
         rdp_password: Some("passwd".to_string()),
+        shared_drives: None,
+        shared_folder: None,
+        optimize_connection: None,
     };
 
     assert!(loader.save("test_env2", &env_config2).is_ok());
@@ -153,6 +159,30 @@ rdp_host=h2
         all.get("e2").unwrap().instance_tag.as_deref(),
         Some("Name=abc")
     );
+
+    fs::remove_file(&path).unwrap();
+}
+
+#[test]
+fn test_config_shared_drives_and_optimization() {
+    let content = r#"
+[test_env]
+profile = dev
+instance = i-12345
+rdp_host = test-host
+remote_port = 3389
+local_port = 13389
+shared_drives = C:,D:
+shared_folder = C:\Shared
+optimize_connection = true
+"#;
+    let path = create_temp_config(content);
+    let loader = ConfigLoader::new(&path);
+    let env = loader.load("test_env").unwrap();
+
+    assert_eq!(env.shared_drives.as_deref(), Some("C:,D:"));
+    assert_eq!(env.shared_folder.as_deref(), Some(r"C:\Shared"));
+    assert_eq!(env.optimize_connection, Some(true));
 
     fs::remove_file(&path).unwrap();
 }

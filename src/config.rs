@@ -27,6 +27,9 @@ pub struct EnvironmentConfig {
     pub rdp_host: String,
     pub rdp_user: Option<String>,
     pub rdp_password: Option<String>,
+    pub shared_drives: Option<String>,
+    pub shared_folder: Option<String>,
+    pub optimize_connection: Option<bool>,
 }
 
 impl EnvironmentConfig {
@@ -84,6 +87,18 @@ impl EnvironmentConfig {
             AuthType::Sso
         };
 
+        let parse_bool = |key: &str| -> Option<bool> {
+            ini.get(name, key).and_then(|v| match v.trim().to_lowercase().as_str() {
+                "true" | "1" | "yes" => Some(true),
+                "false" | "0" | "no" => Some(false),
+                _ => None,
+            })
+        };
+
+        let shared_drives = get_opt("shared_drives");
+        let shared_folder = get_opt("shared_folder");
+        let optimize_connection = parse_bool("optimize_connection");
+
         Ok(Self {
             profile: get("profile")?,
             auth_type,
@@ -96,6 +111,9 @@ impl EnvironmentConfig {
             rdp_host: get("rdp_host")?,
             rdp_user: get_opt("rdp_user"),
             rdp_password: get_opt("rdp_password"),
+            shared_drives,
+            shared_folder,
+            optimize_connection,
         })
     }
 
@@ -123,6 +141,15 @@ impl EnvironmentConfig {
         }
         if let Some(pass) = &self.rdp_password {
             m.insert("rdp_password".into(), pass.clone());
+        }
+        if let Some(drives) = &self.shared_drives {
+            m.insert("shared_drives".into(), drives.clone());
+        }
+        if let Some(folder) = &self.shared_folder {
+            m.insert("shared_folder".into(), folder.clone());
+        }
+        if let Some(opt) = self.optimize_connection {
+            m.insert("optimize_connection".into(), opt.to_string());
         }
         m
     }

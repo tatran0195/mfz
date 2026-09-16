@@ -286,6 +286,9 @@ pub async fn register(
                 rdp_host: "REPLACE_ME".into(),
                 rdp_user: None,
                 rdp_password: None,
+                shared_drives: None,
+                shared_folder: None,
+                optimize_connection: None,
             }
         };
 
