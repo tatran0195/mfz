@@ -86,6 +86,12 @@ pub enum ConfigCommand {
         user: Option<String>,
         #[arg(long)]
         pass: Option<String>,
+        #[arg(long)]
+        shared_drives: Option<String>,
+        #[arg(long)]
+        shared_folder: Option<String>,
+        #[arg(long)]
+        optimize_connection: Option<bool>,
         #[arg(short, long, default_value = "mfz.ini")]
         config: String,
     },
@@ -113,6 +119,12 @@ pub enum ConfigCommand {
         user: Option<String>,
         #[arg(long)]
         pass: Option<String>,
+        #[arg(long)]
+        shared_drives: Option<String>,
+        #[arg(long)]
+        shared_folder: Option<String>,
+        #[arg(long)]
+        optimize_connection: Option<bool>,
         #[arg(short, long, default_value = "mfz.ini")]
         config: String,
     },
@@ -152,6 +164,18 @@ pub struct LaunchArgs {
     /// Path to the environment config file
     #[arg(short, long, default_value = "mfz.ini")]
     pub config: String,
+
+    /// Override shared drives for this session (e.g. *, C:, or "none")
+    #[arg(long = "share-drives")]
+    pub share_drives: Option<String>,
+
+    /// Share a specific local folder into the session (mapped to a virtual drive)
+    #[arg(long = "share-folder")]
+    pub share_folder: Option<String>,
+
+    /// Disable RDP performance optimizations
+    #[arg(long = "no-optimize")]
+    pub no_optimize: bool,
 }
 
 // ─── List ─────────────────────────────────────────────────────────────────────

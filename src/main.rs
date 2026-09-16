@@ -148,6 +148,15 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                     if let Some(user) = env.rdp_user {
                         println!("      {:<12} {}", "RDP User:".dimmed(), user);
                     }
+                    if let Some(drives) = env.shared_drives {
+                        println!("      {:<12} {}", "Drives:".dimmed(), drives);
+                    }
+                    if let Some(folder) = env.shared_folder {
+                        println!("      {:<12} {}", "Folder:".dimmed(), folder);
+                    }
+                    if let Some(opt) = env.optimize_connection {
+                        println!("      {:<12} {}", "Optimize:".dimmed(), opt);
+                    }
                     println!();
                 }
             }
@@ -164,6 +173,9 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             rdp_host,
             user,
             pass,
+            shared_drives,
+            shared_folder,
+            optimize_connection,
             config,
         } => {
             print_section(&format!("Adding Environment: {name}"));
@@ -193,9 +205,9 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                 rdp_host,
                 rdp_user: user,
                 rdp_password: pass,
-                shared_drives: None,
-                shared_folder: None,
-                optimize_connection: None,
+                shared_drives,
+                shared_folder,
+                optimize_connection,
             };
 
             let spinner = Spinner::new(format!("Saving `{name}` to `{config}`…"));
@@ -218,6 +230,9 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             rdp_host,
             user,
             pass,
+            shared_drives,
+            shared_folder,
+            optimize_connection,
             config,
         } => {
             print_section(&format!("Editing Environment: {name}"));
@@ -254,6 +269,15 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             }
             if pass.is_some() {
                 env.rdp_password = pass;
+            }
+            if shared_drives.is_some() {
+                env.shared_drives = shared_drives;
+            }
+            if shared_folder.is_some() {
+                env.shared_folder = shared_folder;
+            }
+            if optimize_connection.is_some() {
+                env.optimize_connection = optimize_connection;
             }
 
             let spinner = Spinner::new(format!("Updating `{name}` in `{config}`…"));
@@ -336,6 +360,33 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
     print_kv("Remote port", &env.remote_port.to_string());
     print_kv("Local port", &env.local_port.to_string());
     print_kv("RDP host", &env.rdp_host);
+
+    let shared_drives = args
+        .share_drives
+        .as_deref()
+        .or(env.shared_drives.as_deref())
+        .or(Some("*"));
+
+    let resolved_folder = args
+        .share_folder
+        .as_ref()
+        .or(env.shared_folder.as_ref());
+
+    let optimize_connection = !args.no_optimize && env.optimize_connection.unwrap_or(true);
+
+    print_kv("Shared drives", shared_drives.unwrap_or("none"));
+    if let Some(folder) = resolved_folder {
+        print_kv("Shared folder", folder);
+    }
+    print_kv(
+        "Optimization",
+        if optimize_connection {
+            "Enabled (compression, bitmap cache, LAN)"
+        } else {
+            "Disabled"
+        },
+    );
+
     print_kv(
         "Mode",
         if args.ssm_only {
@@ -479,16 +530,16 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
         "Launching mstsc → {}:{}…",
         env.rdp_host, env.local_port
     ));
-    let shared_folder_path = env.shared_folder.as_ref().map(std::path::Path::new);
+    let shared_folder_path = resolved_folder.map(std::path::Path::new);
     rdp::launch(rdp::LaunchOptions {
         host: &env.rdp_host,
         port: env.local_port,
         fullscreen: args.fullscreen,
         username: env.rdp_user.as_deref(),
         password: rdp_password.as_deref(),
-        shared_drives: env.shared_drives.as_deref().or(Some("*")),
+        shared_drives,
         shared_folder: shared_folder_path,
-        optimize_connection: env.optimize_connection.unwrap_or(true),
+        optimize_connection,
     })?;
     spinner.success("RDP session ended");
     ssm.stop();
