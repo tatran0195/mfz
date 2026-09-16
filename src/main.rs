@@ -479,13 +479,17 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
         "Launching mstsc → {}:{}…",
         env.rdp_host, env.local_port
     ));
-    rdp::launch(
-        &env.rdp_host,
-        env.local_port,
-        args.fullscreen,
-        env.rdp_user.as_deref(),
-        rdp_password.as_deref(),
-    )?;
+    let shared_folder_path = env.shared_folder.as_ref().map(std::path::Path::new);
+    rdp::launch(rdp::LaunchOptions {
+        host: &env.rdp_host,
+        port: env.local_port,
+        fullscreen: args.fullscreen,
+        username: env.rdp_user.as_deref(),
+        password: rdp_password.as_deref(),
+        shared_drives: env.shared_drives.as_deref().or(Some("*")),
+        shared_folder: shared_folder_path,
+        optimize_connection: env.optimize_connection.unwrap_or(true),
+    })?;
     spinner.success("RDP session ended");
     ssm.stop();
 

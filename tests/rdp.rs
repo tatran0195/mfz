@@ -57,3 +57,26 @@ fn test_build_rdp_content_disabled_drives() {
     let content = build_rdp_file_content(&opts);
     assert!(content.contains("drivestoredirect:s:"));
 }
+
+#[test]
+fn test_resolve_drives_to_redirect() {
+    use mfz::rdp::resolve_drives_to_redirect;
+
+    assert_eq!(
+        resolve_drives_to_redirect(Some("*"), None),
+        Some("*".to_string())
+    );
+    assert_eq!(resolve_drives_to_redirect(Some("none"), None), None);
+    assert_eq!(
+        resolve_drives_to_redirect(Some("C:"), Some('Z')),
+        Some("C:;Z:".to_string())
+    );
+    assert_eq!(
+        resolve_drives_to_redirect(None, Some('Z')),
+        Some("Z:".to_string())
+    );
+    assert_eq!(
+        resolve_drives_to_redirect(Some("none"), Some('Z')),
+        Some("Z:".to_string())
+    );
+}
