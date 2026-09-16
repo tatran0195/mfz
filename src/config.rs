@@ -88,11 +88,12 @@ impl EnvironmentConfig {
         };
 
         let parse_bool = |key: &str| -> Option<bool> {
-            ini.get(name, key).and_then(|v| match v.trim().to_lowercase().as_str() {
-                "true" | "1" | "yes" => Some(true),
-                "false" | "0" | "no" => Some(false),
-                _ => None,
-            })
+            ini.get(name, key)
+                .and_then(|v| match v.trim().to_lowercase().as_str() {
+                    "true" | "1" | "yes" => Some(true),
+                    "false" | "0" | "no" => Some(false),
+                    _ => None,
+                })
         };
 
         let shared_drives = get_opt("shared_drives");

@@ -136,5 +136,3 @@ fn test_dynamic_profile_hosts_sync() {
     fs::remove_file(&hosts_path).unwrap();
     fs::remove_file(&ini_path).unwrap();
 }
-
-

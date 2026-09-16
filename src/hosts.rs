@@ -30,10 +30,7 @@ impl HostsManager {
     }
 
     pub fn is_writable(&self) -> bool {
-        OpenOptions::new()
-            .append(true)
-            .open(&self.path)
-            .is_ok()
+        OpenOptions::new().append(true).open(&self.path).is_ok()
     }
 
     pub fn ensure_writable(&self) -> Result<()> {
@@ -66,8 +63,9 @@ impl HostsManager {
     pub fn elevate_and_run(&self, args: &[&str]) -> Result<()> {
         #[cfg(target_os = "windows")]
         {
-            let exe = std::env::current_exe()
-                .map_err(|e| AppError::Hosts(format!("Failed to determine executable path: {e}")))?;
+            let exe = std::env::current_exe().map_err(|e| {
+                AppError::Hosts(format!("Failed to determine executable path: {e}"))
+            })?;
 
             let formatted_args = args
                 .iter()
@@ -134,7 +132,9 @@ impl HostsManager {
 
     pub fn ensure_host(&self, ip: &str, hostname: &str) -> Result<()> {
         if self.has_host(hostname)? {
-            print_warning(&format!("`{hostname}` already present in hosts file — skipping"));
+            print_warning(&format!(
+                "`{hostname}` already present in hosts file — skipping"
+            ));
             return Ok(());
         }
 
@@ -170,7 +170,9 @@ impl HostsManager {
             }
             Ok(())
         } else {
-            print_info("Administrator privileges required to update hosts file. Requesting elevation…");
+            print_info(
+                "Administrator privileges required to update hosts file. Requesting elevation…",
+            );
             let mut args = vec!["hosts", "add"];
             if let Some(cp) = config_path {
                 args.push("--config");
@@ -186,4 +188,3 @@ impl Default for HostsManager {
         Self::new()
     }
 }
-
