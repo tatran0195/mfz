@@ -34,7 +34,7 @@ pub fn decode(image_path: &str) -> Result<OtpSecret> {
     let source = rxing::Luma8LuminanceSource::new(img.into_raw(), width, height);
     let binarizer = rxing::common::HybridBinarizer::new(source);
     let mut bitmap = rxing::BinaryBitmap::new(binarizer);
-    let mut reader = rxing::qrcode::QRCodeReader::default();
+    let mut reader = rxing::qrcode::QRCodeReader;
 
     let result = reader
         .decode(&mut bitmap)
@@ -314,12 +314,12 @@ pub async fn register(
 fn prompt_totp(prompt: &str) -> Result<String> {
     loop {
         print!("  {} {}: ", "›".cyan().bold(), prompt.white().bold());
-        std::io::stdout().flush().map_err(|e| AppError::Io(e))?;
+        std::io::stdout().flush().map_err(AppError::Io)?;
 
         let mut input = String::new();
         std::io::stdin()
             .read_line(&mut input)
-            .map_err(|e| AppError::Io(e))?;
+            .map_err(AppError::Io)?;
 
         let code = input.trim().to_owned();
 

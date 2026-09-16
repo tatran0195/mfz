@@ -57,7 +57,7 @@ async fn main() {
         colored::control::set_virtual_terminal(true).ok();
         // Force UTF-8 code page for better symbol support in CMD
         let _ = std::process::Command::new("cmd")
-            .args(&["/C", "chcp 65001"])
+            .args(["/C", "chcp 65001"])
             .output();
         // Attempt to set a modern font (Consolas) for better symbol rendering
         setup_console_font();
@@ -367,10 +367,7 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
         .or(env.shared_drives.as_deref())
         .or(Some("*"));
 
-    let resolved_folder = args
-        .share_folder
-        .as_ref()
-        .or(env.shared_folder.as_ref());
+    let resolved_folder = args.share_folder.as_ref().or(env.shared_folder.as_ref());
 
     let optimize_connection = !args.no_optimize && env.optimize_connection.unwrap_or(true);
 

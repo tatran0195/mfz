@@ -36,7 +36,7 @@ pub async fn resolve_instance_by_tag(
             creds.access_key_id,
             creds.secret_access_key,
             Some(creds.session_token),
-            Some(std::time::SystemTime::from(creds.expiration).into()),
+            Some(std::time::SystemTime::from(creds.expiration)),
             "mfz-ec2-resolution",
         ))
         .build();

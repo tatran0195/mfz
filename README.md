@@ -80,6 +80,23 @@ Tired of typing `127.0.0.1:13389`? MFZ uses friendly names like `stg-rdp` or `pr
 mfz hosts add
 ```
 
+### 🚀 Fast File Transfer & Shared Folders
+
+Transferring files through RDP clipboard copy-paste can be slow and prone to freezing. MFZ natively shares your local drives and optimizes RDP performance for ultra-fast transfers:
+
+- **Automatic Drive Sharing**: By default, your local drives are shared into the remote desktop. Inside the remote session, open **This PC** in File Explorer or navigate to `\\tsclient\` to drag and drop files directly.
+- **Share a Specific Folder**: Want to share only a designated folder (e.g. `C:\Transfer`)?
+  ```bash
+  mfz launch my-server --share-folder C:\Transfer
+  ```
+  MFZ automatically maps this folder to a virtual drive letter and shares it, then unmounts it cleanly upon exit.
+- **Control Shared Drives**: Specify exact drives to share or disable sharing:
+  ```bash
+  mfz launch my-server --share-drives "C:,D:"
+  mfz launch my-server --share-drives none
+  ```
+- **Connection Speed Optimization**: Enabled by default (`compression:i:1`, `bitmapcachepersistenable:i:1`, LAN connection type `connection type:i:6`, and disabled audio/printer overhead). Use `--no-optimize` to revert to standard Windows RDP defaults.
+
 ---
 
 ## ❓ Frequently Asked Questions
