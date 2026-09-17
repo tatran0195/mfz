@@ -39,6 +39,11 @@ fn test_config_add_new() {
         shared_drives: None,
         shared_folder: None,
         optimize_connection: None,
+        fullscreen: None,
+        optimize: None,
+        opt_audio: None,
+        opt_wallpaper: None,
+        opt_font_smoothing: None,
     };
 
     assert!(loader.save("test_env", &env_config).is_ok());
@@ -58,6 +63,11 @@ fn test_config_add_new() {
         shared_drives: None,
         shared_folder: None,
         optimize_connection: None,
+        fullscreen: None,
+        optimize: None,
+        opt_audio: None,
+        opt_wallpaper: None,
+        opt_font_smoothing: None,
     };
 
     assert!(loader.save("test_env2", &env_config2).is_ok());
@@ -182,7 +192,39 @@ optimize_connection = true
 
     assert_eq!(env.shared_drives.as_deref(), Some("C:,D:"));
     assert_eq!(env.shared_folder.as_deref(), Some(r"C:\Shared"));
-    assert_eq!(env.optimize_connection, Some(true));
+    assert_eq!(env.optimize.as_deref(), Some("speed"));
+
+    fs::remove_file(&path).unwrap();
+}
+
+#[test]
+fn test_config_share_folder_alias_and_fullscreen() {
+    let content = r#"
+[stg]
+profile = dev
+instance = i-12345
+rdp_host = stg-rdp
+remote_port = 3389
+local_port = 13389
+share_folder = D:\SharedData
+share_drives = C:
+fullscreen = false
+optimize = speed
+audio = true
+wallpaper = false
+font_smoothing = true
+"#;
+    let path = create_temp_config(content);
+    let loader = ConfigLoader::new(&path);
+    let env = loader.load("stg").unwrap();
+
+    assert_eq!(env.shared_folder.as_deref(), Some(r"D:\SharedData"));
+    assert_eq!(env.shared_drives.as_deref(), Some("C:"));
+    assert_eq!(env.fullscreen, Some(false));
+    assert_eq!(env.optimize.as_deref(), Some("speed"));
+    assert_eq!(env.opt_audio, Some(true));
+    assert_eq!(env.opt_wallpaper, Some(false));
+    assert_eq!(env.opt_font_smoothing, Some(true));
 
     fs::remove_file(&path).unwrap();
 }

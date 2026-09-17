@@ -289,6 +289,11 @@ pub async fn register(
                 shared_drives: None,
                 shared_folder: None,
                 optimize_connection: None,
+                fullscreen: None,
+                optimize: None,
+                opt_audio: None,
+                opt_wallpaper: None,
+                opt_font_smoothing: None,
             }
         };
 

@@ -208,6 +208,11 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                 shared_drives,
                 shared_folder,
                 optimize_connection,
+                fullscreen: None,
+                optimize: None,
+                opt_audio: None,
+                opt_wallpaper: None,
+                opt_font_smoothing: None,
             };
 
             let spinner = Spinner::new(format!("Saving `{name}` to `{config}`…"));

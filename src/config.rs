@@ -30,6 +30,11 @@ pub struct EnvironmentConfig {
     pub shared_drives: Option<String>,
     pub shared_folder: Option<String>,
     pub optimize_connection: Option<bool>,
+    pub fullscreen: Option<bool>,
+    pub optimize: Option<String>,
+    pub opt_audio: Option<bool>,
+    pub opt_wallpaper: Option<bool>,
+    pub opt_font_smoothing: Option<bool>,
 }
 
 impl EnvironmentConfig {
@@ -96,9 +101,24 @@ impl EnvironmentConfig {
                 })
         };
 
-        let shared_drives = get_opt("shared_drives");
-        let shared_folder = get_opt("shared_folder");
-        let optimize_connection = parse_bool("optimize_connection");
+        let shared_drives = get_opt("shared_drives").or_else(|| get_opt("share_drives"));
+        let shared_folder = get_opt("shared_folder").or_else(|| get_opt("share_folder"));
+        let fullscreen = parse_bool("fullscreen");
+        let optimize = get_opt("optimize")
+            .or_else(|| get_opt("optimize_profile"))
+            .or_else(|| {
+                parse_bool("optimize_connection").map(|b| {
+                    if b {
+                        "speed".to_string()
+                    } else {
+                        "none".to_string()
+                    }
+                })
+            });
+        let opt_audio = parse_bool("audio").or_else(|| parse_bool("opt_audio"));
+        let opt_wallpaper = parse_bool("wallpaper").or_else(|| parse_bool("opt_wallpaper"));
+        let opt_font_smoothing =
+            parse_bool("font_smoothing").or_else(|| parse_bool("opt_font_smoothing"));
 
         Ok(Self {
             profile: get("profile")?,
@@ -114,7 +134,12 @@ impl EnvironmentConfig {
             rdp_password: get_opt("rdp_password"),
             shared_drives,
             shared_folder,
-            optimize_connection,
+            optimize_connection: parse_bool("optimize_connection"),
+            fullscreen,
+            optimize,
+            opt_audio,
+            opt_wallpaper,
+            opt_font_smoothing,
         })
     }
 
@@ -149,8 +174,20 @@ impl EnvironmentConfig {
         if let Some(folder) = &self.shared_folder {
             m.insert("shared_folder".into(), folder.clone());
         }
-        if let Some(opt) = self.optimize_connection {
-            m.insert("optimize_connection".into(), opt.to_string());
+        if let Some(fs) = self.fullscreen {
+            m.insert("fullscreen".into(), fs.to_string());
+        }
+        if let Some(opt) = &self.optimize {
+            m.insert("optimize".into(), opt.clone());
+        }
+        if let Some(a) = self.opt_audio {
+            m.insert("audio".into(), a.to_string());
+        }
+        if let Some(w) = self.opt_wallpaper {
+            m.insert("wallpaper".into(), w.to_string());
+        }
+        if let Some(f) = self.opt_font_smoothing {
+            m.insert("font_smoothing".into(), f.to_string());
         }
         m
     }
