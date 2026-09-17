@@ -154,7 +154,12 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                     if let Some(folder) = env.shared_folder {
                         println!("      {:<12} {}", "Folder:".dimmed(), folder);
                     }
-                    if let Some(opt) = env.optimize_connection {
+                    if let Some(fs) = env.fullscreen {
+                        println!("      {:<12} {}", "Fullscreen:".dimmed(), fs);
+                    }
+                    if let Some(opt) = env.optimize {
+                        println!("      {:<12} {}", "Optimize:".dimmed(), opt);
+                    } else if let Some(opt) = env.optimize_connection {
                         println!("      {:<12} {}", "Optimize:".dimmed(), opt);
                     }
                     println!();
@@ -175,6 +180,8 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             pass,
             shared_drives,
             shared_folder,
+            fullscreen,
+            optimize,
             optimize_connection,
             config,
         } => {
@@ -193,6 +200,10 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                 crate::config::AuthType::Sso
             };
 
+            let opt_profile = optimize.or_else(|| {
+                optimize_connection.map(|b| if b { "speed".to_string() } else { "none".to_string() })
+            });
+
             let new_env = crate::config::EnvironmentConfig {
                 profile,
                 auth_type,
@@ -208,8 +219,8 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                 shared_drives,
                 shared_folder,
                 optimize_connection,
-                fullscreen: None,
-                optimize: None,
+                fullscreen,
+                optimize: opt_profile,
                 opt_audio: None,
                 opt_wallpaper: None,
                 opt_font_smoothing: None,
@@ -237,6 +248,8 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             pass,
             shared_drives,
             shared_folder,
+            fullscreen,
+            optimize,
             optimize_connection,
             config,
         } => {
@@ -280,6 +293,14 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             }
             if shared_folder.is_some() {
                 env.shared_folder = shared_folder;
+            }
+            if fullscreen.is_some() {
+                env.fullscreen = fullscreen;
+            }
+            if optimize.is_some() {
+                env.optimize = optimize;
+            } else if optimize_connection.is_some() {
+                env.optimize = optimize_connection.map(|b| if b { "speed".to_string() } else { "none".to_string() });
             }
             if optimize_connection.is_some() {
                 env.optimize_connection = optimize_connection;
@@ -366,26 +387,52 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
     print_kv("Local port", &env.local_port.to_string());
     print_kv("RDP host", &env.rdp_host);
 
+    let resolved_folder = args.share_folder.as_ref().or(env.shared_folder.as_ref());
     let shared_drives = args
         .share_drives
         .as_deref()
-        .or(env.shared_drives.as_deref())
-        .or(Some("*"));
+        .or(env.shared_drives.as_deref());
 
-    let resolved_folder = args.share_folder.as_ref().or(env.shared_folder.as_ref());
+    let fullscreen = if args.windowed {
+        false
+    } else {
+        env.fullscreen.unwrap_or(true)
+    };
 
-    let optimize_connection = !args.no_optimize && env.optimize_connection.unwrap_or(true);
+    let opt_profile_str = args
+        .optimize
+        .as_deref()
+        .or(env.optimize.as_deref());
 
-    print_kv("Shared drives", shared_drives.unwrap_or("none"));
+    let mut opt_settings = rdp::OptimizationSettings::from_profile_name(opt_profile_str);
+    if env.opt_audio.is_some() {
+        opt_settings.audio = env.opt_audio;
+    }
+    if env.opt_wallpaper.is_some() {
+        opt_settings.wallpaper = env.opt_wallpaper;
+    }
+    if env.opt_font_smoothing.is_some() {
+        opt_settings.font_smoothing = env.opt_font_smoothing;
+    }
+
     if let Some(folder) = resolved_folder {
         print_kv("Shared folder", folder);
     }
     print_kv(
+        "Shared drives",
+        match (shared_drives, resolved_folder) {
+            (Some(d), _) => d,
+            (None, Some(_)) => "Virtual drive only",
+            (None, None) => "none",
+        },
+    );
+    print_kv(
         "Optimization",
-        if optimize_connection {
-            "Enabled (compression, bitmap cache, LAN)"
-        } else {
-            "Disabled"
+        match opt_settings.profile {
+            rdp::OptimizationProfile::None => "Disabled (Windows defaults)",
+            rdp::OptimizationProfile::Speed => "Speed (LAN, compression, caching, no audio)",
+            rdp::OptimizationProfile::Balanced => "Balanced (caching, audio enabled, wallpaper)",
+            rdp::OptimizationProfile::Quality => "Quality (full desktop effects)",
         },
     );
 
@@ -393,10 +440,10 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
         "Mode",
         if args.ssm_only {
             "SSM tunnel only"
-        } else if args.fullscreen {
+        } else if fullscreen {
             "RDP fullscreen"
         } else {
-            "RDP windowed"
+            "RDP windowed (dynamic resolution)"
         },
     );
 
@@ -536,12 +583,12 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
     rdp::launch(rdp::LaunchOptions {
         host: &env.rdp_host,
         port: env.local_port,
-        fullscreen: args.fullscreen,
+        fullscreen,
         username: env.rdp_user.as_deref(),
         password: rdp_password.as_deref(),
         shared_drives,
         shared_folder: shared_folder_path,
-        optimize_connection,
+        optimization: opt_settings,
     })?;
     spinner.success("RDP session ended");
     ssm.stop();

@@ -4,6 +4,46 @@ use tracing::info;
 
 use crate::error::{AppError, Result};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum OptimizationProfile {
+    #[default]
+    None,
+    Speed,
+    Balanced,
+    Quality,
+}
+
+impl OptimizationProfile {
+    pub fn parse(s: &str) -> Self {
+        match s.trim().to_lowercase().as_str() {
+            "speed" | "fast" | "lan" => Self::Speed,
+            "balanced" | "balance" => Self::Balanced,
+            "quality" | "high" | "best" => Self::Quality,
+            _ => Self::None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct OptimizationSettings {
+    pub profile: OptimizationProfile,
+    pub audio: Option<bool>,
+    pub wallpaper: Option<bool>,
+    pub font_smoothing: Option<bool>,
+}
+
+impl OptimizationSettings {
+    pub fn from_profile_name(name: Option<&str>) -> Self {
+        let profile = name.map(OptimizationProfile::parse).unwrap_or_default();
+        Self {
+            profile,
+            audio: None,
+            wallpaper: None,
+            font_smoothing: None,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct RdpProfileOptions<'a> {
     pub host: &'a str,
@@ -11,7 +51,7 @@ pub struct RdpProfileOptions<'a> {
     pub fullscreen: bool,
     pub username: Option<&'a str>,
     pub drives_to_redirect: Option<&'a str>,
-    pub optimize_connection: bool,
+    pub optimization: OptimizationSettings,
 }
 
 pub fn build_rdp_file_content(opts: &RdpProfileOptions) -> String {
@@ -24,6 +64,7 @@ pub fn build_rdp_file_content(opts: &RdpProfileOptions) -> String {
     ));
     lines.push("use multimon:i:0".into());
     lines.push("smart sizing:i:1".into());
+    lines.push("dynamic resolution:i:1".into());
 
     let drives = opts.drives_to_redirect.unwrap_or("");
     lines.push(format!("drivestoredirect:s:{drives}"));
@@ -34,23 +75,132 @@ pub fn build_rdp_file_content(opts: &RdpProfileOptions) -> String {
     }
     lines.push("prompt for credentials:i:0".into());
 
-    if opts.optimize_connection {
-        lines.push("compression:i:1".into());
-        lines.push("bitmapcachepersistenable:i:1".into());
-        lines.push("connection type:i:6".into());
-        lines.push("networkautodetect:i:0".into());
-        lines.push("bandwidthautodetect:i:1".into());
-        lines.push("audiomode:i:2".into());
-        lines.push("redirectprinters:i:0".into());
-        lines.push("redirectsmartcards:i:0".into());
-        lines.push("disable wallpaper:i:1".into());
-        lines.push("disable full window drag:i:1".into());
-        lines.push("disable menu anims:i:1".into());
-        lines.push("disable themes:i:0".into());
-        lines.push("allow font smoothing:i:1".into());
+    match opts.optimization.profile {
+        OptimizationProfile::None => {
+            if let Some(audio) = opts.optimization.audio {
+                lines.push(format!("audiomode:i:{}", if audio { 0 } else { 2 }));
+            }
+            if let Some(wallpaper) = opts.optimization.wallpaper {
+                lines.push(format!("disable wallpaper:i:{}", if wallpaper { 0 } else { 1 }));
+            }
+            if let Some(fonts) = opts.optimization.font_smoothing {
+                lines.push(format!("allow font smoothing:i:{}", if fonts { 1 } else { 0 }));
+            }
+        }
+        OptimizationProfile::Speed => {
+            lines.push("compression:i:1".into());
+            lines.push("bitmapcachepersistenable:i:1".into());
+            lines.push("connection type:i:6".into());
+            lines.push("networkautodetect:i:0".into());
+            lines.push("bandwidthautodetect:i:1".into());
+
+            let audiomode = if opts.optimization.audio == Some(true) { 0 } else { 2 };
+            lines.push(format!("audiomode:i:{audiomode}"));
+
+            lines.push("redirectprinters:i:0".into());
+            lines.push("redirectsmartcards:i:0".into());
+
+            let disable_wallpaper = if opts.optimization.wallpaper == Some(true) { 0 } else { 1 };
+            lines.push(format!("disable wallpaper:i:{disable_wallpaper}"));
+
+            lines.push("disable full window drag:i:1".into());
+            lines.push("disable menu anims:i:1".into());
+            lines.push("disable themes:i:0".into());
+
+            let font_smoothing = if opts.optimization.font_smoothing == Some(false) { 0 } else { 1 };
+            lines.push(format!("allow font smoothing:i:{font_smoothing}"));
+        }
+        OptimizationProfile::Balanced => {
+            lines.push("compression:i:1".into());
+            lines.push("bitmapcachepersistenable:i:1".into());
+            lines.push("connection type:i:6".into());
+            lines.push("networkautodetect:i:1".into());
+            lines.push("bandwidthautodetect:i:1".into());
+
+            let audiomode = if opts.optimization.audio == Some(false) { 2 } else { 0 };
+            lines.push(format!("audiomode:i:{audiomode}"));
+
+            lines.push("redirectprinters:i:0".into());
+            lines.push("redirectsmartcards:i:0".into());
+
+            let disable_wallpaper = if opts.optimization.wallpaper == Some(false) { 1 } else { 0 };
+            lines.push(format!("disable wallpaper:i:{disable_wallpaper}"));
+
+            lines.push("disable full window drag:i:0".into());
+            lines.push("disable menu anims:i:1".into());
+            lines.push("disable themes:i:0".into());
+
+            let font_smoothing = if opts.optimization.font_smoothing == Some(false) { 0 } else { 1 };
+            lines.push(format!("allow font smoothing:i:{font_smoothing}"));
+        }
+        OptimizationProfile::Quality => {
+            lines.push("compression:i:1".into());
+            lines.push("bitmapcachepersistenable:i:1".into());
+            lines.push("connection type:i:6".into());
+
+            let audiomode = if opts.optimization.audio == Some(false) { 2 } else { 0 };
+            lines.push(format!("audiomode:i:{audiomode}"));
+
+            lines.push("disable wallpaper:i:0".into());
+            lines.push("disable full window drag:i:0".into());
+            lines.push("disable menu anims:i:0".into());
+            lines.push("disable themes:i:0".into());
+
+            let font_smoothing = if opts.optimization.font_smoothing == Some(false) { 0 } else { 1 };
+            lines.push(format!("allow font smoothing:i:{font_smoothing}"));
+        }
     }
 
     lines.join("\r\n") + "\r\n"
+}
+
+#[cfg(windows)]
+fn get_logical_drives_mask() -> u32 {
+    extern "system" {
+        fn GetLogicalDrives() -> u32;
+    }
+    unsafe { GetLogicalDrives() }
+}
+
+#[cfg(not(windows))]
+fn get_logical_drives_mask() -> u32 {
+    0
+}
+
+pub fn is_drive_letter_in_use(c: char) -> bool {
+    let upper = c.to_ascii_uppercase();
+    if !(b'A'..=b'Z').contains(&(upper as u8)) {
+        return true;
+    }
+    let shift = (upper as u8) - b'A';
+    let mask = get_logical_drives_mask();
+    if mask != 0 && (mask & (1 << shift)) != 0 {
+        return true;
+    }
+    std::path::Path::new(&format!("{}:\\", upper)).exists()
+}
+
+pub fn get_ready_local_drives() -> Vec<String> {
+    let mask = get_logical_drives_mask();
+    let mut drives = Vec::new();
+    for c in b'A'..=b'Z' {
+        let shift = c - b'A';
+        let drive_char = c as char;
+        let is_assigned = if mask != 0 {
+            (mask & (1 << shift)) != 0
+        } else {
+            std::path::Path::new(&format!("{}:\\", drive_char)).exists()
+        };
+
+        if is_assigned {
+            let path_str = format!("{}:\\", drive_char);
+            // Verify path is actually ready/accessible (skips empty optical/CD drives)
+            if std::path::Path::new(&path_str).exists() {
+                drives.push(format!("{}:", drive_char));
+            }
+        }
+    }
+    drives
 }
 
 pub fn resolve_drives_to_redirect(
@@ -65,6 +215,13 @@ pub fn resolve_drives_to_redirect(
         (Some(b), None) => {
             if b.eq_ignore_ascii_case("none") {
                 None
+            } else if b == "*" {
+                let ready = get_ready_local_drives();
+                if ready.is_empty() {
+                    Some("*".to_string())
+                } else {
+                    Some(ready.join(";"))
+                }
             } else {
                 Some(b.to_string())
             }
@@ -74,8 +231,11 @@ pub fn resolve_drives_to_redirect(
             if b.eq_ignore_ascii_case("none") {
                 Some(f)
             } else if b == "*" {
-                // All drives already covers all drives including mapped virtual drive
-                Some("*".to_string())
+                let mut ready = get_ready_local_drives();
+                if !ready.iter().any(|p| p.eq_ignore_ascii_case(&f)) {
+                    ready.push(f);
+                }
+                Some(ready.join(";"))
             } else {
                 let mut parts: Vec<String> = b
                     .split(';')
@@ -93,8 +253,7 @@ pub fn resolve_drives_to_redirect(
 
 pub fn find_available_drive_letter() -> Result<char> {
     for c in ('E'..='Z').rev() {
-        let path_str = format!("{}:\\", c);
-        if !std::path::Path::new(&path_str).exists() {
+        if !is_drive_letter_in_use(c) {
             return Ok(c);
         }
     }
@@ -179,7 +338,7 @@ pub struct LaunchOptions<'a> {
     pub password: Option<&'a str>,
     pub shared_drives: Option<&'a str>,
     pub shared_folder: Option<&'a std::path::Path>,
-    pub optimize_connection: bool,
+    pub optimization: OptimizationSettings,
 }
 
 pub fn launch(opts: LaunchOptions) -> Result<()> {
@@ -204,7 +363,7 @@ pub fn launch(opts: LaunchOptions) -> Result<()> {
         fullscreen,
         username,
         drives_to_redirect: drives_to_redirect.as_deref(),
-        optimize_connection: opts.optimize_connection,
+        optimization: opts.optimization.clone(),
     });
 
     let timestamp = std::time::SystemTime::now()
@@ -245,8 +404,8 @@ pub fn launch(opts: LaunchOptions) -> Result<()> {
     }
 
     info!(
-        "Launching RDP → {}:{} (drives: {:?}, optimize: {})",
-        host, port, drives_to_redirect, opts.optimize_connection
+        "Launching RDP → {}:{} (drives: {:?}, profile: {:?})",
+        host, port, drives_to_redirect, opts.optimization.profile
     );
     let status = cmd.status();
 
