@@ -199,7 +199,42 @@ pub struct ConfigLoader {
 
 impl ConfigLoader {
     pub fn new(path: impl Into<PathBuf>) -> Self {
-        Self { path: path.into() }
+        let p: PathBuf = path.into();
+        let resolved = Self::resolve_config_path(p);
+        Self { path: resolved }
+    }
+
+    /// Resolves config path, checking current directory, next to executable, and user directories.
+    pub fn resolve_config_path(p: PathBuf) -> PathBuf {
+        if p.exists() {
+            return p;
+        }
+        if p.is_relative() {
+            // 1. Check next to current executable
+            if let Ok(exe) = std::env::current_exe() {
+                if let Some(parent) = exe.parent() {
+                    let exe_cfg = parent.join(&p);
+                    if exe_cfg.exists() {
+                        return exe_cfg;
+                    }
+                }
+            }
+            // 2. Check %USERPROFILE%\.mfz\mfz.ini
+            if let Ok(profile) = std::env::var("USERPROFILE") {
+                let user_cfg = PathBuf::from(profile).join(".mfz").join(&p);
+                if user_cfg.exists() {
+                    return user_cfg;
+                }
+            }
+            // 3. Check %APPDATA%\mfz\mfz.ini
+            if let Ok(appdata) = std::env::var("APPDATA") {
+                let appdata_cfg = PathBuf::from(appdata).join("mfz").join(&p);
+                if appdata_cfg.exists() {
+                    return appdata_cfg;
+                }
+            }
+        }
+        p
     }
 
     pub fn load(&self, env_name: &str) -> Result<EnvironmentConfig> {
@@ -233,7 +268,10 @@ impl ConfigLoader {
                 .unwrap_or("default")
                 .to_string();
 
-            // Line-based check for `env = ...` or `environment = ...` pointer
+            let mut custom_config_path = None;
+            let mut target_env = None;
+
+            // Line-based check for `env = ...` or `config = ...` pointer
             for line in content.lines() {
                 let trimmed = line.trim();
                 let lower = trimmed.to_lowercase();
@@ -241,11 +279,28 @@ impl ConfigLoader {
                     if let Some((_, val)) = trimmed.split_once('=') {
                         let target = val.trim().trim_matches('"').trim_matches('\'').trim();
                         if !target.is_empty() {
-                            let env = self.load(target)?;
-                            return Ok((target.to_string(), env));
+                            target_env = Some(target.to_string());
                         }
                     }
                 }
+                if lower.starts_with("config") {
+                    if let Some((_, val)) = trimmed.split_once('=') {
+                        let cfg = val.trim().trim_matches('"').trim_matches('\'').trim();
+                        if !cfg.is_empty() {
+                            custom_config_path = Some(PathBuf::from(cfg));
+                        }
+                    }
+                }
+            }
+
+            if let Some(target) = target_env {
+                let loader = if let Some(cfg_path) = custom_config_path {
+                    ConfigLoader::new(cfg_path)
+                } else {
+                    ConfigLoader::new(&self.path)
+                };
+                let env = loader.load(&target)?;
+                return Ok((target, env));
             }
 
             // Try parsing as INI with [session] section

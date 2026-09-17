@@ -79,9 +79,13 @@ pub struct ExportArgs {
     #[arg(short, long)]
     pub desktop: bool,
 
-    /// Export as standalone portable profile (includes full connection details)
-    #[arg(short, long)]
+    /// Export as standalone portable profile (default: true)
+    #[arg(short, long, default_value_t = true)]
     pub standalone: bool,
+
+    /// Export as lightweight pointer file referencing local mfz.ini instead
+    #[arg(short, long)]
+    pub pointer: bool,
 
     /// Custom output directory or file path
     #[arg(short, long)]

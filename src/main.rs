@@ -71,6 +71,13 @@ async fn main() {
 
     if let Err(e) = dispatch(cli).await {
         print_error(&e.to_string());
+        // If launched via .mfz file association, pause so user can inspect any error
+        let is_mfz_launch = std::env::args().any(|a| a.ends_with(".mfz") || a.ends_with(".mfz\""));
+        if is_mfz_launch {
+            println!("\n  {} Press Enter to exit...", "ℹ".cyan());
+            let mut buf = String::new();
+            let _ = std::io::stdin().read_line(&mut buf);
+        }
         std::process::exit(e.exit_code());
     }
 }
@@ -434,9 +441,11 @@ async fn cmd_export(args: cli::ExportArgs) -> Result<()> {
         vec![chosen]
     };
 
+    let standalone = !args.pointer;
+
     for name in &env_names {
         let env_cfg = all_envs.get(name);
-        if env_cfg.is_none() && args.standalone {
+        if env_cfg.is_none() && standalone {
             return Err(crate::error::AppError::Config(format!(
                 "Environment `{name}` not found in `{}`",
                 args.config
@@ -444,7 +453,7 @@ async fn cmd_export(args: cli::ExportArgs) -> Result<()> {
         }
 
         let spinner = Spinner::new(format!("Exporting profile `{name}`…"));
-        let exported_path = shell::export_mfz_file(name, env_cfg, args.standalone, &dest)?;
+        let exported_path = shell::export_mfz_file(name, env_cfg, standalone, &dest)?;
         spinner.success(format!("Exported: {}", exported_path.display()));
     }
 
