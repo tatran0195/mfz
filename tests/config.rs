@@ -242,10 +242,15 @@ local_port = 13389
     let ini_path = create_temp_config(ini_content);
     let loader = ConfigLoader::new(&ini_path);
 
-    let mfz_file = std::env::temp_dir().join(format!("test_pointer_{}.mfz", std::time::UNIX_EPOCH.elapsed().unwrap().as_nanos()));
+    let mfz_file = std::env::temp_dir().join(format!(
+        "test_pointer_{}.mfz",
+        std::time::UNIX_EPOCH.elapsed().unwrap().as_nanos()
+    ));
     fs::write(&mfz_file, "env = stg\n").unwrap();
 
-    let (name, env) = loader.load_from_file_or_name(mfz_file.to_str().unwrap()).unwrap();
+    let (name, env) = loader
+        .load_from_file_or_name(mfz_file.to_str().unwrap())
+        .unwrap();
     assert_eq!(name, "stg");
     assert_eq!(env.profile, "dev");
 
@@ -262,13 +267,18 @@ rdp_host = prd-rdp
 remote_port = 3389
 local_port = 13390
 "#;
-    let mfz_file = std::env::temp_dir().join(format!("test_standalone_{}.mfz", std::time::UNIX_EPOCH.elapsed().unwrap().as_nanos()));
+    let mfz_file = std::env::temp_dir().join(format!(
+        "test_standalone_{}.mfz",
+        std::time::UNIX_EPOCH.elapsed().unwrap().as_nanos()
+    ));
     fs::write(&mfz_file, mfz_content).unwrap();
 
     let dummy_ini = std::env::temp_dir().join("non_existent_mfz.ini");
     let loader = ConfigLoader::new(&dummy_ini);
 
-    let (name, env) = loader.load_from_file_or_name(mfz_file.to_str().unwrap()).unwrap();
+    let (name, env) = loader
+        .load_from_file_or_name(mfz_file.to_str().unwrap())
+        .unwrap();
     assert!(name.starts_with("test_standalone"));
     assert_eq!(env.profile, "prd_profile");
     assert_eq!(env.local_port, 13390);
@@ -292,7 +302,9 @@ local_port = 13390
     let mfz_file = std::env::temp_dir().join(format!("prd.mfz"));
     fs::write(&mfz_file, "").unwrap(); // empty file
 
-    let (name, env) = loader.load_from_file_or_name(mfz_file.to_str().unwrap()).unwrap();
+    let (name, env) = loader
+        .load_from_file_or_name(mfz_file.to_str().unwrap())
+        .unwrap();
     assert_eq!(name, "prd");
     assert_eq!(env.profile, "prod_profile");
 

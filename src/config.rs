@@ -223,8 +223,9 @@ impl ConfigLoader {
         let is_mfz_file = input.ends_with(".mfz") || (path.exists() && path.is_file());
 
         if is_mfz_file && path.exists() {
-            let content = std::fs::read_to_string(path)
-                .map_err(|e| AppError::Config(format!("Failed to read .mfz file {}: {e}", path.display())))?;
+            let content = std::fs::read_to_string(path).map_err(|e| {
+                AppError::Config(format!("Failed to read .mfz file {}: {e}", path.display()))
+            })?;
 
             let file_stem = path
                 .file_stem()

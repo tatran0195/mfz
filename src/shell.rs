@@ -1,8 +1,12 @@
-use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+};
 
-use crate::config::EnvironmentConfig;
-use crate::error::{AppError, Result};
+use crate::{
+    config::EnvironmentConfig,
+    error::{AppError, Result},
+};
 
 /// Returns the user's Desktop directory path, if available.
 pub fn get_desktop_dir() -> Option<PathBuf> {
@@ -41,9 +45,21 @@ pub fn register_file_association() -> Result<()> {
 
     let entries = [
         ("HKCU\\Software\\Classes\\.mfz", "", "mfz.session"),
-        ("HKCU\\Software\\Classes\\mfz.session", "", "MFZ Remote Desktop Profile"),
-        ("HKCU\\Software\\Classes\\mfz.session\\DefaultIcon", "", &icon_path),
-        ("HKCU\\Software\\Classes\\mfz.session\\shell\\open\\command", "", &command_str),
+        (
+            "HKCU\\Software\\Classes\\mfz.session",
+            "",
+            "MFZ Remote Desktop Profile",
+        ),
+        (
+            "HKCU\\Software\\Classes\\mfz.session\\DefaultIcon",
+            "",
+            &icon_path,
+        ),
+        (
+            "HKCU\\Software\\Classes\\mfz.session\\shell\\open\\command",
+            "",
+            &command_str,
+        ),
     ];
 
     for (key, val_name, val_data) in entries {
@@ -56,9 +72,9 @@ pub fn register_file_association() -> Result<()> {
         }
         cmd.arg("/d").arg(val_data).arg("/f");
 
-        let output = cmd.output().map_err(|e| {
-            AppError::Shell(format!("Failed to execute reg.exe: {e}"))
-        })?;
+        let output = cmd
+            .output()
+            .map_err(|e| AppError::Shell(format!("Failed to execute reg.exe: {e}")))?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
