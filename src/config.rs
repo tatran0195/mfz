@@ -218,6 +218,67 @@ impl ConfigLoader {
         EnvironmentConfig::from_section(env_name, &ini)
     }
 
+    pub fn load_from_file_or_name(&self, input: &str) -> Result<(String, EnvironmentConfig)> {
+        let path = std::path::Path::new(input);
+        let is_mfz_file = input.ends_with(".mfz") || (path.exists() && path.is_file());
+
+        if is_mfz_file && path.exists() {
+            let content = std::fs::read_to_string(path)
+                .map_err(|e| AppError::Config(format!("Failed to read .mfz file {}: {e}", path.display())))?;
+
+            let file_stem = path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("default")
+                .to_string();
+
+            // Line-based check for `env = ...` or `environment = ...` pointer
+            for line in content.lines() {
+                let trimmed = line.trim();
+                let lower = trimmed.to_lowercase();
+                if lower.starts_with("env") || lower.starts_with("environment") {
+                    if let Some((_, val)) = trimmed.split_once('=') {
+                        let target = val.trim().trim_matches('"').trim_matches('\'').trim();
+                        if !target.is_empty() {
+                            let env = self.load(target)?;
+                            return Ok((target.to_string(), env));
+                        }
+                    }
+                }
+            }
+
+            // Try parsing as INI with [session] section
+            let wrapped = if content.contains('[') {
+                content.clone()
+            } else {
+                format!("[session]\r\n{content}")
+            };
+
+            let mut ini = configparser::ini::Ini::new();
+            if ini.read(wrapped).is_ok() {
+                // Check if any section parses as EnvironmentConfig
+                for sec in ini.sections() {
+                    if let Ok(env) = EnvironmentConfig::from_section(&sec, &ini) {
+                        let name = if sec == "session" {
+                            file_stem.clone()
+                        } else {
+                            sec
+                        };
+                        return Ok((name, env));
+                    }
+                }
+            }
+
+            // Fallback to file stem as environment name in self.path
+            let env = self.load(&file_stem)?;
+            return Ok((file_stem, env));
+        }
+
+        // Otherwise load directly by environment name
+        let env = self.load(input)?;
+        Ok((input.to_string(), env))
+    }
+
     pub fn list_environments(&self) -> Result<Vec<String>> {
         if !self.path.exists() {
             return Ok(vec![]);
