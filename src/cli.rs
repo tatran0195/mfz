@@ -53,6 +53,43 @@ pub enum TopCommand {
     /// Manage environment configurations in mfz.ini
     #[command(subcommand)]
     Config(ConfigCommand),
+
+    /// Register the .mfz file association in Windows Shell (double-click to connect)
+    Register,
+
+    /// Unregister the .mfz file association from Windows Shell
+    Unregister,
+
+    /// Export quick-launch .mfz files for environments
+    Export(ExportArgs),
+}
+
+// ─── Export args ─────────────────────────────────────────────────────────────
+
+#[derive(Debug, Parser)]
+pub struct ExportArgs {
+    /// Environment name to export (e.g. stg, prd)
+    pub environment: Option<String>,
+
+    /// Export all configured environments
+    #[arg(short, long)]
+    pub all: bool,
+
+    /// Save directly to the Windows Desktop
+    #[arg(short, long)]
+    pub desktop: bool,
+
+    /// Export as standalone portable profile (includes full connection details)
+    #[arg(short, long)]
+    pub standalone: bool,
+
+    /// Custom output directory or file path
+    #[arg(short, long)]
+    pub out: Option<String>,
+
+    /// Path to config file
+    #[arg(short, long, default_value = "mfz.ini")]
+    pub config: String,
 }
 
 #[derive(Debug, Subcommand)]
