@@ -76,6 +76,25 @@ To prevent session expiration during login, MFZ implements a **Safety Margin** (
 
 ---
 
+## 🖥️ Windows Shell Association (`.mfz`)
+
+MFZ registers custom file associations in the Current User registry hive (`HKCU\Software\Classes`), requiring zero administrative rights or UAC prompts:
+
+- `HKCU\Software\Classes\.mfz` -> `(Default) = "mfz.session"`
+- `HKCU\Software\Classes\mfz.session` -> `(Default) = "MFZ Remote Desktop Profile"`
+- `HKCU\Software\Classes\mfz.session\DefaultIcon` -> `(Default) = "<mfz.exe or icon.ico>"`
+- `HKCU\Software\Classes\mfz.session\shell\open\command` -> `(Default) = "\"<mfz.exe>\" launch \"%1\""`
+
+### File Resolution Strategy
+
+When `mfz launch <input>` runs, it checks whether `<input>` is a file or environment name:
+1. **Pointer File**: If the file defines `env = <name>` or `environment = <name>`, it loads section `[<name>]` from `mfz.ini`.
+2. **Standalone Profile**: If the file defines configuration keys directly (`profile = ...`, `instance = ...`, `rdp_host = ...`), MFZ loads it as a standalone `EnvironmentConfig` without needing `mfz.ini`.
+3. **File Stem Fallback**: If the file is 0-bytes or has no keys, MFZ extracts the file stem (e.g. `stg.mfz` -> `stg`) and loads `[stg]` from `mfz.ini`.
+4. **Environment Name**: Standard lookup from `mfz.ini`.
+
+---
+
 ## 🛠️ Development & Building
 
 ### Prerequisites

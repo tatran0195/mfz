@@ -106,6 +106,30 @@ Transferring files through RDP clipboard copy-paste can be slow and prone to fre
   ```
   Profiles (`speed`, `balanced`, `quality`, `none`) and granular overrides (`audio`, `wallpaper`, `font_smoothing`) can also be configured in `mfz.ini`.
 
+### 🖱️ Double-Click Quick-Start (`.mfz` Files)
+
+Tired of opening a command prompt every time? MFZ supports custom `.mfz` extension registration and desktop quick-launch files!
+
+#### Multi-Profile Desktop Setup (e.g. STG and PRD)
+
+1. **Register the `.mfz` file extension** in Windows Shell (instant, no admin/UAC required):
+   ```bash
+   mfz register
+   ```
+2. **Export shortcuts to your Desktop**:
+   ```bash
+   mfz export --all --desktop
+   ```
+3. **Double-click to connect**:
+   - `stg.mfz` on your Desktop connects directly to STG!
+   - `prd.mfz` on your Desktop connects directly to PRD!
+
+#### Export Options
+- `mfz export stg`: Creates `stg.mfz` in the current directory.
+- `mfz export --all --desktop`: Creates `.mfz` quick-launch files for all configured profiles directly on your Desktop.
+- `mfz export prd --standalone`: Exports a self-contained portable profile containing full connection details.
+- `mfz unregister`: Removes the Windows Shell file association cleanly.
+
 ---
 
 ## ❓ Frequently Asked Questions
