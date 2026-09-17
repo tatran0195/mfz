@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::Parser;
 use cli::{Cli, HostsCommand, QrCommand, TopCommand};
 use colored::Colorize;
@@ -6,7 +8,7 @@ use error::Result;
 use hosts::HostsManager;
 use inquire::Select;
 use mfa::MfaSessionManager;
-use mfz::{aws, cli, config, credentials, error, hosts, mfa, qr, rdp, ssm, ui};
+use mfz::{aws, cli, config, credentials, error, hosts, mfa, qr, rdp, shell, ssm, ui};
 use ssm::{start_with_retries, SsmSession};
 use tracing::info;
 use tracing_appender::rolling;
@@ -80,6 +82,9 @@ async fn dispatch(cli: Cli) -> Result<()> {
         TopCommand::Hosts(sub) => cmd_hosts(sub),
         TopCommand::Qr(sub) => cmd_qr(sub).await,
         TopCommand::Config(sub) => cmd_config(sub).await,
+        TopCommand::Register => cmd_register(),
+        TopCommand::Unregister => cmd_unregister(),
+        TopCommand::Export(args) => cmd_export(args).await,
     }
 }
 
@@ -363,13 +368,102 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
     Ok(())
 }
 
+// ─── shell & export ──────────────────────────────────────────────────────────
+
+fn cmd_register() -> Result<()> {
+    print_section("Registering Shell Association");
+    let spinner = Spinner::new("Registering .mfz file association in Windows Shell…");
+    shell::register_file_association()?;
+    spinner.success("Successfully registered .mfz file extension in HKCU\\Software\\Classes.");
+    println!();
+    println!(
+        "    {} Double-clicking any .mfz file will now launch MFZ automatically.",
+        "✓".green().bold()
+    );
+    println!(
+        "    {} You can export desktop shortcuts with: {}",
+        "TIP:".cyan().bold(),
+        "mfz export --all --desktop".yellow()
+    );
+    Ok(())
+}
+
+fn cmd_unregister() -> Result<()> {
+    print_section("Unregistering Shell Association");
+    let spinner = Spinner::new("Removing .mfz file association from Windows Shell…");
+    shell::unregister_file_association()?;
+    spinner.success("Successfully unregistered .mfz file extension.");
+    Ok(())
+}
+
+async fn cmd_export(args: cli::ExportArgs) -> Result<()> {
+    print_section("Exporting MFZ Profiles");
+    let loader = ConfigLoader::new(&args.config);
+
+    // Determine target directory or file path
+    let dest: PathBuf = if args.desktop {
+        shell::get_desktop_dir().ok_or_else(|| {
+            crate::error::AppError::Shell("Could not locate Desktop directory".to_string())
+        })?
+    } else if let Some(ref out) = args.out {
+        PathBuf::from(out)
+    } else {
+        std::env::current_dir()?
+    };
+
+    let all_envs = loader.get_all()?;
+    if all_envs.is_empty() {
+        return Err(crate::error::AppError::Config(format!(
+            "No environments found in config file `{}`",
+            args.config
+        )));
+    }
+
+    let env_names: Vec<String> = if args.all {
+        let mut names: Vec<String> = all_envs.keys().cloned().collect();
+        names.sort();
+        names
+    } else if let Some(ref env) = args.environment {
+        vec![env.clone()]
+    } else {
+        let mut available: Vec<String> = all_envs.keys().cloned().collect();
+        available.sort();
+        let chosen = Select::new("Select environment to export:", available)
+            .prompt()
+            .map_err(|e| crate::error::AppError::Config(format!("Selection failed: {e}")))?;
+        vec![chosen]
+    };
+
+    for name in &env_names {
+        let env_cfg = all_envs.get(name);
+        if env_cfg.is_none() && args.standalone {
+            return Err(crate::error::AppError::Config(format!(
+                "Environment `{name}` not found in `{}`",
+                args.config
+            )));
+        }
+
+        let spinner = Spinner::new(format!("Exporting profile `{name}`…"));
+        let exported_path = shell::export_mfz_file(name, env_cfg, args.standalone, &dest)?;
+        spinner.success(format!("Exported: {}", exported_path.display()));
+    }
+
+    println!();
+    print_success(&format!(
+        "Successfully exported {} profile(s).",
+        env_names.len()
+    ));
+
+    Ok(())
+}
+
 // ─── launch ───────────────────────────────────────────────────────────────────
 
 async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
     let loader = ConfigLoader::new(&args.config);
 
-    let env_name = match args.environment {
-        Some(name) => name,
+    let (env_name, env) = match args.environment {
+        Some(name) => loader.load_from_file_or_name(&name)?,
         None => {
             let envs = loader.list_environments()?;
             if envs.is_empty() {
@@ -378,14 +472,15 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
                 ));
             }
 
-            Select::new("Select environment to launch:", envs)
+            let chosen = Select::new("Select environment to launch:", envs)
                 .prompt()
-                .map_err(|e| crate::error::AppError::Config(format!("Selection failed: {e}")))?
+                .map_err(|e| crate::error::AppError::Config(format!("Selection failed: {e}")))?;
+            let env = loader.load(&chosen)?;
+            (chosen, env)
         }
     };
 
     print_section("Configuration");
-    let env = loader.load(&env_name)?;
 
     print_kv("Environment", &env_name);
     if let Some(ref inst) = env.instance {
