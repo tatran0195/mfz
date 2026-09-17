@@ -201,7 +201,13 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             };
 
             let opt_profile = optimize.or_else(|| {
-                optimize_connection.map(|b| if b { "speed".to_string() } else { "none".to_string() })
+                optimize_connection.map(|b| {
+                    if b {
+                        "speed".to_string()
+                    } else {
+                        "none".to_string()
+                    }
+                })
             });
 
             let new_env = crate::config::EnvironmentConfig {
@@ -300,7 +306,13 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             if optimize.is_some() {
                 env.optimize = optimize;
             } else if optimize_connection.is_some() {
-                env.optimize = optimize_connection.map(|b| if b { "speed".to_string() } else { "none".to_string() });
+                env.optimize = optimize_connection.map(|b| {
+                    if b {
+                        "speed".to_string()
+                    } else {
+                        "none".to_string()
+                    }
+                });
             }
             if optimize_connection.is_some() {
                 env.optimize_connection = optimize_connection;
@@ -399,10 +411,7 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
         env.fullscreen.unwrap_or(true)
     };
 
-    let opt_profile_str = args
-        .optimize
-        .as_deref()
-        .or(env.optimize.as_deref());
+    let opt_profile_str = args.optimize.as_deref().or(env.optimize.as_deref());
 
     let mut opt_settings = rdp::OptimizationSettings::from_profile_name(opt_profile_str);
     if env.opt_audio.is_some() {

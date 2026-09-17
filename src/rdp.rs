@@ -81,10 +81,16 @@ pub fn build_rdp_file_content(opts: &RdpProfileOptions) -> String {
                 lines.push(format!("audiomode:i:{}", if audio { 0 } else { 2 }));
             }
             if let Some(wallpaper) = opts.optimization.wallpaper {
-                lines.push(format!("disable wallpaper:i:{}", if wallpaper { 0 } else { 1 }));
+                lines.push(format!(
+                    "disable wallpaper:i:{}",
+                    if wallpaper { 0 } else { 1 }
+                ));
             }
             if let Some(fonts) = opts.optimization.font_smoothing {
-                lines.push(format!("allow font smoothing:i:{}", if fonts { 1 } else { 0 }));
+                lines.push(format!(
+                    "allow font smoothing:i:{}",
+                    if fonts { 1 } else { 0 }
+                ));
             }
         }
         OptimizationProfile::Speed => {
@@ -94,20 +100,32 @@ pub fn build_rdp_file_content(opts: &RdpProfileOptions) -> String {
             lines.push("networkautodetect:i:0".into());
             lines.push("bandwidthautodetect:i:1".into());
 
-            let audiomode = if opts.optimization.audio == Some(true) { 0 } else { 2 };
+            let audiomode = if opts.optimization.audio == Some(true) {
+                0
+            } else {
+                2
+            };
             lines.push(format!("audiomode:i:{audiomode}"));
 
             lines.push("redirectprinters:i:0".into());
             lines.push("redirectsmartcards:i:0".into());
 
-            let disable_wallpaper = if opts.optimization.wallpaper == Some(true) { 0 } else { 1 };
+            let disable_wallpaper = if opts.optimization.wallpaper == Some(true) {
+                0
+            } else {
+                1
+            };
             lines.push(format!("disable wallpaper:i:{disable_wallpaper}"));
 
             lines.push("disable full window drag:i:1".into());
             lines.push("disable menu anims:i:1".into());
             lines.push("disable themes:i:0".into());
 
-            let font_smoothing = if opts.optimization.font_smoothing == Some(false) { 0 } else { 1 };
+            let font_smoothing = if opts.optimization.font_smoothing == Some(false) {
+                0
+            } else {
+                1
+            };
             lines.push(format!("allow font smoothing:i:{font_smoothing}"));
         }
         OptimizationProfile::Balanced => {
@@ -117,20 +135,32 @@ pub fn build_rdp_file_content(opts: &RdpProfileOptions) -> String {
             lines.push("networkautodetect:i:1".into());
             lines.push("bandwidthautodetect:i:1".into());
 
-            let audiomode = if opts.optimization.audio == Some(false) { 2 } else { 0 };
+            let audiomode = if opts.optimization.audio == Some(false) {
+                2
+            } else {
+                0
+            };
             lines.push(format!("audiomode:i:{audiomode}"));
 
             lines.push("redirectprinters:i:0".into());
             lines.push("redirectsmartcards:i:0".into());
 
-            let disable_wallpaper = if opts.optimization.wallpaper == Some(false) { 1 } else { 0 };
+            let disable_wallpaper = if opts.optimization.wallpaper == Some(false) {
+                1
+            } else {
+                0
+            };
             lines.push(format!("disable wallpaper:i:{disable_wallpaper}"));
 
             lines.push("disable full window drag:i:0".into());
             lines.push("disable menu anims:i:1".into());
             lines.push("disable themes:i:0".into());
 
-            let font_smoothing = if opts.optimization.font_smoothing == Some(false) { 0 } else { 1 };
+            let font_smoothing = if opts.optimization.font_smoothing == Some(false) {
+                0
+            } else {
+                1
+            };
             lines.push(format!("allow font smoothing:i:{font_smoothing}"));
         }
         OptimizationProfile::Quality => {
@@ -138,7 +168,11 @@ pub fn build_rdp_file_content(opts: &RdpProfileOptions) -> String {
             lines.push("bitmapcachepersistenable:i:1".into());
             lines.push("connection type:i:6".into());
 
-            let audiomode = if opts.optimization.audio == Some(false) { 2 } else { 0 };
+            let audiomode = if opts.optimization.audio == Some(false) {
+                2
+            } else {
+                0
+            };
             lines.push(format!("audiomode:i:{audiomode}"));
 
             lines.push("disable wallpaper:i:0".into());
@@ -146,7 +180,11 @@ pub fn build_rdp_file_content(opts: &RdpProfileOptions) -> String {
             lines.push("disable menu anims:i:0".into());
             lines.push("disable themes:i:0".into());
 
-            let font_smoothing = if opts.optimization.font_smoothing == Some(false) { 0 } else { 1 };
+            let font_smoothing = if opts.optimization.font_smoothing == Some(false) {
+                0
+            } else {
+                1
+            };
             lines.push(format!("allow font smoothing:i:{font_smoothing}"));
         }
     }

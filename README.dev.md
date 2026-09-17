@@ -50,9 +50,13 @@ graph TD
 | `rdp_host` | String | (Required) | Friendly name for the RDP connection. |
 | `rdp_user` | String | None | Auto-fill username for RDP. |
 | `rdp_password` | String | None | Auto-fill password (stored in Windows Credential Manager if secured). |
-| `shared_drives` | String | `*` | Local drives to redirect (`*`, `C:;D:`, or `none`). |
-| `shared_folder` | String | None | Dedicated local directory path to map and redirect via virtual drive. |
-| `optimize_connection` | Boolean | `true` | Apply RDP bulk compression, bitmap caching, and LAN mode. |
+| `shared_drives` / `share_drives` | String | None | Local drives to redirect (`*`, `C:;D:`, or `none`). |
+| `shared_folder` / `share_folder` | String | None | Dedicated local directory path to map and redirect via virtual drive. |
+| `fullscreen` | Boolean | `true` | Open RDP session in fullscreen mode. Set `false` for windowed mode. |
+| `optimize` | String | `none` | Optimization profile: `speed`, `balanced`, `quality`, or `none`. |
+| `audio` | Boolean | Profile default | Override audio redirection (`true` = play locally, `false` = mute). |
+| `wallpaper` | Boolean | Profile default | Override desktop wallpaper display (`true` = show, `false` = disable). |
+| `font_smoothing` | Boolean | `true` | Override clear font smoothing. |
 
 ---
 

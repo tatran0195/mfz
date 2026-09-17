@@ -84,18 +84,27 @@ mfz hosts add
 
 Transferring files through RDP clipboard copy-paste can be slow and prone to freezing. MFZ natively shares your local drives and optimizes RDP performance for ultra-fast transfers:
 
-- **Automatic Drive Sharing**: By default, your local drives are shared into the remote desktop. Inside the remote session, open **This PC** in File Explorer or navigate to `\\tsclient\` to drag and drop files directly.
-- **Share a Specific Folder**: Want to share only a designated folder (e.g. `C:\Transfer`)?
+- **Share a Specific Folder**: Want to share only a designated folder (e.g. `C:\Transfer` or `share_folder` in `mfz.ini`)?
   ```bash
   mfz launch my-server --share-folder C:\Transfer
   ```
-  MFZ automatically maps this folder to a virtual drive letter and shares it, then unmounts it cleanly upon exit.
-- **Control Shared Drives**: Specify exact drives to share or disable sharing:
+  MFZ automatically maps this folder to a virtual drive letter (e.g. `Z:`) and shares it cleanly into `\\tsclient`, filtering out unmounted/empty optical drives, then unmounts it upon exit.
+- **Control Shared Drives**: Specify exact drives to share, all drives (`*`), or disable sharing:
   ```bash
   mfz launch my-server --share-drives "C:,D:"
   mfz launch my-server --share-drives none
   ```
-- **Connection Speed Optimization**: Enabled by default (`compression:i:1`, `bitmapcachepersistenable:i:1`, LAN connection type `connection type:i:6`, and disabled audio/printer overhead). Use `--no-optimize` to revert to standard Windows RDP defaults.
+- **Fullscreen & Dynamic Window Resizing**: By default, MFZ launches in **fullscreen**. To launch in a floating window, pass `-w` or `--windowed`:
+  ```bash
+  mfz launch my-server --windowed
+  ```
+  In windowed mode, MFZ enables dynamic resolution so you can resize or maximize the window anytime, and Windows dynamically adjusts the remote screen resolution.
+- **Connection Speed Optimization**: Standard Windows defaults are used by default. Choose an optimization profile to enhance speed:
+  ```bash
+  mfz launch my-server --optimize speed
+  mfz launch my-server --optimize balanced
+  ```
+  Profiles (`speed`, `balanced`, `quality`, `none`) and granular overrides (`audio`, `wallpaper`, `font_smoothing`) can also be configured in `mfz.ini`.
 
 ---
 
