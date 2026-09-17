@@ -13,7 +13,7 @@ Temporary MFA credentials are held in memory only — never written to disk.",
     after_help = "\
 EXAMPLES:
     mfz launch stg
-    mfz launch prd --fullscreen
+    mfz launch prd --windowed
     mfz launch stg --ssm-only
     mfz list
     mfz config list
@@ -91,6 +91,10 @@ pub enum ConfigCommand {
         #[arg(long)]
         shared_folder: Option<String>,
         #[arg(long)]
+        fullscreen: Option<bool>,
+        #[arg(long)]
+        optimize: Option<String>,
+        #[arg(long, hide = true)]
         optimize_connection: Option<bool>,
         #[arg(short, long, default_value = "mfz.ini")]
         config: String,
@@ -124,6 +128,10 @@ pub enum ConfigCommand {
         #[arg(long)]
         shared_folder: Option<String>,
         #[arg(long)]
+        fullscreen: Option<bool>,
+        #[arg(long)]
+        optimize: Option<String>,
+        #[arg(long, hide = true)]
         optimize_connection: Option<bool>,
         #[arg(short, long, default_value = "mfz.ini")]
         config: String,
@@ -149,9 +157,9 @@ pub struct LaunchArgs {
     /// Environment name defined in mfz.ini (e.g. stg, prd)
     pub environment: Option<String>,
 
-    /// Open RDP in fullscreen mode
+    /// Open RDP in windowed mode (overrides fullscreen default)
     #[arg(short, long)]
-    pub fullscreen: bool,
+    pub windowed: bool,
 
     /// Start SSM tunnel only — skip launching mstsc
     #[arg(short, long = "ssm-only")]
@@ -173,9 +181,9 @@ pub struct LaunchArgs {
     #[arg(long = "share-folder")]
     pub share_folder: Option<String>,
 
-    /// Disable RDP performance optimizations
-    #[arg(long = "no-optimize")]
-    pub no_optimize: bool,
+    /// Connection optimization profile (speed, balanced, quality, none)
+    #[arg(short = 'O', long)]
+    pub optimize: Option<String>,
 }
 
 // ─── List ─────────────────────────────────────────────────────────────────────
