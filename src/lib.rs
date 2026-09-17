@@ -7,5 +7,6 @@ pub mod hosts;
 pub mod mfa;
 pub mod qr;
 pub mod rdp;
+pub mod shell;
 pub mod ssm;
 pub mod ui;

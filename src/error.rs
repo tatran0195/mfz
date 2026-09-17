@@ -26,6 +26,9 @@ pub enum AppError {
     #[error("AWS error: {0}")]
     Aws(String),
 
+    #[error("Shell error: {0}")]
+    Shell(String),
+
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
 }
@@ -43,6 +46,7 @@ impl AppError {
             Self::Rdp(_) => 6,
             Self::Iam(_) => 7,
             Self::Aws(_) => 9,
+            Self::Shell(_) => 10,
             Self::Io(_) => 8,
         }
     }
