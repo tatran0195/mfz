@@ -40,3 +40,20 @@ fn test_build_totp_reproducibility() {
         totp2.generate_current().unwrap()
     );
 }
+
+#[test]
+fn test_mfa_manager_creation_with_direct_auth() {
+    use mfz::mfa::{AwsAuthSource, MfaSessionManager};
+
+    let auth = AwsAuthSource::Direct {
+        access_key_id: "AKIAEXAMPLE".to_string(),
+        secret_access_key: "SECRETEXAMPLE".to_string(),
+    };
+    let mgr = MfaSessionManager::new(
+        auth,
+        Some("ap-northeast-1".to_string()),
+        Some("arn:aws:iam::123:mfa/user".to_string()),
+        Some("BASE32SECRET".to_string()),
+    );
+    assert_eq!(mgr.region(), Some("ap-northeast-1"));
+}

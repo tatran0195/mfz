@@ -568,10 +568,35 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
     let totp_secret = env.resolve_secret(&env_name)?;
     let rdp_password = env.resolve_rdp_password(&env_name)?;
 
+    let auth_source = if let Some(ref key_id) = env.aws_access_key_id {
+        let secret_key = env.resolve_aws_secret_key(&env_name)?;
+        let secret_key = secret_key.ok_or_else(|| {
+            error::AppError::Config(format!(
+                "Missing AWS secret access key for environment `{env_name}`"
+            ))
+        })?;
+        mfa::AwsAuthSource::Direct {
+            access_key_id: key_id.clone(),
+            secret_access_key: secret_key,
+        }
+    } else if let Some(ref p) = env.profile {
+        mfa::AwsAuthSource::Profile(p.clone())
+    } else {
+        return Err(error::AppError::Config(format!(
+            "Environment `{env_name}` must configure either `aws_access_key_id` or `profile`"
+        )));
+    };
+
+    let resolved_region = args
+        .region
+        .clone()
+        .or_else(|| env.region.clone())
+        .unwrap_or_else(|| "ap-northeast-1".to_string());
+
     print_section("MFA/SSO Authentication");
     let mut mfa = MfaSessionManager::new(
-        env.profile.clone().unwrap_or_default(),
-        args.region.clone(),
+        auth_source,
+        Some(resolved_region),
         env.serial.clone(),
         totp_secret,
     );

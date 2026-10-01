@@ -47,8 +47,19 @@ impl MfaCredentials {
 
 // ─── MfaSessionManager ───────────────────────────────────────────────────────
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum AwsAuthSource {
+    /// Standalone: direct IAM API credentials from mfz.ini or Keyring
+    Direct {
+        access_key_id: String,
+        secret_access_key: String,
+    },
+    /// Legacy: named AWS profile from ~/.aws/credentials
+    Profile(String),
+}
+
 pub struct MfaSessionManager {
-    base_profile: String,
+    auth_source: AwsAuthSource,
     region: Option<String>,
     serial: Option<String>,
     secret: Option<String>,
@@ -57,18 +68,26 @@ pub struct MfaSessionManager {
 
 impl MfaSessionManager {
     pub fn new(
-        base_profile: String,
+        auth_source: AwsAuthSource,
         region: Option<String>,
         serial: Option<String>,
         secret: Option<String>,
     ) -> Self {
         Self {
-            base_profile,
+            auth_source,
             region,
             serial,
             secret,
             cached: None,
         }
+    }
+
+    pub fn region(&self) -> Option<&str> {
+        self.region.as_deref()
+    }
+
+    pub fn auth_source(&self) -> &AwsAuthSource {
+        &self.auth_source
     }
 
     pub async fn get_credentials(&mut self, spinner: Option<&Spinner>) -> Result<MfaCredentials> {
@@ -106,12 +125,34 @@ impl MfaSessionManager {
         info!("Requesting new AWS session token via MFA...");
         let otp = self.safe_totp(secret, spinner).await?;
 
-        let mut config_loader =
-            aws_config::defaults(BehaviorVersion::latest()).profile_name(&self.base_profile);
-        if let Some(ref r) = self.region {
-            config_loader = config_loader.region(aws_config::Region::new(r.clone()));
-        }
-        let config = config_loader.load().await;
+        let config = match &self.auth_source {
+            AwsAuthSource::Direct {
+                access_key_id,
+                secret_access_key,
+            } => {
+                let static_creds = aws_sdk_sts::config::Credentials::new(
+                    access_key_id.clone(),
+                    secret_access_key.clone(),
+                    None,
+                    None,
+                    "mfz-direct",
+                );
+                let mut config_loader = aws_config::defaults(BehaviorVersion::latest())
+                    .credentials_provider(static_creds);
+                if let Some(ref r) = self.region {
+                    config_loader = config_loader.region(aws_config::Region::new(r.clone()));
+                }
+                config_loader.load().await
+            }
+            AwsAuthSource::Profile(base_profile) => {
+                let mut config_loader =
+                    aws_config::defaults(BehaviorVersion::latest()).profile_name(base_profile);
+                if let Some(ref r) = self.region {
+                    config_loader = config_loader.region(aws_config::Region::new(r.clone()));
+                }
+                config_loader.load().await
+            }
+        };
 
         let response = StsClient::new(&config)
             .get_session_token()
@@ -141,48 +182,64 @@ impl MfaSessionManager {
     }
 
     async fn load_from_profile(&self, _spinner: Option<&Spinner>) -> Result<MfaCredentials> {
-        info!(
-            "Retrieving credentials from AWS profile `{}`...",
-            self.base_profile
-        );
+        match &self.auth_source {
+            AwsAuthSource::Direct {
+                access_key_id,
+                secret_access_key,
+            } => {
+                info!("Using direct AWS credentials without MFA session token...");
+                Ok(MfaCredentials {
+                    access_key_id: access_key_id.clone(),
+                    secret_access_key: secret_access_key.clone(),
+                    session_token: "".to_string(),
+                    expiration: Utc::now() + chrono::Duration::hours(12),
+                })
+            }
+            AwsAuthSource::Profile(base_profile) => {
+                info!(
+                    "Retrieving credentials from AWS profile `{}`...",
+                    base_profile
+                );
 
-        let mut config_loader =
-            aws_config::defaults(BehaviorVersion::latest()).profile_name(&self.base_profile);
-        if let Some(ref r) = self.region {
-            config_loader = config_loader.region(aws_config::Region::new(r.clone()));
+                let mut config_loader =
+                    aws_config::defaults(BehaviorVersion::latest()).profile_name(base_profile);
+                if let Some(ref r) = self.region {
+                    config_loader = config_loader.region(aws_config::Region::new(r.clone()));
+                }
+                let config = config_loader.load().await;
+
+                let provider = config.credentials_provider().ok_or_else(|| {
+                    AppError::Mfa(format!(
+                        "No credential provider found for profile `{}`",
+                        base_profile
+                    ))
+                })?;
+
+                let creds = provider.provide_credentials().await.map_err(|e| {
+                    AppError::Mfa(format!(
+                        "Failed to retrieve credentials for profile `{}`: {}",
+                        base_profile, e
+                    ))
+                })?;
+
+                let expiration = creds
+                    .expiry()
+                    .and_then(|e| {
+                        e.duration_since(UNIX_EPOCH)
+                            .ok()
+                            .map(|d| d.as_secs() as i64)
+                    })
+                    .and_then(|secs| DateTime::from_timestamp(secs, 0))
+                    .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
+
+                Ok(MfaCredentials {
+                    access_key_id: creds.access_key_id().to_owned(),
+                    secret_access_key: creds.secret_access_key().to_owned(),
+                    session_token: creds.session_token().unwrap_or_default().to_owned(),
+                    expiration,
+                })
+            }
         }
-        let config = config_loader.load().await;
-
-        let provider = config.credentials_provider().ok_or_else(|| {
-            AppError::Mfa(format!(
-                "No credential provider found for profile `{}`",
-                self.base_profile
-            ))
-        })?;
-
-        let creds = provider.provide_credentials().await.map_err(|e| {
-            AppError::Mfa(format!(
-                "Failed to retrieve credentials for profile `{}`: {}",
-                self.base_profile, e
-            ))
-        })?;
-
-        let expiration = creds
-            .expiry()
-            .and_then(|e| {
-                e.duration_since(UNIX_EPOCH)
-                    .ok()
-                    .map(|d| d.as_secs() as i64)
-            })
-            .and_then(|secs| DateTime::from_timestamp(secs, 0))
-            .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
-
-        Ok(MfaCredentials {
-            access_key_id: creds.access_key_id().to_owned(),
-            secret_access_key: creds.secret_access_key().to_owned(),
-            session_token: creds.session_token().unwrap_or_default().to_owned(),
-            expiration,
-        })
     }
 
     /// Generate a TOTP code, waiting safely away from the window boundary.
