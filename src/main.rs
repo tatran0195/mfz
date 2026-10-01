@@ -561,30 +561,9 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
         },
     );
 
-    // Resolve Secret & Password from Keyring if missing in config
-    let totp_secret = if env.auth_type == crate::config::AuthType::Mfa {
-        if let Some(s) = env.secret {
-            Some(s)
-        } else {
-            Some(
-                crate::credentials::CredentialStore::get_totp_secret(&env_name)?.ok_or_else(
-                    || {
-                        crate::error::AppError::Config(
-                            "No MFA secret found in config or keyring".into(),
-                        )
-                    },
-                )?,
-            )
-        }
-    } else {
-        None
-    };
-
-    let rdp_password = if env.rdp_password.is_some() {
-        env.rdp_password
-    } else {
-        crate::credentials::CredentialStore::get_rdp_password(&env_name)?
-    };
+    // Resolve Secret & Password (falling back to keyring if omitted from config)
+    let totp_secret = env.resolve_secret(&env_name)?;
+    let rdp_password = env.resolve_rdp_password(&env_name)?;
 
     print_section("MFA/SSO Authentication");
     let mut mfa = MfaSessionManager::new(
@@ -896,7 +875,7 @@ fn setup_console_font() {
             FaceName: [0; 32],
         };
 
-        // Check current font to avoid redundant sets (optional but good practice)
+        // Query current font settings (optional pre-flight check)
         let mut current_font = CONSOLE_FONT_INFOEX {
             cbSize: std::mem::size_of::<CONSOLE_FONT_INFOEX>() as u32,
             nFont: 0,
@@ -906,9 +885,7 @@ fn setup_console_font() {
             FaceName: [0; 32],
         };
 
-        if GetCurrentConsoleFontEx(handle, 0, &mut current_font) != 0 {
-            // If already Consolas, we might skip, but setting it anyway ensures size
-        }
+        let _ = GetCurrentConsoleFontEx(handle, 0, &mut current_font);
 
         let font_name = "Consolas";
         for (i, c) in font_name.encode_utf16().enumerate() {

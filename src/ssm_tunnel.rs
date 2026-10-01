@@ -713,7 +713,7 @@ async fn run_tunnel(
                                         break;
                                     }
                                 } else if f.payload_type == 10 {
-                                    // Flag
+                                    // Control flag payload (1=DisconnectToPort, 2=TerminateSession, 3=ConnectToPortError)
                                     let flag = if f.payload.len() >= 4 {
                                         u32::from_be_bytes(
                                             f.payload[0..4].try_into().unwrap_or_default(),

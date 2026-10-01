@@ -2,7 +2,10 @@ use std::{collections::HashSet, path::PathBuf};
 
 use configparser::ini::Ini;
 
-use crate::error::{AppError, Result};
+use crate::{
+    credentials::CredentialStore,
+    error::{AppError, Result},
+};
 
 const REQUIRED_KEYS: &[&str] = &["profile", "remote_port", "local_port", "rdp_host"];
 
@@ -19,6 +22,8 @@ pub struct EnvironmentConfig {
     pub profile: String,
     pub auth_type: AuthType,
     pub serial: Option<String>,
+    /// TOTP Base-32 secret. If omitted from configuration, resolved from
+    /// the system keyring at session launch.
     pub secret: Option<String>,
     pub instance: Option<String>,
     pub instance_tag: Option<String>,
@@ -26,6 +31,8 @@ pub struct EnvironmentConfig {
     pub local_port: u16,
     pub rdp_host: String,
     pub rdp_user: Option<String>,
+    /// RDP session password. If omitted from configuration, resolved from
+    /// the system keyring at session launch.
     pub rdp_password: Option<String>,
     pub shared_drives: Option<String>,
     pub shared_folder: Option<String>,
@@ -74,10 +81,6 @@ impl EnvironmentConfig {
                 "[{name}] must specify either `instance` or `instance_tag`"
             )));
         }
-
-        // We check for secret later as it might be in keyring,
-        // but we can't check keyring here easily without breaking purity.
-        // Actually, we'll let cmd_launch handle the "missing secret" error.
 
         let parse_port = |key: &str| -> Result<u16> {
             get(key)?
@@ -190,6 +193,31 @@ impl EnvironmentConfig {
             m.insert("font_smoothing".into(), f.to_string());
         }
         m
+    }
+
+    /// Resolves the TOTP secret, checking the config file first, then the system keyring.
+    pub fn resolve_secret(&self, env_name: &str) -> Result<Option<String>> {
+        if let Some(s) = &self.secret {
+            return Ok(Some(s.clone()));
+        }
+        if self.auth_type == AuthType::Mfa {
+            let secret = CredentialStore::get_totp_secret(env_name)?.ok_or_else(|| {
+                AppError::Config(format!(
+                    "No MFA secret found for [{env_name}] in config or keyring"
+                ))
+            })?;
+            Ok(Some(secret))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Resolves the RDP password, checking config first, then the system keyring.
+    pub fn resolve_rdp_password(&self, env_name: &str) -> Result<Option<String>> {
+        if let Some(p) = &self.rdp_password {
+            return Ok(Some(p.clone()));
+        }
+        CredentialStore::get_rdp_password(env_name)
     }
 }
 
@@ -379,8 +407,7 @@ impl ConfigLoader {
             )));
         }
 
-        // configparser doesn't have a direct section delete?
-        // Let's check docs or just rebuild the ini without that section.
+        // Rebuild configuration omitting the deleted section.
         let mut new_ini = Ini::new();
         for section in ini.sections() {
             if section != env_name {

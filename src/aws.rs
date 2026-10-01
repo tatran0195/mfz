@@ -30,7 +30,7 @@ pub async fn resolve_instance_by_tag(
 
     let config = config_loader.load().await;
 
-    // We need to pass the credentials from MFA session to the EC2 client
+    // Configure EC2 client with temporary credentials from the active MFA session.
     let ec2_config = aws_sdk_ec2::config::Builder::from(&config)
         .credentials_provider(aws_sdk_sts::config::Credentials::new(
             creds.access_key_id,
