@@ -49,9 +49,9 @@ mfz launch
 
 Before you start, make sure your computer is ready:
 
-1. **AWS CLI**: You need the AWS Command Line Interface installed and configured.
-2. **SSM Plugin**: This is what lets MFZ "tunnel" through the internet securely. [Download here](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html).
-3. **Remote Desktop (mstsc)**: Standard on all Windows PCs.
+1. **Remote Desktop (mstsc)**: Standard on all Windows PCs.
+2. **Zero External Dependencies (Standalone Mode)**: MFZ contains a native Rust SSM WebSocket tunnel and direct AWS authentication engine—no AWS CLI or SSM plugin installation is required when using direct credentials in `mfz.ini`!
+3. **AWS CLI Profile (Optional)**: If you prefer using named profiles from `~/.aws/credentials` or AWS SSO, MFZ supports them as a seamless fallback.
 
 ---
 
@@ -61,12 +61,17 @@ Before you start, make sure your computer is ready:
 
 Don't want to type names? Just run `mfz launch`. A beautiful interactive menu will appear where you can search for and select your server.
 
-### 🛡️ Secure Your Passwords
+### 🛡️ Secure Your Passwords & Keys
 
-By default, MFZ stores settings in a file named `mfz.ini`. To move sensitive data (like MFA secrets or RDP passwords) to the secure Windows safe-box:
+By default, MFZ stores settings in `mfz.ini`. To move sensitive data (AWS secret keys, MFA secrets, or RDP passwords) to the secure Windows Credential Manager safe-box:
 
 ```bash
-mfz config secure my-server
+mfz env secure my-server
+```
+
+You can also set your AWS Secret Key directly in the safe-box:
+```bash
+mfz env set-aws-secret my-server
 ```
 
 ### 📝 Hostname Shortcuts

@@ -60,7 +60,9 @@ impl CredentialStore {
         match entry.get_password() {
             Ok(p) => Ok(Some(p)),
             Err(keyring::Error::NoEntry) => Ok(None),
-            Err(e) => Err(AppError::Config(format!("Failed to read AWS secret key: {e}"))),
+            Err(e) => Err(AppError::Config(format!(
+                "Failed to read AWS secret key: {e}"
+            ))),
         }
     }
 

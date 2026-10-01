@@ -39,10 +39,13 @@ graph TD
 
 | Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `profile` | String | (Required) | AWS CLI profile name. |
+| `aws_access_key_id` | String | None | AWS Access Key ID for 100% standalone mode (no `~/.aws/credentials` needed). |
+| `aws_secret_access_key` | String | None | AWS Secret Access Key. *Recommendation: Store in Keyring via `mfz env secure` or `mfz env set-aws-secret`*. |
+| `region` | String | `ap-northeast-1` | AWS Region for the environment (overridable via `--region`). |
+| `profile` | String | None | Legacy fallback: AWS profile name in `~/.aws/credentials`. Required if `aws_access_key_id` omitted. |
 | `auth_type` | Enum | Auto | `Mfa` or `Sso`. Inferred by presence of `serial`. |
 | `serial` | String | None | IAM Virtual MFA ARN (e.g., `arn:aws:iam::...:mfa/user`). |
-| `secret` | String | None | Base-32 shared secret. *Recommendation: Use `mfz config secure`*. |
+| `secret` | String | None | Base-32 shared secret. *Recommendation: Use `mfz env secure`*. |
 | `instance` | String | None | Target AWS Instance ID. |
 | `instance_tag` | String | None | Discovery query (e.g., `Name=Jump-Host`). |
 | `remote_port` | u16 | 3389 | The port listening on the target instance. |
@@ -64,11 +67,11 @@ graph TD
 
 ### Keyring Integration
 
-MFZ uses the `keyring` crate to interface with the **Windows Credential Manager**.
+MFZ uses the `keyring` crate with native Windows Credential Manager support (`windows-native`).
 
 - **Namespace**: `mfz-cli`
-- **Keys**: `totp-secret-<env>` and `rdp-password-<env>`
-- **Behavior**: Plain-text values in `mfz.ini` act as overrides. Running `config secure` migrates these to the OS-level store and clears them from the `.ini` file.
+- **Keys**: `totp-secret-<env>`, `rdp-password-<env>`, and `aws-secret-<env>`
+- **Behavior**: Plain-text values in `mfz.ini` act as overrides. Running `mfz env secure <env>` migrates all plain-text secrets (AWS secret key, TOTP secret, RDP password) to the Windows Credential Manager and clears them from `mfz.ini`. You can also set the AWS secret key directly via `mfz env set-aws-secret <env>`.
 
 ### MFA Safety Margin
 

@@ -86,8 +86,7 @@ impl EnvironmentConfig {
         }
 
         let profile = get_opt("profile");
-        let aws_access_key_id =
-            get_opt("aws_access_key_id").or_else(|| get_opt("access_key_id"));
+        let aws_access_key_id = get_opt("aws_access_key_id").or_else(|| get_opt("access_key_id"));
         let aws_secret_access_key =
             get_opt("aws_secret_access_key").or_else(|| get_opt("secret_access_key"));
         let region = get_opt("region");

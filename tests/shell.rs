@@ -52,7 +52,7 @@ local_port = 13389
         .load_from_file_or_name(exported.to_str().unwrap())
         .unwrap();
     assert_eq!(name, "stg");
-    assert_eq!(env.profile, "dev");
+    assert_eq!(env.profile.as_deref(), Some("dev"));
     assert_eq!(env.local_port, 13389);
 
     let _ = fs::remove_file(&ini_path);
@@ -101,7 +101,7 @@ optimize = speed
         .load_from_file_or_name(exported.to_str().unwrap())
         .unwrap();
     assert_eq!(name, "prd");
-    assert_eq!(loaded.profile, "prod_profile");
+    assert_eq!(loaded.profile.as_deref(), Some("prod_profile"));
     assert_eq!(loaded.local_port, 13390);
     assert_eq!(loaded.fullscreen, Some(true));
     assert_eq!(loaded.optimize.as_deref(), Some("speed"));

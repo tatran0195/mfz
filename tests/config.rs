@@ -335,11 +335,22 @@ rdp_host=stg-rdp
     let loader = ConfigLoader::new(&file);
     let cfg = loader.load("stg_standalone").unwrap();
 
-    assert_eq!(cfg.aws_access_key_id.as_deref(), Some("AKIAIOSFODNN7EXAMPLE"));
-    assert_eq!(cfg.aws_secret_access_key.as_deref(), Some("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"));
+    assert_eq!(
+        cfg.aws_access_key_id.as_deref(),
+        Some("AKIAIOSFODNN7EXAMPLE")
+    );
+    assert_eq!(
+        cfg.aws_secret_access_key.as_deref(),
+        Some("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY")
+    );
     assert_eq!(cfg.region.as_deref(), Some("ap-northeast-1"));
     assert_eq!(cfg.profile, None);
-    assert_eq!(cfg.resolve_aws_secret_key("stg_standalone").unwrap().as_deref(), Some("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"));
+    assert_eq!(
+        cfg.resolve_aws_secret_key("stg_standalone")
+            .unwrap()
+            .as_deref(),
+        Some("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY")
+    );
 
     let _ = fs::remove_file(&file);
 }
@@ -356,8 +367,9 @@ rdp_host=stg-rdp
     let file = create_temp_config(content);
     let loader = ConfigLoader::new(&file);
     let err = loader.load("invalid_env").unwrap_err();
-    assert!(err.to_string().contains("must specify either `aws_access_key_id`"));
+    assert!(err
+        .to_string()
+        .contains("must specify either `aws_access_key_id`"));
 
     let _ = fs::remove_file(&file);
 }
-

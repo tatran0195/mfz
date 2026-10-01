@@ -382,7 +382,8 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             let mut changed = false;
 
             if let Some(aws_secret) = env.aws_secret_access_key.take() {
-                let spinner = Spinner::new(format!("Moving AWS secret key for `{name}` to keyring…"));
+                let spinner =
+                    Spinner::new(format!("Moving AWS secret key for `{name}` to keyring…"));
                 crate::credentials::CredentialStore::set_aws_secret_key(&name, &aws_secret)?;
                 spinner.success("AWS secret key secured.");
                 changed = true;
@@ -421,7 +422,10 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                     .map_err(|e| crate::error::AppError::Config(e.to_string()))?
             };
             crate::credentials::CredentialStore::set_aws_secret_key(&name, &key)?;
-            println!("{} AWS secret access key saved to keyring for `{name}`.", "✔".green());
+            println!(
+                "{} AWS secret access key saved to keyring for `{name}`.",
+                "✔".green()
+            );
         }
     }
     Ok(())
