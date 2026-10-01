@@ -10,6 +10,58 @@ use crate::{
 };
 
 #[cfg(target_os = "windows")]
+mod elevation {
+    /// UAC-elevate the current executable with the given args using ShellExecuteW.
+    /// Returns Ok(()) if the elevated process was launched successfully, Err otherwise.
+    pub fn shell_execute_runas(exe: &std::path::Path, args: &[&str]) -> std::io::Result<()> {
+        use std::os::windows::ffi::OsStrExt;
+        use windows_sys::Win32::{
+            Foundation::HWND, UI::Shell::ShellExecuteW, UI::WindowsAndMessaging::SW_SHOW,
+        };
+
+        // Build a single quoted argument string: "arg1" "arg2" ...
+        let args_str: String = args
+            .iter()
+            .map(|a| format!("\"{}\" ", a.replace('"', "\\\"")))
+            .collect();
+        let args_str = args_str.trim_end();
+
+        let verb: Vec<u16> = std::ffi::OsStr::new("runas")
+            .encode_wide()
+            .chain(std::iter::once(0))
+            .collect();
+        let file: Vec<u16> = exe
+            .as_os_str()
+            .encode_wide()
+            .chain(std::iter::once(0))
+            .collect();
+        let params: Vec<u16> = std::ffi::OsStr::new(args_str)
+            .encode_wide()
+            .chain(std::iter::once(0))
+            .collect();
+
+        // SAFETY: All pointers are valid for the duration of the call.
+        let result = unsafe {
+            ShellExecuteW(
+                0 as HWND,
+                verb.as_ptr(),
+                file.as_ptr(),
+                params.as_ptr(),
+                std::ptr::null(),
+                SW_SHOW as i32,
+            )
+        };
+
+        // ShellExecuteW returns a pseudo-HINSTANCE; values <= 32 indicate error.
+        if result as usize > 32 {
+            Ok(())
+        } else {
+            Err(std::io::Error::last_os_error())
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
 const HOSTS_PATH: &str = r"C:\Windows\System32\drivers\etc\hosts";
 #[cfg(not(target_os = "windows"))]
 const HOSTS_PATH: &str = "/etc/hosts";
@@ -67,31 +119,12 @@ impl HostsManager {
                 AppError::Hosts(format!("Failed to determine executable path: {e}"))
             })?;
 
-            let formatted_args = args
-                .iter()
-                .map(|a| format!("'{}'", a.replace('\'', "''")))
-                .collect::<Vec<_>>()
-                .join(", ");
+            elevation::shell_execute_runas(&exe, args)
+                .map_err(|e| AppError::Hosts(format!("Elevation via ShellExecuteW failed: {e}")))?;
 
-            let ps_cmd = format!(
-                "Start-Process -FilePath '{}' -ArgumentList @({}) -Verb RunAs -Wait -PassThru | ForEach-Object {{ exit $_.ExitCode }}",
-                exe.to_string_lossy().replace('\'', "''"),
-                formatted_args
-            );
-
-            let status = std::process::Command::new("powershell")
-                .args(["-NoProfile", "-NonInteractive", "-Command", &ps_cmd])
-                .status()
-                .map_err(|e| AppError::Hosts(format!("Failed to execute elevated process: {e}")))?;
-
-            if status.success() {
-                Ok(())
-            } else {
-                Err(AppError::Hosts(format!(
-                    "Elevated operation failed or was cancelled (exit code: {})",
-                    status.code().unwrap_or(-1)
-                )))
-            }
+            // ShellExecuteW with "runas" is fire-and-forget by default.
+            // For hosts-add we accept this: the elevated process will write the entry.
+            Ok(())
         }
 
         #[cfg(not(target_os = "windows"))]

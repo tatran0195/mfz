@@ -8,5 +8,7 @@ pub mod mfa;
 pub mod qr;
 pub mod rdp;
 pub mod shell;
+pub mod smux;
 pub mod ssm;
+pub mod ssm_tunnel;
 pub mod ui;

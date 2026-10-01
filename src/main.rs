@@ -25,7 +25,7 @@ fn setup_logging(enable_file: bool) {
         .with_writer(std::io::stderr)
         .with_ansi(true)
         .with_target(false)
-        .with_filter(EnvFilter::new("rdp_launcher=debug,warn"))
+        .with_filter(EnvFilter::new("mfz=info,warn"))
         .boxed();
     layers.push(console_layer);
 
@@ -57,10 +57,11 @@ async fn main() {
     {
         // Enable ANSI support
         colored::control::set_virtual_terminal(true).ok();
-        // Force UTF-8 code page for better symbol support in CMD
-        let _ = std::process::Command::new("cmd")
-            .args(["/C", "chcp 65001"])
-            .output();
+        // Set UTF-8 code page natively — no `cmd /C chcp 65001` subprocess needed
+        unsafe {
+            windows_sys::Win32::System::Console::SetConsoleCP(65001);
+            windows_sys::Win32::System::Console::SetConsoleOutputCP(65001);
+        }
         // Attempt to set a modern font (Consolas) for better symbol rendering
         setup_console_font();
     }
@@ -688,7 +689,7 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
         env.rdp_host, env.local_port
     ));
     tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
-    spinner.set_message(format!(
+    spinner.success(format!(
         "Launching mstsc → {}:{}…",
         env.rdp_host, env.local_port
     ));
@@ -703,7 +704,7 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
         shared_folder: shared_folder_path,
         optimization: opt_settings,
     })?;
-    spinner.success("RDP session ended");
+    print_info("Remote Desktop session ended");
     ssm.stop();
 
     Ok(())
@@ -882,7 +883,7 @@ fn setup_console_font() {
 
     unsafe {
         let handle = GetStdHandle(STD_OUTPUT_HANDLE);
-        if handle == 0 || handle == -1isize as _ {
+        if handle == 0 || handle == windows_sys::Win32::Foundation::INVALID_HANDLE_VALUE {
             return;
         }
 

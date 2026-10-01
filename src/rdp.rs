@@ -1,8 +1,16 @@
 use std::process::Command;
 
-use tracing::info;
+use tracing::{debug, info};
 
 use crate::error::{AppError, Result};
+
+#[cfg(windows)]
+use windows_sys::Win32::{
+    Security::Credentials::{
+        CredDeleteW, CredWriteW, CREDENTIALW, CRED_PERSIST_LOCAL_MACHINE, CRED_TYPE_DOMAIN_PASSWORD,
+    },
+    Storage::FileSystem::{DefineDosDeviceW, DDD_REMOVE_DEFINITION},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum OptimizationProfile {
@@ -75,6 +83,17 @@ pub fn build_rdp_file_content(opts: &RdpProfileOptions) -> String {
     }
     lines.push("prompt for credentials:i:0".into());
 
+    // ── SSM tunnel: force TCP-only transport ─────────────────────────────────
+    // mstsc probes UDP:3389 in parallel with TCP. Over an SSM tunnel only TCP
+    // is forwarded; UDP probes go nowhere and the NLA handshake hangs forever
+    // at "Securing remote connection...".  Disabling auto-detect and fixing
+    // the connection type forces mstsc to use TCP exclusively.
+    lines.push("networkautodetect:i:0".into());
+    lines.push("bandwidthautodetect:i:0".into());
+    lines.push("connection type:i:2".into()); // 2 = low-speed broadband (no UDP probe)
+    lines.push("enablecredsspsupport:i:1".into()); // keep NLA (cached creds are used)
+    lines.push("authentication level:i:0".into()); // don't block on cert mismatch over tunnel
+
     match opts.optimization.profile {
         OptimizationProfile::None => {
             if let Some(audio) = opts.optimization.audio {
@@ -98,7 +117,7 @@ pub fn build_rdp_file_content(opts: &RdpProfileOptions) -> String {
             lines.push("bitmapcachepersistenable:i:1".into());
             lines.push("connection type:i:6".into());
             lines.push("networkautodetect:i:0".into());
-            lines.push("bandwidthautodetect:i:1".into());
+            lines.push("bandwidthautodetect:i:0".into());
 
             let audiomode = if opts.optimization.audio == Some(true) {
                 0
@@ -132,8 +151,8 @@ pub fn build_rdp_file_content(opts: &RdpProfileOptions) -> String {
             lines.push("compression:i:1".into());
             lines.push("bitmapcachepersistenable:i:1".into());
             lines.push("connection type:i:6".into());
-            lines.push("networkautodetect:i:1".into());
-            lines.push("bandwidthautodetect:i:1".into());
+            lines.push("networkautodetect:i:0".into());
+            lines.push("bandwidthautodetect:i:0".into());
 
             let audiomode = if opts.optimization.audio == Some(false) {
                 2
@@ -325,17 +344,42 @@ impl FolderDriveGuard {
             folder.display()
         );
 
-        let status = Command::new("subst")
-            .args([&format!("{drive_letter}:"), folder_str])
-            .status()
-            .map_err(|e| AppError::Rdp(format!("Failed to execute `subst`: {e}")))?;
+        #[cfg(windows)]
+        {
+            use std::os::windows::ffi::OsStrExt;
 
-        if !status.success() {
-            return Err(AppError::Rdp(format!(
-                "Failed to map virtual drive {}: for folder {}",
-                drive_letter,
-                folder.display()
-            )));
+            let drive_wide: Vec<u16> = std::ffi::OsStr::new(&format!("{drive_letter}:"))
+                .encode_wide()
+                .chain(std::iter::once(0))
+                .collect();
+            let folder_wide: Vec<u16> = folder_str
+                .encode_utf16()
+                .chain(std::iter::once(0))
+                .collect();
+
+            let ok = unsafe { DefineDosDeviceW(0, drive_wide.as_ptr(), folder_wide.as_ptr()) };
+            if ok == 0 {
+                return Err(AppError::Rdp(format!(
+                    "DefineDosDeviceW failed to map {drive_letter}: → {} (OS error {})",
+                    folder.display(),
+                    std::io::Error::last_os_error()
+                )));
+            }
+        }
+
+        #[cfg(not(windows))]
+        {
+            let status = Command::new("subst")
+                .args([&format!("{drive_letter}:"), folder_str])
+                .status()
+                .map_err(|e| AppError::Rdp(format!("Failed to execute `subst`: {e}")))?;
+
+            if !status.success() {
+                return Err(AppError::Rdp(format!(
+                    "Failed to map virtual drive {drive_letter}: for folder {}",
+                    folder.display()
+                )));
+            }
         }
 
         Ok(Self {
@@ -351,11 +395,26 @@ impl FolderDriveGuard {
     pub fn unmount(&mut self) {
         if !self.unmounted {
             info!("Unmounting virtual drive {}:", self.drive_letter);
-            let _ = Command::new("subst")
-                .args([&format!("{}:", self.drive_letter), "/d"])
-                .stdout(std::process::Stdio::null())
-                .stderr(std::process::Stdio::null())
-                .status();
+
+            #[cfg(windows)]
+            unsafe {
+                use std::os::windows::ffi::OsStrExt;
+                let drive_wide: Vec<u16> = std::ffi::OsStr::new(&format!("{}:", self.drive_letter))
+                    .encode_wide()
+                    .chain(std::iter::once(0))
+                    .collect();
+                DefineDosDeviceW(DDD_REMOVE_DEFINITION, drive_wide.as_ptr(), std::ptr::null());
+            }
+
+            #[cfg(not(windows))]
+            {
+                let _ = Command::new("subst")
+                    .args([&format!("{}:", self.drive_letter), "/d"])
+                    .stdout(std::process::Stdio::null())
+                    .stderr(std::process::Stdio::null())
+                    .status();
+            }
+
             self.unmounted = true;
         }
     }
@@ -419,19 +478,51 @@ pub fn launch(opts: LaunchOptions) -> Result<()> {
         format!("TERMSRV/127.0.0.1:{port}"),
     ];
 
-    // If both user and pass are provided, cache them using cmdkey
+    // If both user and pass are provided, cache credentials natively via CredWriteW
     if let (Some(u), Some(p)) = (username, password) {
         for target_name in &generic_targets {
-            info!("Caching credentials for {target_name}");
-            let _ = Command::new("cmdkey")
-                .args([
-                    &format!("/generic:{target_name}"),
-                    &format!("/user:{u}"),
-                    &format!("/pass:{p}"),
-                ])
-                .stdout(std::process::Stdio::null())
-                .stderr(std::process::Stdio::null())
-                .status();
+            debug!("Caching credentials for {target_name}");
+
+            #[cfg(windows)]
+            {
+                let target_wide: Vec<u16> = target_name
+                    .encode_utf16()
+                    .chain(std::iter::once(0))
+                    .collect();
+                let user_wide: Vec<u16> = u.encode_utf16().chain(std::iter::once(0)).collect();
+                let pass_bytes: Vec<u8> = p.encode_utf16().flat_map(|c| c.to_le_bytes()).collect();
+
+                let cred = CREDENTIALW {
+                    Flags: 0,
+                    Type: CRED_TYPE_DOMAIN_PASSWORD,
+                    TargetName: target_wide.as_ptr() as *mut u16,
+                    Comment: std::ptr::null_mut(),
+                    LastWritten: unsafe { std::mem::zeroed() },
+                    CredentialBlobSize: pass_bytes.len() as u32,
+                    CredentialBlob: pass_bytes.as_ptr() as *mut u8,
+                    Persist: CRED_PERSIST_LOCAL_MACHINE,
+                    AttributeCount: 0,
+                    Attributes: std::ptr::null_mut(),
+                    TargetAlias: std::ptr::null_mut(),
+                    UserName: user_wide.as_ptr() as *mut u16,
+                };
+                unsafe {
+                    CredWriteW(&cred, 0);
+                }
+            }
+
+            #[cfg(not(windows))]
+            {
+                let _ = Command::new("cmdkey")
+                    .args([
+                        &format!("/generic:{target_name}"),
+                        &format!("/user:{u}"),
+                        &format!("/pass:{p}"),
+                    ])
+                    .stdout(std::process::Stdio::null())
+                    .stderr(std::process::Stdio::null())
+                    .status();
+            }
         }
     }
 
@@ -450,12 +541,27 @@ pub fn launch(opts: LaunchOptions) -> Result<()> {
     // Cleanup credentials after RDP session ends
     if username.is_some() && password.is_some() {
         for target_name in &generic_targets {
-            info!("Cleaning up cached credentials for {target_name}");
-            let _ = Command::new("cmdkey")
-                .arg(format!("/delete:{target_name}"))
-                .stdout(std::process::Stdio::null())
-                .stderr(std::process::Stdio::null())
-                .status();
+            debug!("Cleaning up cached credentials for {target_name}");
+
+            #[cfg(windows)]
+            {
+                let target_wide: Vec<u16> = target_name
+                    .encode_utf16()
+                    .chain(std::iter::once(0))
+                    .collect();
+                unsafe {
+                    CredDeleteW(target_wide.as_ptr(), CRED_TYPE_DOMAIN_PASSWORD, 0);
+                }
+            }
+
+            #[cfg(not(windows))]
+            {
+                let _ = Command::new("cmdkey")
+                    .arg(format!("/delete:{target_name}"))
+                    .stdout(std::process::Stdio::null())
+                    .stderr(std::process::Stdio::null())
+                    .status();
+            }
         }
     }
 

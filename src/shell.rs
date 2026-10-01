@@ -1,6 +1,9 @@
-use std::{
-    path::{Path, PathBuf},
-    process::Command,
+use std::path::{Path, PathBuf};
+
+#[cfg(windows)]
+use winreg::{
+    enums::{HKEY_CURRENT_USER, KEY_ALL_ACCESS},
+    RegKey,
 };
 
 use crate::{
@@ -43,64 +46,71 @@ pub fn register_file_association() -> Result<()> {
 
     let command_str = format!("\"{}\" launch \"%1\"", exe_str);
 
-    let entries = [
-        ("HKCU\\Software\\Classes\\.mfz", "", "mfz.session"),
-        (
-            "HKCU\\Software\\Classes\\mfz.session",
-            "",
-            "MFZ Remote Desktop Profile",
-        ),
-        (
-            "HKCU\\Software\\Classes\\mfz.session\\DefaultIcon",
-            "",
-            &icon_path,
-        ),
-        (
-            "HKCU\\Software\\Classes\\mfz.session\\shell\\open\\command",
-            "",
-            &command_str,
-        ),
-    ];
+    #[cfg(windows)]
+    {
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
 
-    for (key, val_name, val_data) in entries {
-        let mut cmd = Command::new("reg");
-        cmd.arg("add").arg(key);
-        if val_name.is_empty() {
-            cmd.arg("/ve");
-        } else {
-            cmd.arg("/v").arg(val_name);
-        }
-        cmd.arg("/d").arg(val_data).arg("/f");
+        // .mfz → mfz.session
+        let (ext_key, _) = hkcu
+            .create_subkey("Software\\Classes\\.mfz")
+            .map_err(|e| AppError::Shell(format!("Failed to create .mfz key: {e}")))?;
+        ext_key
+            .set_value("", &"mfz.session")
+            .map_err(|e| AppError::Shell(format!("Failed to set .mfz default value: {e}")))?;
 
-        let output = cmd
-            .output()
-            .map_err(|e| AppError::Shell(format!("Failed to execute reg.exe: {e}")))?;
+        // mfz.session display name
+        let (prog_key, _) = hkcu
+            .create_subkey("Software\\Classes\\mfz.session")
+            .map_err(|e| AppError::Shell(format!("Failed to create mfz.session key: {e}")))?;
+        prog_key
+            .set_value("", &"MFZ Remote Desktop Profile")
+            .map_err(|e| AppError::Shell(format!("Failed to set mfz.session value: {e}")))?;
 
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(AppError::Shell(format!(
-                "Registry add failed for {key}: {}",
-                stderr.trim()
-            )));
-        }
+        // DefaultIcon
+        let (icon_key, _) = hkcu
+            .create_subkey("Software\\Classes\\mfz.session\\DefaultIcon")
+            .map_err(|e| AppError::Shell(format!("Failed to create DefaultIcon key: {e}")))?;
+        icon_key
+            .set_value("", &icon_path.as_str())
+            .map_err(|e| AppError::Shell(format!("Failed to set DefaultIcon value: {e}")))?;
+
+        // shell\open\command
+        let (cmd_key, _) = hkcu
+            .create_subkey("Software\\Classes\\mfz.session\\shell\\open\\command")
+            .map_err(|e| AppError::Shell(format!("Failed to create open command key: {e}")))?;
+        cmd_key
+            .set_value("", &command_str.as_str())
+            .map_err(|e| AppError::Shell(format!("Failed to set open command value: {e}")))?;
     }
+
+    #[cfg(not(windows))]
+    let _ = (icon_path, command_str);
 
     Ok(())
 }
 
 /// Unregisters the `.mfz` file extension association from `HKCU\Software\Classes`.
 pub fn unregister_file_association() -> Result<()> {
-    let keys = [
-        "HKCU\\Software\\Classes\\.mfz",
-        "HKCU\\Software\\Classes\\mfz.session",
-    ];
+    #[cfg(windows)]
+    {
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+        let classes = hkcu
+            .open_subkey_with_flags("Software\\Classes", KEY_ALL_ACCESS)
+            .map_err(|e| AppError::Shell(format!("Failed to open Software\\Classes: {e}")))?;
 
-    for key in keys {
-        let mut cmd = Command::new("reg");
-        cmd.arg("delete").arg(key).arg("/f");
-
-        // We run reg delete and don't fail if the key doesn't exist
-        let _ = cmd.output();
+        // Delete mfz.session subtree first (has children), then .mfz leaf
+        for key in ["mfz.session", ".mfz"] {
+            // delete_subkey_all is recursive
+            match classes.delete_subkey_all(key) {
+                Ok(_) => {}
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                Err(e) => {
+                    return Err(AppError::Shell(format!(
+                        "Failed to delete registry key {key}: {e}"
+                    )));
+                }
+            }
+        }
     }
 
     Ok(())

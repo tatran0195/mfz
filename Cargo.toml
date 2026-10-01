@@ -19,12 +19,24 @@ tokio = { version = "1", features = ["full"] }
 
 # AWS SDK
 aws-config = { version = "1", features = ["behavior-version-latest"] }
-aws-sdk-sts  = "1"
-aws-sdk-iam  = "1"
-aws-sdk-ec2  = "1"
-aws-sdk-sso  = "1"
+aws-sdk-sts     = "1"
+aws-sdk-iam     = "1"
+aws-sdk-ec2     = "1"
+aws-sdk-ssm     = "1"
+aws-sdk-sso     = "1"
 aws-sdk-ssooidc = "1"
 aws-credential-types = "1"
+serde      = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Native SSM WebSocket tunnel (replaces session-manager-plugin binary)
+tokio-tungstenite = { version = "0.24", features = ["native-tls"] }
+futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
+sha2 = "0.10"
+uuid = { version = "1", features = ["v4"] }
+url  = "2"
+aws-sigv4 = { version = "1", features = ["http1", "sign-http"] }
+http = "1"
 
 # TOTP / OTP
 totp-rs = { version = "5", features = ["gen_secret", "otpauth"] }
@@ -58,7 +70,17 @@ regex     = "1"
 rand      = "0.8.5"
 keyring   = "3"
 inquire   = "0.7.5"
-windows-sys = { version = "0.52", features = ["Win32_System_Console"] }
+windows-sys = { version = "0.52", features = [
+    "Win32_System_Console",         # SetConsoleCP, SetConsoleOutputCP
+    "Win32_System_Threading",       # OpenProcess, TerminateProcess, PROCESS_TERMINATE
+    "Win32_Storage_FileSystem",     # DefineDosDeviceW, DDD_REMOVE_DEFINITION
+    "Win32_Foundation",             # HANDLE, BOOL, CloseHandle
+    "Win32_Security_Credentials",   # CredWriteW, CredDeleteW, CREDENTIALW
+    "Win32_UI_Shell",               # ShellExecuteW (UAC elevation)
+    "Win32_UI_WindowsAndMessaging", # SW_SHOW
+] }
+winreg = "0.52"
+bytes = "1"
 
 [build-dependencies]
 winres = "0.1"
