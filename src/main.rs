@@ -116,7 +116,7 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                     if let Some(tag) = env.instance_tag {
                         println!("      {:<12} {}", "Inst Tag:".dimmed(), tag);
                     }
-                    println!("      {:<12} {}", "Profile:".dimmed(), env.profile);
+                    println!("      {:<12} {}", "Profile:".dimmed(), env.profile.as_deref().unwrap_or("-"));
                     println!("      {:<12} {:?}", "Auth Type:".dimmed(), env.auth_type);
 
                     if env.auth_type == crate::config::AuthType::Mfa {
@@ -224,7 +224,10 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             });
 
             let new_env = crate::config::EnvironmentConfig {
-                profile,
+                profile: Some(profile),
+                aws_access_key_id: None,
+                aws_secret_access_key: None,
+                region: None,
                 auth_type,
                 serial,
                 secret,
@@ -277,7 +280,7 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             let mut env = loader.load(&name)?;
 
             if let Some(p) = profile {
-                env.profile = p;
+                env.profile = Some(p);
             }
             if let Some(s) = serial {
                 env.serial = Some(s);
@@ -499,7 +502,7 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
     if let Some(ref tag) = env.instance_tag {
         print_kv("Instance Tag", tag);
     }
-    print_kv("Profile", &env.profile);
+    print_kv("Profile", env.profile.as_deref().unwrap_or("-"));
     print_kv("Remote port", &env.remote_port.to_string());
     print_kv("Local port", &env.local_port.to_string());
     print_kv("RDP host", &env.rdp_host);
@@ -567,7 +570,7 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
 
     print_section("MFA/SSO Authentication");
     let mut mfa = MfaSessionManager::new(
-        env.profile.clone(),
+        env.profile.clone().unwrap_or_default(),
         args.region.clone(),
         env.serial.clone(),
         totp_secret,

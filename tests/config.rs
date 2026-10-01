@@ -25,7 +25,10 @@ fn test_config_add_new() {
 
     let loader = ConfigLoader::new(&file_path);
     let env_config = EnvironmentConfig {
-        profile: "test_profile".to_string(),
+        profile: Some("test_profile".to_string()),
+        aws_access_key_id: None,
+        aws_secret_access_key: None,
+        region: None,
         auth_type: AuthType::Sso,
         serial: None,
         secret: None,
@@ -49,7 +52,10 @@ fn test_config_add_new() {
     assert!(loader.save("test_env", &env_config).is_ok());
 
     let env_config2 = EnvironmentConfig {
-        profile: "test_profile2".to_string(),
+        profile: Some("test_profile2".to_string()),
+        aws_access_key_id: None,
+        aws_secret_access_key: None,
+        region: None,
         auth_type: AuthType::Mfa,
         serial: Some("arn:test".to_string()),
         secret: Some("secret123".to_string()),
@@ -73,7 +79,7 @@ fn test_config_add_new() {
     assert!(loader.save("test_env2", &env_config2).is_ok());
 
     let loaded = loader.load("test_env2").unwrap();
-    assert_eq!(loaded.profile, "test_profile2");
+    assert_eq!(loaded.profile.as_deref(), Some("test_profile2"));
     assert_eq!(loaded.serial.as_deref(), Some("arn:test"));
     assert_eq!(loaded.auth_type, AuthType::Mfa);
     assert_eq!(loaded.instance_tag.as_deref(), Some("Name=test"));
@@ -110,7 +116,7 @@ rdp_host=prd-rdp
     assert!(envs.contains(&"prd".to_string()));
 
     let stg = loader.load("stg").unwrap();
-    assert_eq!(stg.profile, "nsy_web_app_stg");
+    assert_eq!(stg.profile.as_deref(), Some("nsy_web_app_stg"));
     assert_eq!(stg.serial.as_deref(), Some("arn:aws:iam::123:mfa/waka"));
     assert_eq!(stg.instance.as_deref(), Some("i-abc"));
 
@@ -164,7 +170,7 @@ rdp_host=h2
 
     let all = loader.get_all().unwrap();
     assert_eq!(all.len(), 2);
-    assert_eq!(all.get("e1").unwrap().profile, "p1");
+    assert_eq!(all.get("e1").unwrap().profile.as_deref(), Some("p1"));
     assert_eq!(
         all.get("e2").unwrap().instance_tag.as_deref(),
         Some("Name=abc")
@@ -252,7 +258,7 @@ local_port = 13389
         .load_from_file_or_name(mfz_file.to_str().unwrap())
         .unwrap();
     assert_eq!(name, "stg");
-    assert_eq!(env.profile, "dev");
+    assert_eq!(env.profile.as_deref(), Some("dev"));
 
     let _ = fs::remove_file(&ini_path);
     let _ = fs::remove_file(&mfz_file);
@@ -280,7 +286,7 @@ local_port = 13390
         .load_from_file_or_name(mfz_file.to_str().unwrap())
         .unwrap();
     assert!(name.starts_with("test_standalone"));
-    assert_eq!(env.profile, "prd_profile");
+    assert_eq!(env.profile.as_deref(), Some("prd_profile"));
     assert_eq!(env.local_port, 13390);
 
     let _ = fs::remove_file(&mfz_file);
@@ -306,8 +312,52 @@ local_port = 13390
         .load_from_file_or_name(mfz_file.to_str().unwrap())
         .unwrap();
     assert_eq!(name, "prd");
-    assert_eq!(env.profile, "prod_profile");
+    assert_eq!(env.profile.as_deref(), Some("prod_profile"));
 
     let _ = fs::remove_file(&ini_path);
     let _ = fs::remove_file(&mfz_file);
 }
+
+#[test]
+fn test_standalone_config_parsing() {
+    let content = r#"
+[stg_standalone]
+aws_access_key_id=AKIAIOSFODNN7EXAMPLE
+aws_secret_access_key=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+region=ap-northeast-1
+serial=arn:aws:iam::123:mfa/waka
+instance=i-abc
+remote_port=3389
+local_port=13389
+rdp_host=stg-rdp
+"#;
+    let file = create_temp_config(content);
+    let loader = ConfigLoader::new(&file);
+    let cfg = loader.load("stg_standalone").unwrap();
+
+    assert_eq!(cfg.aws_access_key_id.as_deref(), Some("AKIAIOSFODNN7EXAMPLE"));
+    assert_eq!(cfg.aws_secret_access_key.as_deref(), Some("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"));
+    assert_eq!(cfg.region.as_deref(), Some("ap-northeast-1"));
+    assert_eq!(cfg.profile, None);
+    assert_eq!(cfg.resolve_aws_secret_key("stg_standalone").unwrap().as_deref(), Some("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"));
+
+    let _ = fs::remove_file(&file);
+}
+
+#[test]
+fn test_missing_auth_error() {
+    let content = r#"
+[invalid_env]
+instance=i-abc
+remote_port=3389
+local_port=13389
+rdp_host=stg-rdp
+"#;
+    let file = create_temp_config(content);
+    let loader = ConfigLoader::new(&file);
+    let err = loader.load("invalid_env").unwrap_err();
+    assert!(err.to_string().contains("must specify either `aws_access_key_id`"));
+
+    let _ = fs::remove_file(&file);
+}
+

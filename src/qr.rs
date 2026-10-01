@@ -275,7 +275,10 @@ pub async fn register(
             existing
         } else {
             crate::config::EnvironmentConfig {
-                profile: profile.to_owned(),
+                profile: Some(profile.to_owned()),
+                aws_access_key_id: None,
+                aws_secret_access_key: None,
+                region: None,
                 auth_type: crate::config::AuthType::Mfa,
                 serial: Some(serial_number.clone()),
                 secret: Some(qr.secret_b32.clone()),

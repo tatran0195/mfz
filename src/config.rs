@@ -7,7 +7,7 @@ use crate::{
     error::{AppError, Result},
 };
 
-const REQUIRED_KEYS: &[&str] = &["profile", "remote_port", "local_port", "rdp_host"];
+const REQUIRED_KEYS: &[&str] = &["remote_port", "local_port", "rdp_host"];
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum AuthType {
@@ -19,7 +19,10 @@ pub enum AuthType {
 
 #[derive(Debug, Clone)]
 pub struct EnvironmentConfig {
-    pub profile: String,
+    pub profile: Option<String>,
+    pub aws_access_key_id: Option<String>,
+    pub aws_secret_access_key: Option<String>,
+    pub region: Option<String>,
     pub auth_type: AuthType,
     pub serial: Option<String>,
     /// TOTP Base-32 secret. If omitted from configuration, resolved from
@@ -82,6 +85,19 @@ impl EnvironmentConfig {
             )));
         }
 
+        let profile = get_opt("profile");
+        let aws_access_key_id =
+            get_opt("aws_access_key_id").or_else(|| get_opt("access_key_id"));
+        let aws_secret_access_key =
+            get_opt("aws_secret_access_key").or_else(|| get_opt("secret_access_key"));
+        let region = get_opt("region");
+
+        if profile.is_none() && aws_access_key_id.is_none() {
+            return Err(AppError::Config(format!(
+                "[{name}] must specify either `aws_access_key_id` (standalone) or `profile` (AWS profile)"
+            )));
+        }
+
         let parse_port = |key: &str| -> Result<u16> {
             get(key)?
                 .parse::<u16>()
@@ -124,7 +140,10 @@ impl EnvironmentConfig {
             parse_bool("font_smoothing").or_else(|| parse_bool("opt_font_smoothing"));
 
         Ok(Self {
-            profile: get("profile")?,
+            profile,
+            aws_access_key_id,
+            aws_secret_access_key,
+            region,
             auth_type,
             serial,
             secret: get_opt("secret"),
@@ -148,7 +167,18 @@ impl EnvironmentConfig {
 
     pub fn to_map(&self) -> std::collections::HashMap<String, String> {
         let mut m = std::collections::HashMap::new();
-        m.insert("profile".into(), self.profile.clone());
+        if let Some(profile) = &self.profile {
+            m.insert("profile".into(), profile.clone());
+        }
+        if let Some(key_id) = &self.aws_access_key_id {
+            m.insert("aws_access_key_id".into(), key_id.clone());
+        }
+        if let Some(sec_key) = &self.aws_secret_access_key {
+            m.insert("aws_secret_access_key".into(), sec_key.clone());
+        }
+        if let Some(reg) = &self.region {
+            m.insert("region".into(), reg.clone());
+        }
         if let Some(serial) = &self.serial {
             m.insert("serial".into(), serial.clone());
         }
@@ -218,6 +248,22 @@ impl EnvironmentConfig {
             return Ok(Some(p.clone()));
         }
         CredentialStore::get_rdp_password(env_name)
+    }
+
+    /// Resolves the AWS secret access key, checking config first, then the system keyring.
+    pub fn resolve_aws_secret_key(&self, env_name: &str) -> Result<Option<String>> {
+        if let Some(ref k) = self.aws_secret_access_key {
+            return Ok(Some(k.clone()));
+        }
+        if self.aws_access_key_id.is_some() {
+            let secret = CredentialStore::get_aws_secret_key(env_name)?.ok_or_else(|| {
+                AppError::Config(format!(
+                    "No AWS secret access key found for [{env_name}] in config or keyring"
+                ))
+            })?;
+            return Ok(Some(secret));
+        }
+        Ok(None)
     }
 }
 
