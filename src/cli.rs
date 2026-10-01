@@ -108,7 +108,13 @@ pub enum ConfigCommand {
         /// Environment identifier (e.g. stg, prd)
         name: String,
         #[arg(long)]
-        profile: String,
+        profile: Option<String>,
+        #[arg(long)]
+        aws_access_key_id: Option<String>,
+        #[arg(long)]
+        aws_secret_access_key: Option<String>,
+        #[arg(long)]
+        region: Option<String>,
         #[arg(long)]
         serial: Option<String>,
         #[arg(long)]
@@ -146,6 +152,12 @@ pub enum ConfigCommand {
         name: String,
         #[arg(long)]
         profile: Option<String>,
+        #[arg(long)]
+        aws_access_key_id: Option<String>,
+        #[arg(long)]
+        aws_secret_access_key: Option<String>,
+        #[arg(long)]
+        region: Option<String>,
         #[arg(long)]
         serial: Option<String>,
         #[arg(long)]
@@ -188,6 +200,14 @@ pub enum ConfigCommand {
         name: String,
         #[arg(short, long, default_value = "mfz.ini")]
         config: String,
+    },
+    /// Store an AWS Secret Access Key in the secure system keyring for an environment
+    SetAwsSecret {
+        /// Environment identifier (e.g. stg, prd)
+        name: String,
+        /// AWS Secret Access Key (prompted interactively if omitted)
+        #[arg(long)]
+        secret: Option<String>,
     },
 }
 

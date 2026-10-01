@@ -116,7 +116,14 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                     if let Some(tag) = env.instance_tag {
                         println!("      {:<12} {}", "Inst Tag:".dimmed(), tag);
                     }
-                    println!("      {:<12} {}", "Profile:".dimmed(), env.profile.as_deref().unwrap_or("-"));
+                    if let Some(ref key_id) = env.aws_access_key_id {
+                        println!("      {:<12} Direct Key ({})", "AWS Auth:".dimmed(), key_id);
+                    } else if let Some(ref p) = env.profile {
+                        println!("      {:<12} {}", "Profile:".dimmed(), p);
+                    }
+                    if let Some(ref reg) = env.region {
+                        println!("      {:<12} {}", "Region:".dimmed(), reg);
+                    }
                     println!("      {:<12} {:?}", "Auth Type:".dimmed(), env.auth_type);
 
                     if env.auth_type == crate::config::AuthType::Mfa {
@@ -182,6 +189,9 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
         cli::ConfigCommand::Add {
             name,
             profile,
+            aws_access_key_id,
+            aws_secret_access_key,
+            region,
             serial,
             secret,
             instance,
@@ -207,6 +217,12 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
                 ));
             }
 
+            if profile.is_none() && aws_access_key_id.is_none() {
+                return Err(crate::error::AppError::Config(
+                    "Must specify either `--aws-access-key-id` (standalone) or `--profile`".into(),
+                ));
+            }
+
             let auth_type = if serial.is_some() {
                 crate::config::AuthType::Mfa
             } else {
@@ -224,10 +240,10 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             });
 
             let new_env = crate::config::EnvironmentConfig {
-                profile: Some(profile),
-                aws_access_key_id: None,
-                aws_secret_access_key: None,
-                region: None,
+                profile,
+                aws_access_key_id,
+                aws_secret_access_key,
+                region,
                 auth_type,
                 serial,
                 secret,
@@ -259,6 +275,9 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
         cli::ConfigCommand::Edit {
             name,
             profile,
+            aws_access_key_id,
+            aws_secret_access_key,
+            region,
             serial,
             secret,
             instance,
@@ -281,6 +300,15 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
 
             if let Some(p) = profile {
                 env.profile = Some(p);
+            }
+            if let Some(key_id) = aws_access_key_id {
+                env.aws_access_key_id = Some(key_id);
+            }
+            if let Some(sec_key) = aws_secret_access_key {
+                env.aws_secret_access_key = Some(sec_key);
+            }
+            if let Some(r) = region {
+                env.region = Some(r);
             }
             if let Some(s) = serial {
                 env.serial = Some(s);
@@ -353,6 +381,13 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             let mut env = loader.load(&name)?;
             let mut changed = false;
 
+            if let Some(aws_secret) = env.aws_secret_access_key.take() {
+                let spinner = Spinner::new(format!("Moving AWS secret key for `{name}` to keyring…"));
+                crate::credentials::CredentialStore::set_aws_secret_key(&name, &aws_secret)?;
+                spinner.success("AWS secret key secured.");
+                changed = true;
+            }
+
             if let Some(secret) = env.secret.take() {
                 let spinner = Spinner::new(format!("Moving TOTP secret for `{name}` to keyring…"));
                 crate::credentials::CredentialStore::set_totp_secret(&name, &secret)?;
@@ -374,6 +409,19 @@ async fn cmd_config(sub: cli::ConfigCommand) -> Result<()> {
             } else {
                 print_warning("No plain-text secrets found to secure.");
             }
+        }
+        cli::ConfigCommand::SetAwsSecret { name, secret } => {
+            print_section(&format!("Set AWS Secret Key: {name}"));
+            let key = if let Some(s) = secret {
+                s
+            } else {
+                inquire::Password::new("Enter AWS Secret Access Key:")
+                    .without_confirmation()
+                    .prompt()
+                    .map_err(|e| crate::error::AppError::Config(e.to_string()))?
+            };
+            crate::credentials::CredentialStore::set_aws_secret_key(&name, &key)?;
+            println!("{} AWS secret access key saved to keyring for `{name}`.", "✔".green());
         }
     }
     Ok(())
@@ -502,7 +550,17 @@ async fn cmd_launch(args: cli::LaunchArgs) -> Result<()> {
     if let Some(ref tag) = env.instance_tag {
         print_kv("Instance Tag", tag);
     }
-    print_kv("Profile", env.profile.as_deref().unwrap_or("-"));
+    if let Some(ref key_id) = env.aws_access_key_id {
+        print_kv("AWS Auth", &format!("Direct Key ({})", key_id));
+    } else if let Some(ref p) = env.profile {
+        print_kv("AWS Profile", p);
+    }
+    let resolved_region = args
+        .region
+        .clone()
+        .or_else(|| env.region.clone())
+        .unwrap_or_else(|| "ap-northeast-1".to_string());
+    print_kv("Region", &resolved_region);
     print_kv("Remote port", &env.remote_port.to_string());
     print_kv("Local port", &env.local_port.to_string());
     print_kv("RDP host", &env.rdp_host);
