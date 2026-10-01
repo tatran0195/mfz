@@ -15,8 +15,10 @@ mod elevation {
     /// Returns Ok(()) if the elevated process was launched successfully, Err otherwise.
     pub fn shell_execute_runas(exe: &std::path::Path, args: &[&str]) -> std::io::Result<()> {
         use std::os::windows::ffi::OsStrExt;
+
         use windows_sys::Win32::{
-            Foundation::HWND, UI::Shell::ShellExecuteW, UI::WindowsAndMessaging::SW_SHOW,
+            Foundation::HWND,
+            UI::{Shell::ShellExecuteW, WindowsAndMessaging::SW_SHOW},
         };
 
         // Build a single quoted argument string: "arg1" "arg2" ...

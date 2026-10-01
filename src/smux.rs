@@ -14,8 +14,10 @@ use std::{
 };
 
 use bytes::{Buf, BufMut, Bytes, BytesMut};
-use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
-use tokio::sync::mpsc;
+use tokio::{
+    io::{AsyncRead, AsyncWrite, ReadBuf},
+    sync::mpsc,
+};
 use tracing::{debug, trace, warn};
 
 pub const VERSION: u8 = 1;

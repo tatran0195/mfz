@@ -1,9 +1,6 @@
 use std::process::Command;
 
 use tracing::{debug, info};
-
-use crate::error::{AppError, Result};
-
 #[cfg(windows)]
 use windows_sys::Win32::{
     Security::Credentials::{
@@ -11,6 +8,8 @@ use windows_sys::Win32::{
     },
     Storage::FileSystem::{DefineDosDeviceW, DDD_REMOVE_DEFINITION},
 };
+
+use crate::error::{AppError, Result};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum OptimizationProfile {
