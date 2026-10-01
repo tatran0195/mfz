@@ -68,7 +68,7 @@ thiserror = "2.0.18"
 chrono    = { version = "0.4", features = ["serde"] }
 regex     = "1"
 rand      = "0.8.5"
-keyring   = "3"
+keyring   = { version = "3", features = ["windows-native"] }
 inquire   = "0.7.5"
 windows-sys = { version = "0.52", features = [
     "Win32_System_Console",         # SetConsoleCP, SetConsoleOutputCP
