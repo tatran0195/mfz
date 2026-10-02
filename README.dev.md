@@ -6,30 +6,76 @@ This document contains technical details, architecture overviews, and advanced c
 
 ## 🏗️ Technical Architecture
 
-MFZ is built in Rust to provide a high-performance, safe, and portable binary. It orchestrates three primary AWS services:
+MFZ is built in Rust to provide a high-performance, completely self-contained binary with **zero external runtime dependencies** (no AWS CLI, no `session-manager-plugin`). It orchestrates three primary AWS services:
 
-1. **IAM/STS**: For session token acquisition and identity verification.
-2. **SSM (Systems Manager)**: For creating secure WebSocket-based tunnels for port forwarding.
-3. **EC2**: For dynamic instance discovery and state verification.
+1. **IAM/STS**: For session token acquisition and identity verification via native AWS Rust SDK (`aws-sdk-sts`).
+2. **SSM (Systems Manager)**: For creating secure WebSocket-based tunnels for port forwarding via native Rust implementation (`src/ssm_tunnel.rs` and `src/ssm.rs`).
+3. **EC2**: For dynamic instance discovery and state verification (`aws-sdk-ec2`).
 
 ### Flow Diagram
 
 ```mermaid
 graph TD
-    A[CLI: launch name] --> B[Resolve Config]
-    B --> C{Auth Type?}
-    C -->|MFA| D[Generate TOTP + STS GetSessionToken]
-    C -->|SSO| E[SDK SSO Credential Provider]
-    D --> F[Resolved Credentials]
-    E --> F
-    F --> G{Instance Info?}
-    G -->|ID| H[Start SSM Session]
-    G -->|Tag| I[EC2: DescribeInstances by Tag]
-    I --> H[Start SSM Session]
-    H --> J[SSM Port-Forward Tunnel]
-    J --> K[Launch mstsc.exe]
-    K --> L[Inject Credentials via cmdkey]
+    A["CLI / Double-Click: launch &lt;target&gt;"] --> B["Resolve Config (mfz.ini or .mfz)"]
+    
+    subgraph Credentials ["1. Credential Resolution"]
+        B --> C{"Auth Source?"}
+        C -->|Direct Keys| D["Standalone Keys (aws_access_key_id + Keyring/ini secret)"]
+        C -->|Profile Fallback| E["AWS Profile (~/.aws/credentials or SSO)"]
+        D --> F["AwsAuthSource::Direct"]
+        E --> G["AwsAuthSource::Profile"]
+    end
+
+    subgraph Auth ["2. Authentication &amp; Session"]
+        F --> H{"MFA Required?"}
+        G --> H
+        H -->|Yes| I["Generate TOTP (Keyring/ini) with Safety Margin"]
+        I --> J["STS GetSessionToken (aws-sdk-sts)"]
+        H -->|No / SSO| K["SDK Credential Provider"]
+        J --> L["Active AWS Credentials"]
+        K --> L
+    end
+
+    subgraph Discovery ["3. Instance Discovery"]
+        L --> M{"Instance Target?"}
+        M -->|Direct ID| N["Instance ID"]
+        M -->|Instance Tag| O["EC2 DescribeInstances by Tag"]
+        O --> N
+    end
+
+    subgraph Tunnel ["4. Native Pure-Rust SSM Tunnel"]
+        N --> P["SSM StartSession (AWS-StartPortForwardingSession)"]
+        P --> Q["Native WebSocket Handshake (tokio-tungstenite)"]
+        Q --> R["Local TCP Listener (127.0.0.1:local_port) &lt;--&gt; SSM WebSocket Framing"]
+    end
+
+    subgraph RDP ["5. RDP Orchestration"]
+        R --> S["Inject Credentials (cmdkey /generic:TERMSRV/...)"]
+        S --> T["Map Virtual Drive (subst) if share_folder specified"]
+        T --> U["Launch mstsc.exe with optimized .rdp settings"]
+        U --> V["Cleanup: Remove cmdkey credentials &amp; unmount virtual drives"]
+    end
 ```
+
+---
+
+## ⚡ Zero External Dependencies Engine
+
+Previous architectures relied on spawning `aws.exe` and `session-manager-plugin` as external child processes. MFZ eliminates these dependencies entirely:
+
+1. **Native STS Authentication (`src/mfa.rs` & `src/credentials.rs`)**:
+   - STS calls are made directly via `aws-sdk-sts`.
+   - Standalone direct credentials (`aws_access_key_id`, `aws_secret_access_key`, and `region`) bypass AWS CLI profile configuration entirely.
+   - Profile resolution directly parses `~/.aws/credentials` and `~/.aws/config` or delegates to the AWS SDK SSO provider when configured.
+
+2. **Native WebSocket SSM Port-Forwarding Tunnel (`src/ssm_tunnel.rs`)**:
+   - Invokes `ssm.start_session()` with document `AWS-StartPortForwardingSession` to obtain a `SessionId`, `StreamUrl`, and `TokenValue`.
+   - Establishes a TLS WebSocket connection directly to the AWS Systems Manager gateway.
+   - Implements AWS Systems Manager binary message framing:
+     - 4-byte header length, 4-byte message type, 8-byte sequence number, flags, and binary payloads.
+     - Performs initial handshake with `ClientToken`.
+     - Bridges local TCP sockets bi-directionally with the encrypted SSM WebSocket stream.
+     - Responds to SSM Ping/Pong frames to maintain persistent tunnel health.
 
 ---
 
@@ -70,8 +116,12 @@ graph TD
 MFZ uses the `keyring` crate with native Windows Credential Manager support (`windows-native`).
 
 - **Namespace**: `mfz-cli`
-- **Keys**: `totp-secret-<env>`, `rdp-password-<env>`, and `aws-secret-<env>`
-- **Behavior**: Plain-text values in `mfz.ini` act as overrides. Running `mfz env secure <env>` migrates all plain-text secrets (AWS secret key, TOTP secret, RDP password) to the Windows Credential Manager and clears them from `mfz.ini`. You can also set the AWS secret key directly via `mfz env set-aws-secret <env>`.
+- **Keys**: `aws-secret-<env>`, `totp-secret-<env>`, and `rdp-password-<env>`
+- **Behavior**: Plain-text values in `mfz.ini` act as overrides. Running `mfz env secure <env>` (or `mfz config secure <env>`) migrates all plain-text secrets (AWS secret key, TOTP secret, RDP password) to the Windows Credential Manager and clears them from `mfz.ini`.
+- **Targeted Key Management**:
+  - `mfz env set-aws-secret <env>`: Securely prompts and stores AWS Secret Access Key without touching disk.
+  - `mfz env set-totp-secret <env>`: Securely stores MFA TOTP seed.
+  - `mfz env set-rdp-password <env>`: Securely stores Windows Administrator/RDP password.
 
 ### MFA Safety Margin
 
@@ -103,9 +153,9 @@ When `mfz launch <input>` runs, it checks whether `<input>` is a file or environ
 ### Prerequisites
 
 - Stable Rust (v1.70+)
-- `cargo-edit` (optional, for dependency management)
+- Windows 10/11 environment (for native Credential Manager, RDP `mstsc.exe`, and registry shell association)
 
-### Build Commands
+### Build & Test Commands
 
 ```bash
 # Debug build
@@ -113,6 +163,9 @@ cargo build
 
 # Production build (optimized with icon resources)
 cargo build --release
+
+# Run all automated tests
+cargo test
 
 # Run linting
 cargo clippy

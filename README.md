@@ -12,8 +12,9 @@ If you've ever found connecting to an AWS Windows server frustrating because of 
 
 - 🎯 **No more searching**: Find your server by its name (Tags), not a random ID.
 - ⌨️ **Less typing**: Interactive menus let you pick your environment with a single click.
-- � **Super secure**: Keep your passwords in the Windows Credential Manager, not in text files.
-- � **One-click launch**: One command opens your Remote Desktop client automatically.
+- 🔒 **Super secure**: Keep your AWS secret keys, MFA secrets, and passwords in the Windows Credential Manager safe-box.
+- 🚀 **One-click launch**: One command opens your Remote Desktop client automatically.
+- ⚡ **Zero external tools**: Pure-Rust native SSM WebSocket tunnel and direct STS auth—no AWS CLI or `session-manager-plugin` needed!
 
 ---
 
@@ -26,21 +27,50 @@ If you have Rust installed, simply run:
 ```bash
 cargo install --path .
 ```
+Or place the compiled `mfz.exe` into any folder in your system `PATH`.
 
 ### 2. Add your first Environment
 
-Tell MFZ about your server. Replace the values with your actual AWS details:
+You can configure an environment by editing `mfz.ini` directly or using the CLI:
 
+#### Option A: Direct in `mfz.ini` (Recommended — 100% Standalone)
+Create or edit `mfz.ini` in the same directory as `mfz.exe`:
+
+```ini
+[my-server]
+region = ap-northeast-1
+aws_access_key_id = AKIAIOSFODNN7EXAMPLE
+aws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+serial = arn:aws:iam::123456789012:mfa/username
+secret = JBSWY3DPEHPK3PXP
+instance_tag = Name=MyServerName
+rdp_host = my-server-rdp
+rdp_user = Administrator
+```
+
+#### Option B: Via CLI Command
 ```bash
+# Standalone direct credentials (no ~/.aws files needed):
+mfz config add my-server \
+  --aws-access-key-id AKIAIOSFODNN7EXAMPLE \
+  --aws-secret-access-key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
+  --region ap-northeast-1 \
+  --instance-tag Name=MyServerName
+
+# Or using an existing ~/.aws/credentials profile:
 mfz config add my-server --profile my-aws-profile --instance-tag Name=MyServerName
 ```
 
 ### 3. Launch
 
-Just type `mfz launch`, select your server from the list, and press **Enter**.
+Just type `mfz launch`, select your server from the list, and press **Enter**:
 
 ```bash
 mfz launch
+```
+Or launch directly by name:
+```bash
+mfz launch my-server
 ```
 
 ---
@@ -49,13 +79,13 @@ mfz launch
 
 Before you start, make sure your computer is ready:
 
-1. **Remote Desktop (mstsc)**: Standard on all Windows PCs.
-2. **Zero External Dependencies (Standalone Mode)**: MFZ contains a native Rust SSM WebSocket tunnel and direct AWS authentication engine—no AWS CLI or SSM plugin installation is required when using direct credentials in `mfz.ini`!
-3. **AWS CLI Profile (Optional)**: If you prefer using named profiles from `~/.aws/credentials` or AWS SSO, MFZ supports them as a seamless fallback.
+1. **Remote Desktop (`mstsc.exe`)**: Standard on all Windows PCs.
+2. **Zero External Dependencies (Standalone Mode)**: MFZ contains a native Rust SSM WebSocket tunnel and direct STS/EC2 client engine. **No AWS CLI (`aws.exe`) or Session Manager plugin (`session-manager-plugin`) is required!**
+3. **AWS Profile Fallback (Optional)**: If you already use `~/.aws/credentials` or AWS IAM Identity Center (SSO), MFZ supports `profile = <name>` as a fallback.
 
 ---
 
-## � Daily Usage Guide
+## 📖 Daily Usage Guide
 
 ### 🗂️ Managed Environments
 
@@ -69,7 +99,7 @@ By default, MFZ stores settings in `mfz.ini`. To move sensitive data (AWS secret
 mfz env secure my-server
 ```
 
-You can also set your AWS Secret Key directly in the safe-box:
+You can also set your AWS Secret Key directly into the Windows Credential Manager without writing it to disk:
 ```bash
 mfz env set-aws-secret my-server
 ```
@@ -138,6 +168,9 @@ Tired of opening a command prompt every time? MFZ supports custom `.mfz` extensi
 ---
 
 ## ❓ Frequently Asked Questions
+
+**"Do I need to install AWS CLI or Session Manager Plugin?"**
+No! MFZ is completely self-contained. It uses pure Rust for STS token exchange and establishes native WebSocket port-forwarding tunnels directly to AWS Systems Manager.
 
 **"I use SSO / AWS Identity Center. Does it work?"**
 Yes! MFZ automatically detects SSO profiles. Just make sure you are logged in using `aws sso login` and MFZ will handle the rest.
