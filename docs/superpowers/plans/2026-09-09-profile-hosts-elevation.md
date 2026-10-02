@@ -9,6 +9,7 @@
 **Tech Stack:** Rust, `clap` (derive), `std::process::Command`, PowerShell `Start-Process -Verb RunAs`, `configparser`.
 
 ## Global Constraints
+
 - Only request UAC elevation if target entry is missing AND hosts file is not writable.
 - Do not hardcode any environment names or hostnames (`stg-rdp`, `prd-rdp`).
 - Re-use `mfz` binary itself for elevated execution via `hosts custom` / `hosts add`.
@@ -19,10 +20,12 @@
 ### Task 1: Extend `HostsManager` with Pre-checks, Auto-Elevation, and Batch Synchronization
 
 **Files:**
+
 - Modify: `src/hosts.rs`
 - Test: `tests/hosts.rs`
 
 **Interfaces:**
+
 - Consumes: `AppError::Hosts(String)`
 - Produces:
   - `HostsManager::has_host(&self, hostname: &str) -> Result<bool>`
@@ -34,6 +37,7 @@
 - [ ] **Step 1: Write unit tests for `has_host`, `ensure_host`, and `ensure_hosts`**
 
 Add tests to `tests/hosts.rs`:
+
 ```rust
 #[test]
 fn test_hosts_has_host_and_ensure() {
@@ -218,9 +222,11 @@ git commit -m "feat(hosts): add elevation, existence checks, and ensure methods"
 ### Task 2: Update CLI Definition for `mfz hosts add`
 
 **Files:**
+
 - Modify: `src/cli.rs:168-180`
 
 **Interfaces:**
+
 - Produces: `HostsCommand::Add { config: String }`
 
 - [ ] **Step 1: Update `HostsCommand::Add` in `src/cli.rs`**
@@ -262,9 +268,11 @@ git commit -m "feat(cli): add --config option to hosts add subcommand"
 ### Task 3: Update `cmd_hosts` to Parse Environments Dynamically without Hardcoding
 
 **Files:**
+
 - Modify: `src/main.rs:500-518`
 
 **Interfaces:**
+
 - Consumes: `ConfigLoader`, `HostsManager`, `HostsCommand::Add { config }`
 
 - [ ] **Step 1: Update `cmd_hosts` implementation in `src/main.rs`**
@@ -328,14 +336,17 @@ git commit -m "feat(hosts): dynamically sync rdp_host entries from config"
 ### Task 4: Integrate Hosts Entry Creation into `mfz config add`
 
 **Files:**
+
 - Modify: `src/main.rs:155-202`
 
 **Interfaces:**
+
 - Consumes: `new_env.rdp_host`, `HostsManager::ensure_host`
 
 - [ ] **Step 1: Update `cli::ConfigCommand::Add` in `src/main.rs`**
 
 After saving to `mfz.ini`, invoke `HostsManager::new().ensure_host("127.0.0.1", &new_env.rdp_host)`:
+
 ```rust
             let spinner = Spinner::new(format!("Saving `{name}` to `{config}`…"));
             loader.save(&name, &new_env)?;
@@ -363,12 +374,14 @@ git commit -m "feat(config): automatically add host entry on config add"
 ### Task 5: Sync Current Profiles, Integration Testing, and Verification
 
 **Files:**
+
 - Test: `tests/hosts.rs`
 - Verify: `mfz.ini` current profiles (`stg` -> `stg-rdp`)
 
 - [ ] **Step 1: Write integration test verifying dynamic profile reading and hosts resolution**
 
 Add test to `tests/hosts.rs`:
+
 ```rust
 #[test]
 fn test_dynamic_profile_hosts_sync() {

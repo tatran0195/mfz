@@ -5,6 +5,7 @@
 **Goal:** Fix shared folder mapping errors (`\\tsclient\E`), introduce configurable optimization profiles (`speed`, `balanced`, `quality`, `none`) with standard unoptimized default, and establish fullscreen as default launch mode with `--windowed` override and dynamic resolution.
 
 **Architecture:**
+
 1. Refactor configuration loading in `src/config.rs` to support `share_folder`/`shared_folder` aliases, `fullscreen` setting, `optimize` profiles, and granular overrides.
 2. Update CLI commands in `src/cli.rs` to replace `--fullscreen` with `--windowed`, remove `--no-optimize`, and add `--optimize <profile>`.
 3. Enhance RDP profile generation in `src/rdp.rs` with `OptimizationSettings`, `dynamic resolution:i:1`, and isolated virtual drive redirection that avoids empty CD-ROM/optical drives.
@@ -13,6 +14,7 @@
 **Tech Stack:** Rust 2021, `clap`, `configparser`, `windows-sys` / Windows Win32 APIs, `mstsc`.
 
 ## Global Constraints
+
 - Target Windows OS using powershell.
 - Backward compatibility: parse both `share_folder` and `shared_folder`, `share_drives` and `shared_drives`.
 - Default optimization is `none` (MSTSC defaults).
@@ -23,10 +25,12 @@
 ### Task 1: Configuration Schema & Aliases
 
 **Files:**
+
 - Modify: `src/config.rs`
 - Test: `tests/config.rs`
 
 **Interfaces:**
+
 - `EnvironmentConfig`:
   - `pub fullscreen: Option<bool>`
   - `pub optimize: Option<String>`
@@ -89,6 +93,7 @@ Run: `cargo test --test config`
 Expected: PASS (all config tests pass).
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add src/config.rs tests/config.rs
 git commit -m "feat(config): add share_folder alias, fullscreen, and optimization settings"
@@ -99,9 +104,11 @@ git commit -m "feat(config): add share_folder alias, fullscreen, and optimizatio
 ### Task 2: CLI Interface Updates
 
 **Files:**
+
 - Modify: `src/cli.rs`
 
 **Interfaces:**
+
 - `LaunchArgs`:
   - `pub windowed: bool` (`#[arg(short, long)]`)
   - `pub optimize: Option<String>` (`#[arg(short = 'O', long)]`)
@@ -120,6 +127,7 @@ Run: `cargo check --lib`
 Expected: PASS or clean library check (ignoring callers in `main.rs` that will be updated in Task 4).
 
 - [ ] **Step 3: Commit**
+
 ```bash
 git add src/cli.rs
 git commit -m "feat(cli): replace --fullscreen with --windowed, add --optimize and remove --no-optimize"
@@ -130,10 +138,12 @@ git commit -m "feat(cli): replace --fullscreen with --windowed, add --optimize a
 ### Task 3: RDP Profile Generation & Drive Filtering
 
 **Files:**
+
 - Modify: `src/rdp.rs`
 - Test: `tests/rdp.rs`
 
 **Interfaces:**
+
 - `OptimizationProfile`: `None`, `Speed`, `Balanced`, `Quality`
 - `OptimizationSettings`: struct containing profile and granular overrides
 - `RdpProfileOptions`:
@@ -145,6 +155,7 @@ git commit -m "feat(cli): replace --fullscreen with --windowed, add --optimize a
   - If `shared_drives` is `Some("*")`, queries ready Windows drive letters and skips optical/empty drives (DriveType 5 without media).
 
 - [ ] **Step 1: Write failing tests in `tests/rdp.rs`**
+
 ```rust
 #[test]
 fn test_resolve_drives_folder_only() {
@@ -214,6 +225,7 @@ Run: `cargo test --test rdp`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add src/rdp.rs tests/rdp.rs
 git commit -m "feat(rdp): add dynamic resolution, optimization profiles, and folder-only drive redirection"
@@ -224,9 +236,11 @@ git commit -m "feat(rdp): add dynamic resolution, optimization profiles, and fol
 ### Task 4: Main Launch & Config Integration
 
 **Files:**
+
 - Modify: `src/main.rs`
 
 **Interfaces:**
+
 - `cmd_launch`:
   - Resolves `fullscreen`: `if args.windowed { false } else { env.fullscreen.unwrap_or(true) }`.
   - Resolves `optimize`: CLI `args.optimize.as_deref().or(env.optimize.as_deref())`.
@@ -243,6 +257,7 @@ Run: `cargo test`
 Expected: PASS (all unit and integration tests succeed).
 
 - [ ] **Step 3: Commit**
+
 ```bash
 git add src/main.rs
 git commit -m "feat(main): integrate default fullscreen, windowed flag, and optimization profiles"
@@ -253,6 +268,7 @@ git commit -m "feat(main): integrate default fullscreen, windowed flag, and opti
 ### Task 5: Documentation & Verification
 
 **Files:**
+
 - Modify: `README.md`
 - Modify: `README.dev.md`
 
@@ -267,6 +283,7 @@ Run: `cargo run -- config list`
 Verify `--windowed` is present, `--no-optimize` is removed, and `--optimize` is documented.
 
 - [ ] **Step 3: Commit documentation updates**
+
 ```bash
 git add README.md README.dev.md
 git commit -m "docs: document default fullscreen, --windowed, and optimization profiles"

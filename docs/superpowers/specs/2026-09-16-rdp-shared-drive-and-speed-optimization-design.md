@@ -1,7 +1,9 @@
 # RDP Shared Drive/Folder & Connection Speed Optimization Design
 
 ## Overview
+
 MFZ provides automated AWS MFA authentication and SSM port-forwarding to Windows EC2 instances, launching Remote Desktop (`mstsc.exe`). However, previously MFZ launched `mstsc /v:{host}:{port}` directly without an `.rdp` profile. Consequently:
+
 - Drive redirection was unconfigured / disabled, preventing fast and reliable file transfer between the local machine and the remote Windows desktop (forcing users into slow, memory-intensive clipboard copy-paste).
 - Default RDP connection profiles were unoptimized for tunneled localhost connections, resulting in unnecessary UI latency and network bandwidth overhead.
 
@@ -48,25 +50,28 @@ User CLI: mfz launch <env> [--share-drives] [--share-folder] [--no-optimize]
 ## Configuration & CLI Schema
 
 ### 1. `mfz.ini` Schema Updates
+
 Each environment section supports the following optional keys:
-* `shared_drives`: (String, default: `*`) Drive letters to redirect into the remote desktop session.
-  * `*`: Redirect all local drives.
-  * `C:`, `C:;D:`: Redirect specific drives.
-  * `none`: Disable drive redirection.
-* `shared_folder`: (String, optional) Absolute path to a specific local directory (e.g. `C:\Users\Admin\Transfer`). When set, MFZ mounts this directory to an available virtual drive letter and shares it.
-* `optimize_connection`: (Boolean, default: `true`) Whether to apply RDP compression, persistent bitmap caching, and bandwidth optimization flags.
+- `shared_drives`: (String, default: `*`) Drive letters to redirect into the remote desktop session.
+  - `*`: Redirect all local drives.
+  - `C:`, `C:;D:`: Redirect specific drives.
+  - `none`: Disable drive redirection.
+- `shared_folder`: (String, optional) Absolute path to a specific local directory (e.g. `C:\Users\Admin\Transfer`). When set, MFZ mounts this directory to an available virtual drive letter and shares it.
+- `optimize_connection`: (Boolean, default: `true`) Whether to apply RDP compression, persistent bitmap caching, and bandwidth optimization flags.
 
 ### 2. CLI Updates
 
 #### `mfz launch`
+
 * `--share-drives <DRIVES>`: Override shared drives for this session (e.g. `*`, `C:,D:`, `none`).
-* `--share-folder <PATH>`: Provide an ad-hoc local folder path to share for this session.
-* `--no-optimize`: Disable connection performance tuning (defaults to standard Windows defaults).
+- `--share-folder <PATH>`: Provide an ad-hoc local folder path to share for this session.
+- `--no-optimize`: Disable connection performance tuning (defaults to standard Windows defaults).
 
 #### `mfz config add` and `mfz config edit`
+
 * `--shared-drives <DRIVES>`: Save `shared_drives` in `mfz.ini`.
-* `--shared-folder <PATH>`: Save `shared_folder` in `mfz.ini`.
-* `--optimize-connection <true|false>`: Set `optimize_connection` flag.
+- `--shared-folder <PATH>`: Save `shared_folder` in `mfz.ini`.
+- `--optimize-connection <true|false>`: Set `optimize_connection` flag.
 
 ---
 
@@ -104,6 +109,7 @@ When `--no-optimize` is set or `optimize_connection: false`, the performance fla
 ## Folder Mapping via `subst`
 
 When a `shared_folder` is configured:
+
 1. MFZ checks existing occupied drive letters (A: through Z:).
 2. Picks the first available drive letter in reverse order (starting from `Z:` down to `E:`).
 3. Runs `subst <Drive>: "<Folder>"`.
@@ -116,10 +122,10 @@ When a `shared_folder` is configured:
 ## Teardown & Safety
 
 Cleanup of all session artifacts is guaranteed:
-* Virtual drive letter unmounted via `subst /d`.
-* Temporary `.rdp` file deleted from `%TEMP%`.
-* Cached credentials in `cmdkey` deleted.
-* SSM port forwarding process killed.
+- Virtual drive letter unmounted via `subst /d`.
+- Temporary `.rdp` file deleted from `%TEMP%`.
+- Cached credentials in `cmdkey` deleted.
+- SSM port forwarding process killed.
 
 ---
 

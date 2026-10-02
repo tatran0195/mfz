@@ -1,6 +1,7 @@
 # Standalone `mfz.ini` Credentials Design
 
 ## Overview
+
 Enable `mfz` to operate 100% standalone using direct AWS credentials specified in `mfz.ini` or stored securely in the Windows Keyring, removing any mandatory dependency on `~/.aws/credentials`, `~/.aws/config`, or AWS CLI tools, while retaining backwards compatibility for named profiles.
 
 ---
@@ -50,12 +51,15 @@ graph TD
 ### 1. Configuration & Storage (`src/config.rs`)
 
 #### Schema Changes
+
 `REQUIRED_KEYS` changes from `&["profile", "remote_port", "local_port", "rdp_host"]` to:
+
 ```rust
 const REQUIRED_KEYS: &[&str] = &["remote_port", "local_port", "rdp_host"];
 ```
 
 #### Struct Updates
+
 ```rust
 pub struct EnvironmentConfig {
     pub profile: Option<String>,
@@ -84,13 +88,16 @@ pub struct EnvironmentConfig {
 ```
 
 #### Parsing & Validation
+
 - Read `aws_access_key_id`, `aws_secret_access_key`, and `region`.
 - If neither `aws_access_key_id` nor `profile` is present:
+
   ```rust
   return Err(AppError::Config(format!(
       "[{name}] must specify either `aws_access_key_id` (standalone) or `profile` (AWS profile)"
   )));
   ```
+
 - Method `resolve_aws_secret_key(&self, env_name: &str) -> Result<Option<String>>`:
   - If `self.aws_secret_access_key` is `Some(k)`, return `Ok(Some(k))`.
   - If `self.aws_access_key_id.is_some()`, lookup in `CredentialStore::get_aws_secret_key(env_name)`:
@@ -103,6 +110,7 @@ pub struct EnvironmentConfig {
 ### 2. Keyring Store (`src/credentials.rs`)
 
 Add entries for the AWS secret access key:
+
 ```rust
 impl CredentialStore {
     pub fn set_aws_secret_key(env_name: &str, secret_key: &str) -> Result<()> {
@@ -135,6 +143,7 @@ impl CredentialStore {
 ### 3. Authentication Engine (`src/mfa.rs`)
 
 #### Auth Source Representation
+
 ```rust
 #[derive(Debug, Clone)]
 pub enum AwsAuthSource {
@@ -147,6 +156,7 @@ pub enum AwsAuthSource {
 ```
 
 #### `MfaSessionManager` Updates
+
 ```rust
 pub struct MfaSessionManager {
     auth_source: AwsAuthSource,
@@ -158,8 +168,10 @@ pub struct MfaSessionManager {
 ```
 
 In `acquire_session_token(&self, spinner: Option<&Spinner>)`:
+
 - Construct `StsClient`:
   - When `AwsAuthSource::Direct { access_key_id, secret_access_key }`:
+
     ```rust
     let static_creds = aws_sdk_sts::config::Credentials::new(
         access_key_id.clone(),
@@ -176,7 +188,9 @@ In `acquire_session_token(&self, spinner: Option<&Spinner>)`:
     let config = config_loader.load().await;
     let client = StsClient::new(&config);
     ```
+
   - When `AwsAuthSource::Profile(profile)`:
+
     ```rust
     let mut config_loader = aws_config::defaults(BehaviorVersion::latest())
         .profile_name(profile);
@@ -192,6 +206,7 @@ In `acquire_session_token(&self, spinner: Option<&Spinner>)`:
 ### 4. CLI Execution & Display (`src/main.rs`, `src/cli.rs`)
 
 #### Region Resolution
+
 ```rust
 let resolved_region = args
     .region
@@ -201,6 +216,7 @@ let resolved_region = args
 ```
 
 #### Auth Source Resolution
+
 ```rust
 let auth_source = if let Some(ref key_id) = env.aws_access_key_id {
     let secret_key = env.resolve_aws_secret_key(&env_name)?;
@@ -223,7 +239,9 @@ let auth_source = if let Some(ref key_id) = env.aws_access_key_id {
 ```
 
 #### UI Feedback
+
 Print authentication details dynamically:
+
 - Direct Key: `print_kv("AWS Auth", &format!("Direct ({})", mask_key(key_id)));`
 - Profile: `print_kv("AWS Profile", profile);`
 - Region: `print_kv("Region", &resolved_region);`

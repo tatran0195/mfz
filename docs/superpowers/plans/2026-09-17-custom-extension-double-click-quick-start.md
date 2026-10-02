@@ -5,6 +5,7 @@
 **Goal:** Enable users to double-click `.mfz` files (e.g. `stg.mfz`, `prd.mfz`) from Desktop or File Explorer to launch RDP sessions immediately, with Windows Registry association and export utilities.
 
 **Architecture:**
+
 1. Extend `src/config.rs` to parse `.mfz` files (pointer format, standalone portable format, and file stem fallback).
 2. Add `Register`, `Unregister`, and `Export` commands to `src/cli.rs`.
 3. Implement Windows Shell registry manipulation and file export generator in `src/shell.rs`.
@@ -13,6 +14,7 @@
 **Tech Stack:** Rust 2021, `clap`, `configparser`, Windows Registry (`reg.exe`), `mstsc`.
 
 ## Global Constraints
+
 - Target Windows OS.
 - File association must operate under `HKCU` (Current User) without requiring admin elevation.
 - Pointer files reference local `mfz.ini` keeping secrets in Windows Credential Manager.
@@ -23,10 +25,12 @@
 ### Task 1: `.mfz` File Profile Loading & Resolution
 
 **Files:**
+
 - Modify: `src/config.rs`
 - Test: `tests/config.rs`
 
 **Interfaces:**
+
 - `ConfigLoader::load_from_file_or_name(&self, input: &str) -> Result<(String, EnvironmentConfig)>`:
   - If `input` ends in `.mfz` or exists as a file:
     - Parse `.mfz` file:
@@ -98,6 +102,7 @@ Run: `cargo test --test config`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add src/config.rs tests/config.rs
 git commit -m "feat(config): add load_from_file_or_name for .mfz files"
@@ -108,9 +113,11 @@ git commit -m "feat(config): add load_from_file_or_name for .mfz files"
 ### Task 2: CLI Commands for Extension Management and Export
 
 **Files:**
+
 - Modify: `src/cli.rs`
 
 **Interfaces:**
+
 - `TopCommand`:
   - `Register`: Register `.mfz` file extension
   - `Unregister`: Unregister `.mfz` file extension
@@ -131,6 +138,7 @@ Run: `cargo check --lib`
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
+
 ```bash
 git add src/cli.rs
 git commit -m "feat(cli): add register, unregister, and export subcommands"
@@ -141,11 +149,13 @@ git commit -m "feat(cli): add register, unregister, and export subcommands"
 ### Task 3: Shell Registration & Export Module
 
 **Files:**
+
 - Create: `src/shell.rs`
 - Modify: `src/lib.rs`
 - Modify: `src/error.rs` (add `Shell` error variant if needed)
 
 **Interfaces:**
+
 - `register_file_association() -> Result<()>`:
   - Finds current executable path (`std::env::current_exe()`).
   - Finds `icon.ico` path if present next to binary or in current directory.
@@ -166,6 +176,7 @@ Add `pub mod shell;` to `src/lib.rs`.
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
+
 ```bash
 git add src/shell.rs src/lib.rs src/error.rs
 git commit -m "feat(shell): implement windows registry file association and export"
@@ -176,9 +187,11 @@ git commit -m "feat(shell): implement windows registry file association and expo
 ### Task 4: Main Integration & Double-Click Launch Flow
 
 **Files:**
+
 - Modify: `src/main.rs`
 
 **Interfaces:**
+
 - `cmd_launch`:
   - Checks if `args.environment` is an `.mfz` file or pointer.
   - Loads environment using `loader.load_from_file_or_name`.
@@ -200,6 +213,7 @@ Run: `cargo run -- launch stg.mfz --ssm-only`
 Expected: Successfully recognizes and launches `stg.mfz`!
 
 - [ ] **Step 4: Commit**
+
 ```bash
 git add src/main.rs
 git commit -m "feat(main): integrate .mfz double-click launch, register, and export commands"
@@ -210,6 +224,7 @@ git commit -m "feat(main): integrate .mfz double-click launch, register, and exp
 ### Task 5: Documentation Updates & Final Verification
 
 **Files:**
+
 - Modify: `README.md`
 - Modify: `README.dev.md`
 
@@ -223,6 +238,7 @@ Document:
 Run: `cargo test`
 
 - [ ] **Step 3: Commit documentation**
+
 ```bash
 git add README.md README.dev.md
 git commit -m "docs: document .mfz double-click quick-start and export commands"

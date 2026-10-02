@@ -27,6 +27,7 @@ If you have Rust installed, simply run:
 ```bash
 cargo install --path .
 ```
+
 Or place the compiled `mfz.exe` into any folder in your system `PATH`.
 
 ### 2. Add your first Environment
@@ -34,6 +35,7 @@ Or place the compiled `mfz.exe` into any folder in your system `PATH`.
 You can configure an environment by editing `mfz.ini` directly or using the CLI:
 
 #### Option A: Direct in `mfz.ini` (Recommended — 100% Standalone)
+
 Create or edit `mfz.ini` in the same directory as `mfz.exe`:
 
 ```ini
@@ -49,6 +51,7 @@ rdp_user = Administrator
 ```
 
 #### Option B: Via CLI Command
+
 ```bash
 # Standalone direct credentials (no ~/.aws files needed):
 mfz config add my-server \
@@ -68,7 +71,9 @@ Just type `mfz launch`, select your server from the list, and press **Enter**:
 ```bash
 mfz launch
 ```
+
 Or launch directly by name:
+
 ```bash
 mfz launch my-server
 ```
@@ -100,6 +105,7 @@ mfz env secure my-server
 ```
 
 You can also set your AWS Secret Key directly into the Windows Credential Manager without writing it to disk:
+
 ```bash
 mfz env set-aws-secret my-server
 ```
@@ -120,25 +126,33 @@ mfz hosts add
 Transferring files through RDP clipboard copy-paste can be slow and prone to freezing. MFZ natively shares your local drives and optimizes RDP performance for ultra-fast transfers:
 
 - **Share a Specific Folder**: Want to share only a designated folder (e.g. `C:\Transfer` or `share_folder` in `mfz.ini`)?
+
   ```bash
   mfz launch my-server --share-folder C:\Transfer
   ```
+
   MFZ automatically maps this folder to a virtual drive letter (e.g. `Z:`) and shares it cleanly into `\\tsclient`, filtering out unmounted/empty optical drives, then unmounts it upon exit.
 - **Control Shared Drives**: Specify exact drives to share, all drives (`*`), or disable sharing:
+
   ```bash
   mfz launch my-server --share-drives "C:,D:"
   mfz launch my-server --share-drives none
   ```
+
 - **Fullscreen & Dynamic Window Resizing**: By default, MFZ launches in **fullscreen**. To launch in a floating window, pass `-w` or `--windowed`:
+
   ```bash
   mfz launch my-server --windowed
   ```
+
   In windowed mode, MFZ enables dynamic resolution so you can resize or maximize the window anytime, and Windows dynamically adjusts the remote screen resolution.
 - **Connection Speed Optimization**: Standard Windows defaults are used by default. Choose an optimization profile to enhance speed:
+
   ```bash
   mfz launch my-server --optimize speed
   mfz launch my-server --optimize balanced
   ```
+
   Profiles (`speed`, `balanced`, `quality`, `none`) and granular overrides (`audio`, `wallpaper`, `font_smoothing`) can also be configured in `mfz.ini`.
 
 ### 🖱️ Double-Click Quick-Start (`.mfz` Files)
@@ -148,18 +162,23 @@ Tired of opening a command prompt every time? MFZ supports custom `.mfz` extensi
 #### Multi-Profile Desktop Setup (e.g. STG and PRD)
 
 1. **Register the `.mfz` file extension** in Windows Shell (instant, no admin/UAC required):
+
    ```bash
    mfz register
    ```
+
 2. **Export shortcuts to your Desktop**:
+
    ```bash
    mfz export --all --desktop
    ```
+
 3. **Double-click to connect**:
    - `stg.mfz` on your Desktop connects directly to STG!
    - `prd.mfz` on your Desktop connects directly to PRD!
 
 #### Export Options
+
 - `mfz export stg`: Creates `stg.mfz` in the current directory.
 - `mfz export --all --desktop`: Creates `.mfz` quick-launch files for all configured profiles directly on your Desktop.
 - `mfz export prd --standalone`: Exports a self-contained portable profile containing full connection details.

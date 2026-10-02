@@ -9,6 +9,7 @@
 **Tech Stack:** Rust (1.70+), `mstsc.exe`, Windows Credential Manager (`cmdkey`), Windows `subst.exe`, `tempfile`/std::env::temp_dir.
 
 ## Global Constraints
+
 - Must maintain full backward compatibility with existing `mfz.ini` files.
 - Default `shared_drives` is `*` (share all drives) unless set to `none` or specific drive letters.
 - Default `optimize_connection` is `true`.
@@ -20,12 +21,15 @@
 ### Task 1: Extend Configuration Schema & Serialization
 
 **Files:**
+
 - Modify: `src/config.rs`
 - Test: `tests/config.rs`
 
 **Interfaces:**
+
 - Consumes: `Ini` parser from `configparser`
 - Produces:
+
   ```rust
   pub struct EnvironmentConfig {
       // existing fields...
@@ -37,6 +41,7 @@
 
 - [ ] **Step 1: Write failing tests for new config fields**
 In `tests/config.rs`, add tests for parsing and saving `shared_drives`, `shared_folder`, and `optimize_connection`:
+
 ```rust
 #[test]
 fn test_config_shared_drives_and_optimization() {
@@ -71,6 +76,7 @@ Expected: FAIL (fields `shared_drives`, `shared_folder`, `optimize_connection` d
 
 - [ ] **Step 3: Implement new fields and parsing in `src/config.rs`**
 Update `EnvironmentConfig` struct, `from_section`, and `to_map`:
+
 ```rust
 pub struct EnvironmentConfig {
     pub profile: String,
@@ -89,7 +95,9 @@ pub struct EnvironmentConfig {
     pub optimize_connection: Option<bool>,
 }
 ```
+
 In `from_section`:
+
 ```rust
 let parse_bool = |key: &str| -> Option<bool> {
     ini.get(name, key).and_then(|v| match v.trim().to_lowercase().as_str() {
@@ -103,7 +111,9 @@ let shared_drives = get_opt("shared_drives");
 let shared_folder = get_opt("shared_folder");
 let optimize_connection = parse_bool("optimize_connection");
 ```
+
 And in `to_map`:
+
 ```rust
 if let Some(drives) = &self.shared_drives {
     m.insert("shared_drives".into(), drives.clone());
@@ -121,6 +131,7 @@ Run: `cargo test --test config`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add src/config.rs tests/config.rs
 git commit -m "feat(config): add shared_drives, shared_folder, and optimize_connection"
@@ -131,12 +142,15 @@ git commit -m "feat(config): add shared_drives, shared_folder, and optimize_conn
 ### Task 2: Dynamic `.rdp` Content Generation & Performance Directives
 
 **Files:**
+
 - Modify: `src/rdp.rs`
 - Test: `tests/rdp.rs`
 
 **Interfaces:**
+
 - Consumes: Configuration values (host, port, fullscreen, username, shared_drives, optimize_connection)
 - Produces:
+
   ```rust
   pub struct RdpProfileOptions<'a> {
       pub host: &'a str,
@@ -152,6 +166,7 @@ git commit -m "feat(config): add shared_drives, shared_folder, and optimize_conn
 
 - [ ] **Step 1: Write unit tests for `.rdp` profile builder**
 Create `tests/rdp.rs`:
+
 ```rust
 use mfz::rdp::{build_rdp_file_content, RdpProfileOptions};
 
@@ -220,6 +235,7 @@ Expected: FAIL (`build_rdp_file_content` and `RdpProfileOptions` not found).
 
 - [ ] **Step 3: Implement `build_rdp_file_content` in `src/rdp.rs`**
 In `src/rdp.rs`:
+
 ```rust
 #[derive(Debug, Clone)]
 pub struct RdpProfileOptions<'a> {
@@ -273,6 +289,7 @@ Run: `cargo test --test rdp`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add src/rdp.rs tests/rdp.rs
 git commit -m "feat(rdp): add build_rdp_file_content with performance tuning directives"
@@ -283,12 +300,15 @@ git commit -m "feat(rdp): add build_rdp_file_content with performance tuning dir
 ### Task 3: Virtual Drive Mapping Guard (`subst`) & Full RDP Launch Lifecycle
 
 **Files:**
+
 - Modify: `src/rdp.rs`
 - Test: `tests/rdp.rs`
 
 **Interfaces:**
+
 - Consumes: Folder path, `subst.exe`
 - Produces:
+
   ```rust
   pub struct FolderDriveGuard {
       drive_letter: char,
@@ -315,6 +335,7 @@ git commit -m "feat(rdp): add build_rdp_file_content with performance tuning dir
 
 - [ ] **Step 1: Write tests for drive letter allocation & resolver logic**
 In `tests/rdp.rs`:
+
 ```rust
 use mfz::rdp::resolve_drives_to_redirect;
 
@@ -354,6 +375,7 @@ Run: `cargo test --test rdp`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add src/rdp.rs tests/rdp.rs
 git commit -m "feat(rdp): add folder subst guard, drive resolution, and temp rdp launch"
@@ -364,16 +386,19 @@ git commit -m "feat(rdp): add folder subst guard, drive resolution, and temp rdp
 ### Task 4: CLI Flags & Command Dispatch Integration
 
 **Files:**
+
 - Modify: `src/cli.rs`
 - Modify: `src/main.rs`
 - Test: `tests/config.rs`
 
 **Interfaces:**
+
 - Consumes: CLI args from `clap`
 - Produces: Updated CLI args for `LaunchArgs`, `ConfigCommand::Add`, `ConfigCommand::Edit`, and terminal display in `cmd_config`.
 
 - [ ] **Step 1: Add new flags in `src/cli.rs`**
 In `LaunchArgs`:
+
 ```rust
 /// Override shared drives for this session (e.g. *, C:, or "none")
 #[arg(long = "share-drives")]
@@ -387,7 +412,9 @@ pub share_folder: Option<String>,
 #[arg(long = "no-optimize")]
 pub no_optimize: bool,
 ```
+
 In `ConfigCommand::Add` & `ConfigCommand::Edit`:
+
 ```rust
 #[arg(long = "shared-drives")]
 pub shared_drives: Option<String>,
@@ -406,6 +433,7 @@ In `cmd_config`:
 - `edit`: Update `shared_drives`, `shared_folder`, and `optimize_connection` if provided.
 
 In `cmd_launch`:
+
 - Resolve `shared_drives`: CLI `--share-drives` overrides env config (default: `"*"`. If `"none"` or empty, disabled).
 - Resolve `shared_folder`: CLI `--share-folder` overrides env config.
 - Resolve `optimize_connection`: `!args.no_optimize && env.optimize_connection.unwrap_or(true)`.
@@ -416,6 +444,7 @@ Run: `cargo test`
 Expected: All tests pass.
 
 - [ ] **Step 4: Commit**
+
 ```bash
 git add src/cli.rs src/main.rs
 git commit -m "feat(cli): integrate drive sharing and optimization flags into launch and config"
@@ -426,6 +455,7 @@ git commit -m "feat(cli): integrate drive sharing and optimization flags into la
 ### Task 5: End-to-End Verification & Documentation
 
 **Files:**
+
 - Modify: `README.md`
 - Modify: `README.dev.md`
 
@@ -440,6 +470,7 @@ Run: `cargo fmt --check` and `cargo clippy -- -D warnings`
 Expected: Clean with 0 warnings.
 
 - [ ] **Step 3: Commit**
+
 ```bash
 git add README.md README.dev.md
 git commit -m "docs: document RDP shared drives and connection optimization options"
@@ -448,6 +479,7 @@ git commit -m "docs: document RDP shared drives and connection optimization opti
 ---
 
 ## Plan Review Checklist
+
 - [x] Spec coverage verified against `2026-09-16-rdp-shared-drive-and-speed-optimization-design.md`
 - [x] No placeholders or undefined types
 - [x] Step-by-step TDD with explicit tests and commands

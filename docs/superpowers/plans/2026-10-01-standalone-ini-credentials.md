@@ -21,12 +21,15 @@
 ### Task 1: Extend `CredentialStore` for AWS Secret Key
 
 **Files:**
+
 - Modify: `src/credentials.rs:1-60`
 - Test: `tests/credentials_test.rs` (or unit test in `src/credentials.rs`)
 
 **Interfaces:**
+
 - Consumes: `keyring::Entry`, `crate::error::{AppError, Result}`
 - Produces:
+
   ```rust
   impl CredentialStore {
       pub fn set_aws_secret_key(env_name: &str, secret_key: &str) -> Result<()>;
@@ -38,6 +41,7 @@
 - [ ] **Step 1: Write unit tests for AWS secret key in keyring**
 
 Create or add to `tests/credentials_test.rs`:
+
 ```rust
 use mfz::credentials::CredentialStore;
 
@@ -72,6 +76,7 @@ Expected: FAIL with `cannot find function set_aws_secret_key in CredentialStore`
 - [ ] **Step 3: Implement `set_aws_secret_key`, `get_aws_secret_key`, and update `delete_secrets` in `src/credentials.rs`**
 
 In `src/credentials.rs`:
+
 ```rust
     pub fn set_aws_secret_key(env_name: &str, secret_key: &str) -> Result<()> {
         let entry = Entry::new("mfz-cli", &format!("aws-secret-{}", env_name))
@@ -92,7 +97,9 @@ In `src/credentials.rs`:
         }
     }
 ```
+
 And in `delete_secrets`:
+
 ```rust
         let aws_entry = Entry::new("mfz-cli", &format!("aws-secret-{}", env_name))
             .map_err(|e| AppError::Config(format!("Keyring error: {e}")))?;
@@ -116,12 +123,15 @@ git commit -m "feat(credentials): add AWS secret key storage to Keyring"
 ### Task 2: Update `config.rs` Schema and Parsing for Standalone Keys & Region
 
 **Files:**
+
 - Modify: `src/config.rs:10-222`
 - Test: `tests/config.rs`
 
 **Interfaces:**
+
 - Consumes: `crate::credentials::CredentialStore`, `configparser::ini::Ini`
 - Produces:
+
   ```rust
   pub struct EnvironmentConfig {
       pub profile: Option<String>,
@@ -138,6 +148,7 @@ git commit -m "feat(credentials): add AWS secret key storage to Keyring"
 - [ ] **Step 1: Write failing tests in `tests/config.rs`**
 
 Add tests to `tests/config.rs`:
+
 ```rust
 #[test]
 fn test_standalone_config_parsing() {
@@ -187,9 +198,11 @@ Expected: FAIL (missing fields / profile required)
 - [ ] **Step 3: Update `src/config.rs`**
 
 1. Change `REQUIRED_KEYS`:
+
    ```rust
    const REQUIRED_KEYS: &[&str] = &["remote_port", "local_port", "rdp_host"];
    ```
+
 2. Update `EnvironmentConfig`:
    - Change `pub profile: Option<String>`.
    - Add `pub aws_access_key_id: Option<String>`.
@@ -201,6 +214,7 @@ Expected: FAIL (missing fields / profile required)
    - Read `aws_secret_access_key: get_opt("aws_secret_access_key")`.
    - Read `region: get_opt("region")`.
    - Validate auth:
+
      ```rust
      if profile.is_none() && aws_access_key_id.is_none() {
          return Err(AppError::Config(format!(
@@ -208,7 +222,9 @@ Expected: FAIL (missing fields / profile required)
          )));
      }
      ```
+
 4. Implement `resolve_aws_secret_key`:
+
    ```rust
    pub fn resolve_aws_secret_key(&self, env_name: &str) -> Result<Option<String>> {
        if let Some(ref k) = self.aws_secret_access_key {
@@ -225,6 +241,7 @@ Expected: FAIL (missing fields / profile required)
        Ok(None)
    }
    ```
+
 5. Update `to_map()` to include `aws_access_key_id`, `aws_secret_access_key`, `region`, and conditional `profile`.
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -244,12 +261,15 @@ git commit -m "feat(config): support standalone aws credentials and optional reg
 ### Task 3: Update `mfa.rs` Authentication Engine for `AwsAuthSource`
 
 **Files:**
+
 - Modify: `src/mfa.rs:50-160`
 - Test: `tests/mfa.rs`
 
 **Interfaces:**
+
 - Consumes: `aws_sdk_sts`, `aws_config`, `aws_credential_types`
 - Produces:
+
   ```rust
   #[derive(Debug, Clone)]
   pub enum AwsAuthSource {
@@ -273,6 +293,7 @@ git commit -m "feat(config): support standalone aws credentials and optional reg
 - [ ] **Step 1: Write test for `AwsAuthSource` in `tests/mfa.rs`**
 
 In `tests/mfa.rs`:
+
 ```rust
 use mfz::mfa::{AwsAuthSource, MfaSessionManager};
 
@@ -300,6 +321,7 @@ Expected: FAIL (types / signature mismatch)
 - [ ] **Step 3: Update `src/mfa.rs`**
 
 1. Define `AwsAuthSource`:
+
    ```rust
    #[derive(Debug, Clone)]
    pub enum AwsAuthSource {
@@ -310,7 +332,9 @@ Expected: FAIL (types / signature mismatch)
        Profile(String),
    }
    ```
+
 2. Update `MfaSessionManager`:
+
    ```rust
    pub struct MfaSessionManager {
        auth_source: AwsAuthSource,
@@ -320,7 +344,9 @@ Expected: FAIL (types / signature mismatch)
        cached: Option<MfaCredentials>,
    }
    ```
+
 3. Update `acquire_session_token()`:
+
    ```rust
    let config = match &self.auth_source {
        AwsAuthSource::Direct { access_key_id, secret_access_key } => {
@@ -349,6 +375,7 @@ Expected: FAIL (types / signature mismatch)
    };
    let client = StsClient::new(&config);
    ```
+
 4. Update `load_from_profile()` to handle both direct mode (returns credentials directly if not expired) and profile mode.
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -368,18 +395,22 @@ git commit -m "feat(mfa): support direct static credentials via AwsAuthSource"
 ### Task 4: Wire Auth & Region Resolution in `main.rs`, `cli.rs`, and `shell.rs`
 
 **Files:**
+
 - Modify: `src/main.rs:115-130, 210-290, 500-580`
 - Modify: `src/cli.rs` (credential management subcommands if needed)
 - Modify: `src/shell.rs:133-155`
 
 **Interfaces:**
+
 - Consumes: `AwsAuthSource`, `EnvironmentConfig`, `CredentialStore`
 - Produces: Working CLI with dynamic auth source detection, region resolution, and keyring helpers.
 
 - [ ] **Step 1: Update session launch and auth resolution in `src/main.rs`**
 
 In `cmd_launch` (and interactive run):
+
 1. Resolve region:
+
    ```rust
    let resolved_region = args
        .region
@@ -387,7 +418,9 @@ In `cmd_launch` (and interactive run):
        .or_else(|| env.region.clone())
        .unwrap_or_else(|| "ap-northeast-1".to_string());
    ```
+
 2. Resolve auth source:
+
    ```rust
    let auth_source = if let Some(ref key_id) = env.aws_access_key_id {
        let secret_key = env.resolve_aws_secret_key(&env_name)?;
@@ -408,7 +441,9 @@ In `cmd_launch` (and interactive run):
        )));
    };
    ```
+
 3. Initialize `MfaSessionManager`:
+
    ```rust
    let mut mfa = MfaSessionManager::new(
        auth_source.clone(),
@@ -417,7 +452,9 @@ In `cmd_launch` (and interactive run):
        totp_secret,
    );
    ```
+
 4. Update UI summary print:
+
    ```rust
    match &auth_source {
        AwsAuthSource::Direct { access_key_id, .. } => {
@@ -429,11 +466,13 @@ In `cmd_launch` (and interactive run):
    }
    print_kv("Region", &resolved_region);
    ```
+
 5. Update `env.profile` references in `cmd_list`, `cmd_env_add`, etc. to handle `Option<String>` safely.
 
 - [ ] **Step 2: Add `set-aws-secret` to CLI Creds command in `src/cli.rs` and `src/main.rs`**
 
 Support `mfz creds set-aws-secret <env>` to save key to keyring:
+
 ```rust
 CredsCommand::SetAwsSecret { env } => {
     let secret = inquire::Password::new("Enter AWS Secret Access Key:")
@@ -466,6 +505,7 @@ git commit -m "feat: wire standalone auth and region resolution into CLI and she
 ### Task 5: End-to-End Verification and Documentation
 
 **Files:**
+
 - Modify: `README.md`, `README.dev.md`
 - Verify: Full test suite
 

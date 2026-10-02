@@ -141,6 +141,7 @@ MFZ registers custom file associations in the Current User registry hive (`HKCU\
 ### File Resolution Strategy
 
 When `mfz launch <input>` runs, it checks whether `<input>` is a file or environment name:
+
 1. **Pointer File**: If the file defines `env = <name>` or `environment = <name>`, it loads section `[<name>]` from `mfz.ini`.
 2. **Standalone Profile**: If the file defines configuration keys directly (`profile = ...`, `instance = ...`, `rdp_host = ...`), MFZ loads it as a standalone `EnvironmentConfig` without needing `mfz.ini`.
 3. **File Stem Fallback**: If the file is 0-bytes or has no keys, MFZ extracts the file stem (e.g. `stg.mfz` -> `stg`) and loads `[stg]` from `mfz.ini`.
