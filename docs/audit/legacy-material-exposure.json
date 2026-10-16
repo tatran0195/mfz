@@ -1,0 +1,28 @@
+{
+  "discovered": "2026-10-15",
+  "baseline_file": "refs/environment.txt",
+  "baseline_lines": [
+    15,
+    26
+  ],
+  "material": "two 64-character Base-32 values paired with MFA device ARNs",
+  "values_recorded": false,
+  "active_or_revoked": "unknown; no credential probing performed",
+  "current_tree": "obsolete references removed; sanitized mfz.ini.example provided",
+  "preserved_archives_containing_the_same_values": [
+    "mfz-native-transfer-fix.zip",
+    "mfz-native-performance.zip",
+    "mfz-native-production.zip"
+  ],
+  "archive_entry": "mfz/refs/environment.txt",
+  "action_if_genuine": "replace corresponding MFA devices; source removal does not revoke secrets",
+  "artifact_policy": "earlier archives/baselines unchanged; never publish an unredacted deletion diff for this file",
+  "additional_top_level_patch_diff_report_matches": [],
+  "additional_top_level_patch_diff_report_files_checked": [
+    "mfz-native-performance-from-stability.patch",
+    "mfz-native-performance.patch",
+    "mfz-native-production-from-performance.patch",
+    "mfz-native-production.patch",
+    "mfz-native-transfer-fix.patch"
+  ]
+}

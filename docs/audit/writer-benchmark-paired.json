@@ -1,0 +1,342 @@
+{
+  "scope": "same worker, alternating preserved-v3/current actual production writers; release, 4 MiB, three runs per RTT; in-memory, no TLS/AWS/RDP/guest",
+  "duplicate_frames_all_runs": 0,
+  "transport_write_calls_all_runs": 64,
+  "not_a_statistical_equivalence_or_full_system_performance_claim": true,
+  "summary": [
+    {
+      "rtt_ms": 0,
+      "preserved_v3_median_mib_s": 176.9670641287938,
+      "audit_median_mib_s": 174.6346795309557,
+      "ratio_audit_to_v3": 0.986820233418459,
+      "v3_samples_mib_s": [
+        138.2955720731177,
+        176.9670641287938,
+        182.52323589239123
+      ],
+      "audit_samples_mib_s": [
+        153.116225244073,
+        174.6346795309557,
+        176.3154954211968
+      ]
+    },
+    {
+      "rtt_ms": 50,
+      "preserved_v3_median_mib_s": 55.74475635555722,
+      "audit_median_mib_s": 55.76065719287525,
+      "ratio_audit_to_v3": 1.0002852436418703,
+      "v3_samples_mib_s": [
+        51.67116896938586,
+        55.74475635555722,
+        56.23723203943085
+      ],
+      "audit_samples_mib_s": [
+        55.07858495459328,
+        55.76065719287525,
+        56.52280440098425
+      ]
+    },
+    {
+      "rtt_ms": 250,
+      "preserved_v3_median_mib_s": 14.887613314044694,
+      "audit_median_mib_s": 14.854217662743215,
+      "ratio_audit_to_v3": 0.9977568163145416,
+      "v3_samples_mib_s": [
+        14.895748880255834,
+        14.874320359765186,
+        14.887613314044694
+      ],
+      "audit_samples_mib_s": [
+        14.847060761158177,
+        14.854217662743215,
+        14.92595964657104
+      ]
+    },
+    {
+      "rtt_ms": 500,
+      "preserved_v3_median_mib_s": 7.680872763439304,
+      "audit_median_mib_s": 7.694412646856715,
+      "ratio_audit_to_v3": 1.0017628053262202,
+      "v3_samples_mib_s": [
+        7.6565498962924154,
+        7.695411414518716,
+        7.680872763439304
+      ],
+      "audit_samples_mib_s": [
+        7.694412646856715,
+        7.683033679653759,
+        7.7157524512704425
+      ]
+    }
+  ],
+  "samples": {
+    "v3": [
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 28.923558,
+        "implementation": "preserved-v3-same-worker",
+        "mib_per_second": 138.2955720731177,
+        "payload_mib": 4,
+        "rtt_ms": 0,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 77.41260899999999,
+        "implementation": "preserved-v3-same-worker",
+        "mib_per_second": 51.67116896938586,
+        "payload_mib": 4,
+        "rtt_ms": 50,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 268.532991,
+        "implementation": "preserved-v3-same-worker",
+        "mib_per_second": 14.895748880255834,
+        "payload_mib": 4,
+        "rtt_ms": 250,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 522.428516,
+        "implementation": "preserved-v3-same-worker",
+        "mib_per_second": 7.6565498962924154,
+        "payload_mib": 4,
+        "rtt_ms": 500,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 22.603076,
+        "implementation": "preserved-v3-same-worker",
+        "mib_per_second": 176.9670641287938,
+        "payload_mib": 4,
+        "rtt_ms": 0,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 71.755628,
+        "implementation": "preserved-v3-same-worker",
+        "mib_per_second": 55.74475635555722,
+        "payload_mib": 4,
+        "rtt_ms": 50,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 268.91985,
+        "implementation": "preserved-v3-same-worker",
+        "mib_per_second": 14.874320359765186,
+        "payload_mib": 4,
+        "rtt_ms": 250,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 519.7902730000001,
+        "implementation": "preserved-v3-same-worker",
+        "mib_per_second": 7.695411414518716,
+        "payload_mib": 4,
+        "rtt_ms": 500,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 21.915018,
+        "implementation": "preserved-v3-same-worker",
+        "mib_per_second": 182.52323589239123,
+        "payload_mib": 4,
+        "rtt_ms": 0,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 71.127256,
+        "implementation": "preserved-v3-same-worker",
+        "mib_per_second": 56.23723203943085,
+        "payload_mib": 4,
+        "rtt_ms": 50,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 268.679735,
+        "implementation": "preserved-v3-same-worker",
+        "mib_per_second": 14.887613314044694,
+        "payload_mib": 4,
+        "rtt_ms": 250,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 520.774152,
+        "implementation": "preserved-v3-same-worker",
+        "mib_per_second": 7.680872763439304,
+        "payload_mib": 4,
+        "rtt_ms": 500,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      }
+    ],
+    "audit": [
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 26.123946,
+        "implementation": "repository-remediation-same-worker",
+        "mib_per_second": 153.116225244073,
+        "payload_mib": 4,
+        "rtt_ms": 0,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 72.623507,
+        "implementation": "repository-remediation-same-worker",
+        "mib_per_second": 55.07858495459328,
+        "payload_mib": 4,
+        "rtt_ms": 50,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 269.413594,
+        "implementation": "repository-remediation-same-worker",
+        "mib_per_second": 14.847060761158177,
+        "payload_mib": 4,
+        "rtt_ms": 250,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 519.8577439999999,
+        "implementation": "repository-remediation-same-worker",
+        "mib_per_second": 7.694412646856715,
+        "payload_mib": 4,
+        "rtt_ms": 500,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 22.904958,
+        "implementation": "repository-remediation-same-worker",
+        "mib_per_second": 174.6346795309557,
+        "payload_mib": 4,
+        "rtt_ms": 0,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 71.735166,
+        "implementation": "repository-remediation-same-worker",
+        "mib_per_second": 55.76065719287525,
+        "payload_mib": 4,
+        "rtt_ms": 50,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 269.283788,
+        "implementation": "repository-remediation-same-worker",
+        "mib_per_second": 14.854217662743215,
+        "payload_mib": 4,
+        "rtt_ms": 250,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 520.62768,
+        "implementation": "repository-remediation-same-worker",
+        "mib_per_second": 7.683033679653759,
+        "payload_mib": 4,
+        "rtt_ms": 500,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 22.686605,
+        "implementation": "repository-remediation-same-worker",
+        "mib_per_second": 176.3154954211968,
+        "payload_mib": 4,
+        "rtt_ms": 0,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 70.76789699999999,
+        "implementation": "repository-remediation-same-worker",
+        "mib_per_second": 56.52280440098425,
+        "payload_mib": 4,
+        "rtt_ms": 50,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 267.989469,
+        "implementation": "repository-remediation-same-worker",
+        "mib_per_second": 14.92595964657104,
+        "payload_mib": 4,
+        "rtt_ms": 250,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      },
+      {
+        "data_frames": 4096,
+        "duplicate_frames": 0,
+        "elapsed_ms": 518.41995,
+        "implementation": "repository-remediation-same-worker",
+        "mib_per_second": 7.7157524512704425,
+        "payload_mib": 4,
+        "rtt_ms": 500,
+        "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+        "transport_write_calls": 64
+      }
+    ]
+  }
+}

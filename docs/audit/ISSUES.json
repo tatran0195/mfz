@@ -1,0 +1,962 @@
+{
+  "baseline_tree": "668854b1c20b58e175046482481e44b326c96883",
+  "audit_date": "2026-10-15",
+  "finding_count": 28,
+  "note": "Evidence text refers to preserved baseline unless explicitly marked intermediate remediation; current status is separate. No seed values are recorded.",
+  "findings": [
+    {
+      "id": "MFZ-A01",
+      "title": "Secret removal does not remove persisted secrets",
+      "category": "security/persistence",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/config.rs::ConfigLoader::{replace_fields,update,secure}",
+        "src/main.rs::cmd_config"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence/current behavior: Secure takes secret fields out of the model, then save only inserts keys returned by `to_map`; old INI keys are never removed. Reloading restores the plaintext secrets while the CLI prints “secrets removed.”"
+      ],
+      "root_cause": "Patch-save semantics were used for a complete secret-removal model, leaving old keys.",
+      "realistic_impact_and_detail": "- Category/location: security, persistence; `src/config.rs::ConfigLoader::save`, `src/main.rs::cmd_config(Secure)`.\n- Evidence/current behavior: Secure takes secret fields out of the model, then save only inserts keys returned by `to_map`; old INI keys are never removed. Reloading restores the plaintext secrets while the CLI prints “secrets removed.”\n- Root cause/impact: patch semantics are used for a complete-model save. The same stale-field behavior prevents clearing other settings. A user believing MFA/AWS/RDP secrets were secured can retain/distribute plaintext.\n- Severity high; likelihood high when Secure is used; confidence high. Affects config edits, credential migration and portable exports.\n- Remediation: replace known section fields coherently, verify secure-store writes before removing plaintext, atomically persist under a mutation lock.\n- Verification: `aud_001_removing_secret_fields_actually_removes_persisted_keys` plus migration/save-failure regressions.\n- Status: Implemented and locally verified: full-field removal, secure readback/failure and locked persistence tests pass. Actual Windows secure-store/filesystem execution remains an external gate.\n",
+      "severity": "high (conditional as documented)",
+      "likelihood": "high when secure migration is used",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "config edit/secure",
+        "CredentialStore readback",
+        "exports consuming saved config"
+      ],
+      "remediation": [
+        "Remediation: replace known section fields coherently, verify secure-store writes before removing plaintext, atomically persist under a mutation lock."
+      ],
+      "verification": [
+        "Verification: `aud_001_removing_secret_fields_actually_removes_persisted_keys` plus migration/save-failure regressions.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented and locally verified: full-field removal, secure readback/failure and locked persistence tests pass. Actual Windows secure-store/filesystem execution remains an external gate.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A02",
+      "title": "Ordinary exports silently copy plaintext secrets",
+      "category": "security/export",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/shell.rs::export_mfz_file_with_options",
+        "src/main.rs::cmd_export",
+        "src/cli.rs::ExportArgs"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: default standalone export serializes `EnvironmentConfig::to_map`, including AWS secret, TOTP seed and RDP password, without a warning/opt-in. Exported desktop/shared files can contain all authentication factors."
+      ],
+      "root_cause": "Persistence representation was reused unfiltered for distributable exports.",
+      "realistic_impact_and_detail": "- Category/location: security; `src/shell.rs::export_mfz_file`, `src/main.rs::cmd_export`, `src/cli.rs::ExportArgs`.\n- Evidence: default standalone export serializes `EnvironmentConfig::to_map`, including AWS secret, TOTP seed and RDP password, without a warning/opt-in. Exported desktop/shared files can contain all authentication factors.\n- Root cause: persistence and distributable export share an unfiltered secret-bearing representation.\n- Severity high; likelihood medium (requires secrets in config/export); confidence high. Also affects export-name/path validation and output overwrites.\n- Remediation: secret-free export by default, explicit secret opt-in/warning, validated names and no-clobber/explicit replacement policy.\n- Verification: `aud_002`, `aud_003`, `aud_011`; restricted-file and round-trip checks.\n- Status: Implemented and locally verified by helper and actual-CLI secret/no-clobber/explicit-policy checks; Windows output ACL runtime behavior remains an external gate.\n",
+      "severity": "high (conditional as documented)",
+      "likelihood": "medium, conditional on plaintext fields/export",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "standalone/profile consumers",
+        "export CLI",
+        "secret-bearing local output"
+      ],
+      "remediation": [
+        "Remediation: secret-free export by default, explicit secret opt-in/warning, validated names and no-clobber/explicit replacement policy."
+      ],
+      "verification": [
+        "Verification: `aud_002`, `aud_003`, `aud_011`; restricted-file and round-trip checks.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented and locally verified by helper and actual-CLI secret/no-clobber/explicit-policy checks; Windows output ACL runtime behavior remains an external gate.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A03",
+      "title": "RDP destination is not constrained to the authenticated tunnel",
+      "category": "security/endpoint integrity",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/main.rs::cmd_launch",
+        "src/rdp.rs::LaunchOptions::validate"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: any hosts-file alias is accepted irrespective of IP; hosts read/add failures are converted to false/ignored; `mstsc` receives the configurable hostname anyway. DNS or an incorrect existing mapping can direct RDP/cached credentials outside the native localhost tunnel."
+      ],
+      "root_cause": "Alias existence was confused with the authenticated numeric-tunnel endpoint invariant.",
+      "realistic_impact_and_detail": "- Category/location: security, integration; `src/main.rs::cmd_launch`, `src/hosts.rs::{has_host,ensure_host}`, `src/rdp.rs::launch`.\n- Evidence: any hosts-file alias is accepted irrespective of IP; hosts read/add failures are converted to false/ignored; `mstsc` receives the configurable hostname anyway. DNS or an incorrect existing mapping can direct RDP/cached credentials outside the native localhost tunnel.\n- Root cause: alias existence is confused with the network endpoint invariant.\n- Severity high; likelihood medium with wrong/untrusted mapping/profile; confidence high. Affects cached credentials, profile trust and hosts handling.\n- Remediation: connect tunneled RDP to a numeric loopback endpoint, separate descriptive aliases/explicit hosts management, reject unsafe profile fields before side effects.\n- Verification: generated-profile/launch-target regressions and Windows-target integration check; actual MSTSC requires Windows.\n- Status: Implemented numeric owned-loopback policy through main/public launch; portable target tests and full Windows integration type/lint pass. Actual mstsc/server identity remains an external gate.\n",
+      "severity": "high (conditional as documented)",
+      "likelihood": "medium, conditional on bad/untrusted alias/profile",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "native SSM listener",
+        "MSTSC launch",
+        "hosts aliases",
+        "stored RDP credentials"
+      ],
+      "remediation": [
+        "Remediation: connect tunneled RDP to a numeric loopback endpoint, separate descriptive aliases/explicit hosts management, reject unsafe profile fields before side effects."
+      ],
+      "verification": [
+        "Verification: generated-profile/launch-target regressions and Windows-target integration check; actual MSTSC requires Windows.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented numeric owned-loopback policy through main/public launch; portable target tests and full Windows integration type/lint pass. Actual mstsc/server identity remains an external gate.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A04",
+      "title": "Unvalidated strings cross configuration/hosts/RDP file boundaries",
+      "category": "security/input integrity",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/validation.rs",
+        "src/config.rs::EnvironmentConfig::validate",
+        "src/hosts.rs",
+        "src/rdp.rs::build_rdp_file_content"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: public functions interpolate hostname/user/drive/environment values into line-oriented files or paths without CR/LF/control/path checks. `hosts custom` can append additional host records via one hostname; environment names can escape an export directory."
+      ],
+      "root_cause": "Argument separation was mistaken for validation of downstream line/file/path grammars.",
+      "realistic_impact_and_detail": "- Category/location: injection, integrity; `EnvironmentConfig`, `HostsManager::add_host`, `build_rdp_file_content`, `export_mfz_file`.\n- Evidence: public functions interpolate hostname/user/drive/environment values into line-oriented files or paths without CR/LF/control/path checks. `hosts custom` can append additional host records via one hostname; environment names can escape an export directory.\n- Root cause: CLI argument separation is mistaken for validation of downstream file grammars.\n- Severity high for elevated hosts manipulation/misdirected credentials, medium for local profile corruption; likelihood medium; confidence high. All entry points, not just CLI parsing, need checks.\n- Remediation: validate at the relevant public boundaries; preserve literal passwords using unambiguous serialization, not destructive sanitizing.\n- Verification: `aud_003`, `aud_015`, RDP control-character and invalid-save regressions.\n- Status: Implemented at config/hosts/export/RDP public boundaries; injection/quoting/serialization regressions pass. No destructive sanitizing of valid password bytes.\n",
+      "severity": "high (conditional as documented)",
+      "likelihood": "medium at affected public boundaries",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "all config/output public APIs",
+        "explicit/elevated hosts",
+        "profile filenames"
+      ],
+      "remediation": [
+        "Remediation: validate at the relevant public boundaries; preserve literal passwords using unambiguous serialization, not destructive sanitizing."
+      ],
+      "verification": [
+        "Verification: `aud_003`, `aud_015`, RDP control-character and invalid-save regressions.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented at config/hosts/export/RDP public boundaries; injection/quoting/serialization regressions pass. No destructive sanitizing of valid password bytes.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A05",
+      "title": "Security-sensitive Windows executables are found by ambient search",
+      "category": "security/local executable trust",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/rdp_windows.rs::launch",
+        "src/windows.rs::system_directory"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: Windows executable search can select an executable in an untrusted working directory/PATH. Double-click profile operation can inherit unrelated current directories."
+      ],
+      "root_cause": "A Windows system executable was invoked through ambient working-directory/PATH search.",
+      "realistic_impact_and_detail": "- Category/location: local execution/trust; `src/rdp.rs::launch` calls `Command::new(\"mstsc\")`.\n- Evidence: Windows executable search can select an executable in an untrusted working directory/PATH. Double-click profile operation can inherit unrelated current directories.\n- Root cause: a Windows system component is invoked as an arbitrary search-path command.\n- Severity high under planted-executable scenario; likelihood low/medium; confidence high on search behavior, Windows execution not available.\n- Remediation: obtain the system directory through the Windows API and invoke the absolute executable; unsupported platforms must return an error instead of shell fallbacks.\n- Verification: path construction unit checks, Windows cross-check and live Windows gate.\n- Status: Implemented absolute system executable and unsupported-platform error. Complete Windows all-target type/lint pass; native mstsc execution not performed here.\n",
+      "severity": "high (conditional as documented)",
+      "likelihood": "low/medium, conditional on planted executable",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "MSTSC child creation",
+        "double-click profile working directories"
+      ],
+      "remediation": [
+        "Remediation: obtain the system directory through the Windows API and invoke the absolute executable; unsupported platforms must return an error instead of shell fallbacks."
+      ],
+      "verification": [
+        "Verification: path construction unit checks, Windows cross-check and live Windows gate.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented absolute system executable and unsupported-platform error. Complete Windows all-target type/lint pass; native mstsc execution not performed here.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A06",
+      "title": "Temporary RDP credentials overwrite/delete existing credentials",
+      "category": "security/credential ownership",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/rdp_windows.rs::CredentialGuard"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: three target records, including a broad hostname without port, are written with per-user local-machine persistence (not a shared machine-wide vault); return values are ignored; all are deleted unconditionally afterwards. Existing user entries can be destroyed, failures are invisible and interrupted sessions can leave persistent credentials."
+      ],
+      "root_cause": "Credential writes/deletes had no scoped ownership, preservation or checked-result contract.",
+      "realistic_impact_and_detail": "- Category/location: security, data integrity; `src/rdp.rs::launch`.\n- Evidence: three target records, including a broad hostname without port, are written with per-user local-machine persistence (not a shared machine-wide vault); return values are ignored; all are deleted unconditionally afterwards. Existing user entries can be destroyed, failures are invisible and interrupted sessions can leave persistent credentials.\n- Root cause: credential updates have no ownership/restoration/error model or per-target coordination.\n- Severity high; likelihood medium when credentials already exist/concurrent sessions fail; confidence high. Windows-only behavior requires API execution to fully verify.\n- Remediation: narrowly scoped targets, session persistence, owned guarded writes/restoration and explicit errors; no command-line password fallbacks.\n- Verification: mockable lifecycle invariants and Windows-target type-check; native Credential Manager execution remains a live gate.\n- Status: Implemented one exact-port session credential, refused overwrite, fresh ownership/readback checks and checked cleanup; no subprocess-argument password. Complete Windows type/lint pass, native credential/mstsc behavior remains unexecuted.\n",
+      "severity": "high (conditional as documented)",
+      "likelihood": "medium with pre-existing/interrupted credentials",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "Windows Credential Manager",
+        "MSTSC auth",
+        "normal/error/cancel cleanup"
+      ],
+      "remediation": [
+        "Remediation: narrowly scoped targets, session persistence, owned guarded writes/restoration and explicit errors; no command-line password fallbacks."
+      ],
+      "verification": [
+        "Verification: mockable lifecycle invariants and Windows-target type-check; native Credential Manager execution remains a live gate.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented one exact-port session credential, refused overwrite, fresh ownership/readback checks and checked cleanup; no subprocess-argument password. Complete Windows type/lint pass, native credential/mstsc behavior remains unexecuted.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A07",
+      "title": "Region selection is inconsistent across authentication/discovery/session creation",
+      "category": "correctness/AWS integration",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/main.rs::cmd_launch",
+        "src/mfa.rs::{aws_config,service_config}",
+        "src/aws.rs",
+        "src/ssm.rs::start"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: launch computes CLI/config/fallback region for MFA, but passes only `args.region` to EC2 and SSM. Clients can therefore use the default SDK region rather than the environment's configured region. V3's correctly SDK-resolved WebSocket signing cannot fix choosing the wrong control-plane region."
+      ],
+      "root_cause": "Resolved region/profile selection was duplicated and lost between services/callers.",
+      "realistic_impact_and_detail": "- Category/location: correctness; `src/main.rs::cmd_launch`, `src/aws.rs::resolve_instance_by_tag`, `src/ssm.rs::SsmSession::start`.\n- Evidence: launch computes CLI/config/fallback region for MFA, but passes only `args.region` to EC2 and SSM. Clients can therefore use the default SDK region rather than the environment's configured region. V3's correctly SDK-resolved WebSocket signing cannot fix choosing the wrong control-plane region.\n- Root cause: duplicated selection code and loss of the resolved value at call boundaries.\n- Severity high; likelihood high with per-environment regions and no override; confidence high.\n- Remediation: propagate one explicit override consistently and otherwise honor the selected SDK profile/provider chain across services.\n- Verification: actual SDK loopback signature/endpoint tests and launch-resolution regressions.\n- Status: Implemented consistent override and cached selected-profile provider/region; actual SDK production-start/profile fixture and both-platform integration checks pass.\n",
+      "severity": "high (conditional as documented)",
+      "likelihood": "high for per-environment regions without explicit CLI override",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "MFA/STS",
+        "EC2 discovery",
+        "SSM control plane/WebSocket signing"
+      ],
+      "remediation": [
+        "Remediation: propagate one explicit override consistently and otherwise honor the selected SDK profile/provider chain across services."
+      ],
+      "verification": [
+        "Verification: actual SDK loopback signature/endpoint tests and launch-resolution regressions.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented consistent override and cached selected-profile provider/region; actual SDK production-start/profile fixture and both-platform integration checks pass.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A08",
+      "title": "Long-lived credentials are passed to SDK clients with an empty session token",
+      "category": "correctness/auth credential representation",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/mfa.rs::MfaCredentials::to_sdk_credentials",
+        "src/ssm_tunnel.rs::SessionCredentials/sign_request_sigv4"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: no-MFA direct credentials and static profiles model absence as `\"\"`; EC2/SSM construct SDK credentials with `Some(creds.session_token)`. The token header should be absent, not an explicitly empty security token."
+      ],
+      "root_cause": "Optional session-token absence was modeled as an empty String and wrapped in Some.",
+      "realistic_impact_and_detail": "- Category/location: correctness/integration; `src/mfa.rs::load_from_profile`, `src/aws.rs`, `src/ssm.rs`.\n- Evidence: no-MFA direct credentials and static profiles model absence as `\"\"`; EC2/SSM construct SDK credentials with `Some(creds.session_token)`. The token header should be absent, not an explicitly empty security token.\n- Root cause: ad-hoc credential conversion is duplicated rather than preserving AWS token optionality.\n- Severity high for the advertised standalone/no-MFA workflow; likelihood high for that mode; confidence high on invalid representation, service response requires live AWS.\n- Remediation: one credential conversion that omits empty tokens, used by every SDK/signer consumer.\n- Verification: local real-SDK HTTP and signer tests assert absence/presence of token headers.\n- Status: Implemented optional token model and typed SDK credentials through native signer; actual HTTP/signature presence/absence tests pass.\n",
+      "severity": "high (conditional as documented)",
+      "likelihood": "high within no-MFA static-key mode; live rejection not probed",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "direct/profile credentials",
+        "EC2/SSM SDK clients",
+        "native WebSocket signer"
+      ],
+      "remediation": [
+        "Remediation: one credential conversion that omits empty tokens, used by every SDK/signer consumer."
+      ],
+      "verification": [
+        "Verification: local real-SDK HTTP and signer tests assert absence/presence of token headers.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented optional token model and typed SDK credentials through native signer; actual HTTP/signature presence/absence tests pass.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A09",
+      "title": "Partial MFA configuration silently selects a non-MFA flow",
+      "category": "security/authentication contract",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/mfa.rs::MfaSessionManager::{validate_auth,get_credentials}"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: MFA is used only if both serial and secret are Some; serial-only/secret-only managers fall back to profile/direct credentials. Main normally resolves a missing secret first, but this public service entry point does not uphold the invariant."
+      ],
+      "root_cause": "Incomplete MFA input was treated as a request for an unrelated authentication mode.",
+      "realistic_impact_and_detail": "- Category/location: authentication/reliability; `src/mfa.rs::MfaSessionManager::get_credentials`.\n- Evidence: MFA is used only if both serial and secret are Some; serial-only/secret-only managers fall back to profile/direct credentials. Main normally resolves a missing secret first, but this public service entry point does not uphold the invariant.\n- Root cause: missing MFA input is treated as a request for another authentication mode.\n- Severity high as a fail-open API contract; actual AWS IAM policy may independently reject non-MFA requests (no IAM bypass is claimed); likelihood medium; confidence high.\n- Remediation: reject incomplete/empty MFA configuration before credentials/provider calls.\n- Verification: public-manager tests proving no fallback/network request.\n- Status: Implemented fail-closed validation before provider access; no-fallback/no-network manager tests pass.\n",
+      "severity": "high (conditional as documented)",
+      "likelihood": "medium; IAM may independently reject non-MFA calls",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "MFA manager callers",
+        "direct/profile fallback",
+        "IAM authorization remains independent"
+      ],
+      "remediation": [
+        "Remediation: reject incomplete/empty MFA configuration before credentials/provider calls."
+      ],
+      "verification": [
+        "Verification: public-manager tests proving no fallback/network request.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented fail-closed validation before provider access; no-fallback/no-network manager tests pass.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A10",
+      "title": "Tag discovery silently selects an arbitrary instance and ignores later pages",
+      "category": "correctness/target integrity",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/aws.rs::resolve_instance_by_tag",
+        "src/instance_selection.rs::UniqueInstanceSelection",
+        "src/main.rs::cmd_launch"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: first response/first instance is returned, no paginator or uniqueness check; CLI splits on every `=` although tag values can contain `=`. Shared Name tags can select the wrong (including production) VM."
+      ],
+      "root_cause": "A paginated resource collection was treated as one unique first match; tag parsing split too often.",
+      "realistic_impact_and_detail": "- Category/location: target integrity; `src/aws.rs::resolve_instance_by_tag`, tag parsing in `cmd_launch`.\n- Evidence: first response/first instance is returned, no paginator or uniqueness check; CLI splits on every `=` although tag values can contain `=`. Shared Name tags can select the wrong (including production) VM.\n- Root cause: an API collection is treated as a unique resource identifier.\n- Severity high for target integrity; likelihood medium; confidence high.\n- Remediation: split once, validate nonempty key/value, paginate and require exactly one distinct matching running instance; cap pathological pagination.\n- Verification: deterministic selector/pagination contract tests and complete SDK type-check; live account IAM remains external.\n- Status: Implemented split-once tag parsing and bounded unique paginated selection; actual selector regressions and complete EC2 SDK type/lint pass. Live account enumeration is an external gate.\n",
+      "severity": "high (conditional as documented)",
+      "likelihood": "medium with duplicate tags/pagination",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "EC2 SDK filters/pages",
+        "instance/tag CLI/model",
+        "SSM target"
+      ],
+      "remediation": [
+        "Remediation: split once, validate nonempty key/value, paginate and require exactly one distinct matching running instance; cap pathological pagination."
+      ],
+      "verification": [
+        "Verification: deterministic selector/pagination contract tests and complete SDK type-check; live account IAM remains external.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented split-once tag parsing and bounded unique paginated selection; actual selector regressions and complete EC2 SDK type/lint pass. Live account enumeration is an external gate.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A11",
+      "title": "INI defaults truncate passwords and drive lists",
+      "category": "correctness/secret serialization",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/config.rs::{parse_ini,encode_ini_value,EnvironmentConfig::from_section}"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: configparser's default inline comment symbols are `#` and `;`. A password containing either or a semicolon-separated RDP drive list is truncated during load. Save/load is not a round trip."
+      ],
+      "root_cause": "Generic INI inline-comment defaults and quoting were incompatible with literal secret/drive values.",
+      "realistic_impact_and_detail": "- Category/location: data correctness; every `Ini::new` use in `src/config.rs`.\n- Evidence: configparser's default inline comment symbols are `#` and `;`. A password containing either or a semicolon-separated RDP drive list is truncated during load. Save/load is not a round trip.\n- Root cause: generic INI defaults are incompatible with this application's value grammar.\n- Severity high for silently changed credentials; likelihood medium/high; confidence high.\n- Remediation: full-line comments only, shared parser settings, explicit quoting/escaping for values that cannot round-trip literally, retain secret whitespace where represented explicitly.\n- Verification: `aud_006`, punctuation/quoted-value/reload regressions.\n- Status: Implemented full-line comments and explicit quoted values; punctuation/control/whitespace and explicit-empty-password round trips pass.\n",
+      "severity": "high (conditional as documented)",
+      "likelihood": "medium/high for punctuation-containing credentials/drive lists",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "all INI read/write",
+        "credential migration",
+        "drive/profile output"
+      ],
+      "remediation": [
+        "Remediation: full-line comments only, shared parser settings, explicit quoting/escaping for values that cannot round-trip literally, retain secret whitespace where represented explicitly."
+      ],
+      "verification": [
+        "Verification: `aud_006`, punctuation/quoted-value/reload regressions.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented full-line comments and explicit quoted values; punctuation/control/whitespace and explicit-empty-password round trips pass.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A12",
+      "title": "Vulnerable/deprecated transitive stacks are enabled unnecessarily",
+      "category": "dependency security/reachability",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "tools/transport-tests/Cargo.toml",
+        "tools/transport-tests/Cargo.lock"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: the saved OSV batch scan matched 13 package versions. Advisory documents/ranges are preserved under `docs/audit/advisories/`; aliases are not counted as separate vulnerabilities. SDK default `rustls` additionally enables the legacy Hyper 0.14/rustls 0.21 stack even though the modern default HTTPS client is enabled. rxing's image helper feature pulls imageproc/font code although MFZ already supplies luminance data directly."
+      ],
+      "root_cause": "Broad redundant/default feature stacks and stale locked transitive versions enabled unnecessary exposure.",
+      "realistic_impact_and_detail": "- Category/location: dependencies; root/harness Cargo manifests and locks.\n- Evidence: the saved OSV batch scan matched 13 package versions. Advisory documents/ranges are preserved under `docs/audit/advisories/`; aliases are not counted as separate vulnerabilities. SDK default `rustls` additionally enables the legacy Hyper 0.14/rustls 0.21 stack even though the modern default HTTPS client is enabled. rxing's image helper feature pulls imageproc/font code although MFZ already supplies luminance data directly.\n- Root cause: broad/default features plus old locked transitive versions. Not every matched path is exploitable: imageproc transforms, CRL parsing, smithy generated servers, aarch64 cmov and Debug paths require separate reachability assessment. Unmaintained notices are not themselves exploits.\n- Severity high for reachable TLS issues; variable for others; likelihood/reachability under review; confidence high on package matches.\n- Remediation: remove unused feature stacks/direct crates; update affected compatible transitive versions rather than suppress advisories; re-scan and document residual reachability.\n- Verification: dependency trees, compile/tests and final OSV query with saved evidence.\n- Status: Known advisory versions patched/unused stacks removed. Exact OSV scan matches only fxhash/paste maintenance notices; effective-tree reachability and deliberately retained residuals documented in DEPENDENCIES.md. No suppression or permanent zero-risk claim.\n",
+      "severity": "high (conditional as documented)",
+      "likelihood": "advisory/peer/platform/feature dependent; not every match exploitable",
+      "confidence": "high on exact version/advisory matches; exploit reachability varies and is assessed separately",
+      "affected_dependencies_and_callers": [
+        "modern AWS HTTPS",
+        "SSO provider support",
+        "QR/image stack",
+        "both locks/harness"
+      ],
+      "remediation": [
+        "Remediation: remove unused feature stacks/direct crates; update affected compatible transitive versions rather than suppress advisories; re-scan and document residual reachability."
+      ],
+      "verification": [
+        "Verification: dependency trees, compile/tests and final OSV query with saved evidence.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Known advisory versions patched/unused stacks removed. Exact OSV scan matches only fxhash/paste maintenance notices; effective-tree reachability and deliberately retained residuals documented in DEPENDENCIES.md. No suppression or permanent zero-risk claim.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A13",
+      "title": "Malformed profiles can silently select another configuration",
+      "category": "correctness/profile authority",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/config.rs::ConfigLoader::{new,from_cli,load_for_launch}",
+        "src/cli.rs config argument origins",
+        "src/main.rs::cmd_launch"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence/root cause: pointer keys use starts-with matching; relative pointer configs use process CWD; parse/validation errors are ignored and fall through to an existing environment named after the file; selection of the first valid section depends on HashMap iteration. Empty-file stem shorthand is intentional, malformed-file fallback is not.",
+        "Additional reproduced evidence: the actual earlier application binary silently selected USERPROFILE/.mfz/mfz.ini for an explicit `--config mfz.ini`; the new subprocess case failed before the fix. CLI config fields now preserve omission vs explicit path, and programmatic constructors use exact paths."
+      ],
+      "root_cause": "Permissive prefix/fallback selection and loss of explicit/default path origin could change configuration source.",
+      "realistic_impact_and_detail": "- Location: `ConfigLoader::load_from_file_or_name`.\n- Evidence/root cause: pointer keys use starts-with matching; relative pointer configs use process CWD; parse/validation errors are ignored and fall through to an existing environment named after the file; selection of the first valid section depends on HashMap iteration. Empty-file stem shorthand is intentional, malformed-file fallback is not.\n- Impact: wrong environment launch, confusing diagnostics. Medium/high target integrity; likelihood medium; confidence high. Also platform case sensitivity and explicit-path resolution need consistency.\n- Remediation: exact pointer grammar, pointer-relative paths, deterministic single-profile selection, empty-only fallback and source metadata for launch trust/keyring decisions.\n- Verification: `aud_007`, `aud_008`, `aud_009`, ambiguous/missing profiles and trust-boundary tests.\n- Additional reproduced evidence: the actual earlier application binary silently selected USERPROFILE/.mfz/mfz.ini for an explicit `--config mfz.ini`; the new subprocess case failed before the fix. CLI config fields now preserve omission vs explicit path, and programmatic constructors use exact paths.\n- Status: Implemented deterministic/exact parser, pointer-relative provenance, explicit-vs-omitted config origin and two-stage profile authority. Original regressions and independently reproduced actual-CLI explicit-path regression pass.\n",
+      "severity": "medium (conditional as documented)",
+      "likelihood": "medium, includes actual explicit-origin reproduction",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "file association launch",
+        "named/standalone/pointer sources",
+        "keyring authority",
+        "all --config callers"
+      ],
+      "remediation": [
+        "Remediation: exact pointer grammar, pointer-relative paths, deterministic single-profile selection, empty-only fallback and source metadata for launch trust/keyring decisions."
+      ],
+      "verification": [
+        "Verification: `aud_007`, `aud_008`, `aud_009`, ambiguous/missing profiles and trust-boundary tests.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented deterministic/exact parser, pointer-relative provenance, explicit-vs-omitted config origin and two-stage profile authority. Original regressions and independently reproduced actual-CLI explicit-path regression pass.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A14",
+      "title": "Invalid configurations are accepted or silently hidden",
+      "category": "correctness/config validation",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/config.rs::EnvironmentConfig::{validate,from_section}",
+        "src/config.rs::ConfigLoader::get_all",
+        "src/cli.rs"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence/root cause: empty option strings count as present; zero ports parse successfully; malformed booleans become None; unknown optimization maps to None; get_all drops every invalid section; programmatic saves bypass validation. Config/hosts/export can claim success on a partial set."
+      ],
+      "root_cause": "Validation/defaulting was inconsistent across parsing, saving, CLI and output boundaries.",
+      "realistic_impact_and_detail": "- Location: `EnvironmentConfig::from_section`, `ConfigLoader::{get_all,save}`, CLI add/edit.\n- Evidence/root cause: empty option strings count as present; zero ports parse successfully; malformed booleans become None; unknown optimization maps to None; get_all drops every invalid section; programmatic saves bypass validation. Config/hosts/export can claim success on a partial set.\n- Impact: ignored controls, later failure, incorrect target/default behavior. Severity medium; likelihood high for typos; confidence high.\n- Remediation: coherent model validation reused at load/save and public output boundaries; actionable errors for every invalid section; sorted deterministic listings.\n- Verification: `aud_004`, `aud_005`, `aud_010`, blank/invalid inputs and programmatic-save tests.\n- Status: Implemented coherent model/output/CLI validation, strict invalid-section errors and accurate non-MFA provider labeling; regressions pass.\n",
+      "severity": "medium (conditional as documented)",
+      "likelihood": "high for malformed/typo configuration",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "config add/edit/list/export/hosts/launch",
+        "RDP builder"
+      ],
+      "remediation": [
+        "Remediation: coherent model validation reused at load/save and public output boundaries; actionable errors for every invalid section; sorted deterministic listings."
+      ],
+      "verification": [
+        "Verification: `aud_004`, `aud_005`, `aud_010`, blank/invalid inputs and programmatic-save tests.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented coherent model/output/CLI validation, strict invalid-section errors and accurate non-MFA provider labeling; regressions pass.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A15",
+      "title": "Config mutations can truncate files and lose concurrent updates",
+      "category": "reliability/data integrity",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/storage.rs",
+        "src/storage_windows.rs",
+        "src/config.rs::ConfigLoader::{save,insert,update,delete}",
+        "src/main.rs::cmd_config"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence/root cause: direct fs::write truncates the destination; read/modify/write has no lock; edit reads outside save so even a save lock alone would lose edits. Non-UTF8 paths silently become an empty filename through unwrap_or_default."
+      ],
+      "root_cause": "Truncating unlocked read-modify-write and lossy Path conversion did not preserve data/concurrent edits.",
+      "realistic_impact_and_detail": "- Location: `ConfigLoader::{save,delete}`, `cmd_config(Edit,Secure)`.\n- Evidence/root cause: direct fs::write truncates the destination; read/modify/write has no lock; edit reads outside save so even a save lock alone would lose edits. Non-UTF8 paths silently become an empty filename through unwrap_or_default.\n- Impact: partial config loss on failure/crash, unrelated edits overwritten. Severity medium/high; likelihood medium; confidence high.\n- Remediation: same-directory private temporary file + atomic replacement, cross-process mutation lock, closure-based locked edit/migration; operate on Paths without lossy conversion.\n- Verification: read-only/write-failure/no-truncation, concurrent edits, Unicode/path and full replacement regressions.\n- Status: Implemented stable read-through-update locks/atomic writes and migrated all callers; local read-only/no-loss/concurrent-lock tests pass. Complete Windows DACL/recovery implementation/test targets type/lint pass; actual Windows filesystem behavior remains an external gate.\n",
+      "severity": "medium (conditional as documented)",
+      "likelihood": "medium under write failure/concurrent edits",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "all mutations/migration",
+        "main read/update scope",
+        "Windows ACL replacement"
+      ],
+      "remediation": [
+        "Remediation: same-directory private temporary file + atomic replacement, cross-process mutation lock, closure-based locked edit/migration; operate on Paths without lossy conversion."
+      ],
+      "verification": [
+        "Verification: read-only/write-failure/no-truncation, concurrent edits, Unicode/path and full replacement regressions.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented stable read-through-update locks/atomic writes and migrated all callers; local read-only/no-loss/concurrent-lock tests pass. Complete Windows DACL/recovery implementation/test targets type/lint pass; actual Windows filesystem behavior remains an external gate.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A16",
+      "title": "Credential deletion errors are discarded; unsupported backends can lie",
+      "category": "security/persistence error handling",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/credentials.rs::CredentialStore",
+        "src/main.rs::cmd_config(Remove/Secure)"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: each delete result and then the entire operation result are ignored. keyring has a mock default on unsupported target configurations; successful volatile writes must not be represented as durable secure migration."
+      ],
+      "root_cause": "Deletion errors were discarded and unsupported volatile backend success could be mistaken for persistence.",
+      "realistic_impact_and_detail": "- Location: `CredentialStore::delete_secrets`, `cmd_config(Remove)`, non-Windows credential backend.\n- Evidence: each delete result and then the entire operation result are ignored. keyring has a mock default on unsupported target configurations; successful volatile writes must not be represented as durable secure migration.\n- Impact: stale secrets or credential loss with a false success message. Severity medium; likelihood medium; confidence high on swallowed errors, backend test pending.\n- Remediation: distinguish NoEntry from real errors, attempt all deletions/report failures; fail unsupported writes explicitly; isolated backend tests and opt-in real Windows test.\n- Status: Implemented unsupported-mock errors, normalized identities, fresh readback and checked deletion. Portable tests pass; explicit disposable real-Windows round trip is provided but not executed here.\n",
+      "severity": "medium (conditional as documented)",
+      "likelihood": "medium when backend/deletion fails",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "secure migration",
+        "config removal",
+        "Windows backend",
+        "unsupported platforms"
+      ],
+      "remediation": [
+        "Remediation: distinguish NoEntry from real errors, attempt all deletions/report failures; fail unsupported writes explicitly; isolated backend tests and opt-in real Windows test."
+      ],
+      "verification": [
+        "See final VERIFICATION.md, actual portable/backend tests and explicit Windows integration gate; no unsupported-backend success is claimed.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented unsupported-mock errors, normalized identities, fresh readback and checked deletion. Portable tests pass; explicit disposable real-Windows round trip is provided but not executed here.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A17",
+      "title": "QR URI processing is not a URI contract",
+      "category": "correctness/local URI/image boundary",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/qr.rs",
+        "src/otp.rs"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: labels/issuer are interpolated unescaped into path/query; regex accepts secret-looking substrings of arbitrary URIs and does not validate type/duplicates/Base32. Image decoding/output have no app-level size/privacy/no-clobber policy."
+      ],
+      "root_cause": "Unescaped URI interpolation/regex extraction and unconstrained local image/output handling were not a provisioning contract.",
+      "realistic_impact_and_detail": "- Location: `qr::{generate,extract_secret_from_uri,decode,save_png}`.\n- Evidence: labels/issuer are interpolated unescaped into path/query; regex accepts secret-looking substrings of arbitrary URIs and does not validate type/duplicates/Base32. Image decoding/output have no app-level size/privacy/no-clobber policy.\n- Impact: wrong secret/issuer/OTP parameters, malformed QR, local resource exhaustion or accidental secret-file overwrite. Severity medium; likelihood medium; confidence high on URI bugs; size risk not benchmarked.\n- Remediation: existing URL/TOTP primitives, consistent Base32 parser, explicit supported algorithm contract, bounded image decoding and safe output.\n- Verification: independent TOTP parser, special-character round trips, malformed URI/large image cases.\n- Status: Implemented URL/Base32/image/output contracts; actual QR PNG/independent TOTP, malformed input, bounds and no-clobber regressions pass.\n",
+      "severity": "medium (conditional as documented)",
+      "likelihood": "medium for special labels/invalid input/overwrites",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "QR decode/generate/save CLI",
+        "image limits",
+        "Base32/MFA contract"
+      ],
+      "remediation": [
+        "Remediation: existing URL/TOTP primitives, consistent Base32 parser, explicit supported algorithm contract, bounded image decoding and safe output."
+      ],
+      "verification": [
+        "Verification: independent TOTP parser, special-character round trips, malformed URI/large image cases.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented URL/Base32/image/output contracts; actual QR PNG/independent TOTP, malformed input, bounds and no-clobber regressions pass.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A18",
+      "title": "IAM enrollment leaves orphan devices and conceals persistence failure",
+      "category": "reliability/cloud side-effect ownership",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/enrollment.rs::{register,PendingDevice,prompt_totp}",
+        "src/main.rs::cmd_qr"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: after CreateVirtualMFADevice, every error/cancellation exits without deleting an unused device. Existing-config load errors become a fabricated REPLACE_ME profile; saving errors are printed then overall success is returned. EOF is retried forever by prompt_totp."
+      ],
+      "root_cause": "Owned remote side effects had no pending cleanup, truthful save state or EOF termination model.",
+      "realistic_impact_and_detail": "- Location: `qr::register`, `prompt_totp`.\n- Evidence: after CreateVirtualMFADevice, every error/cancellation exits without deleting an unused device. Existing-config load errors become a fabricated REPLACE_ME profile; saving errors are printed then overall success is returned. EOF is retried forever by prompt_totp.\n- Impact: unrecoverable enrollment retry/name conflicts, missing saved MFA seed with false success, tight EOF loop. Severity medium/high; likelihood medium; confidence high.\n- Remediation: validate save target first, owned bounded cleanup until activation, preserve original failures, return save errors and stop at EOF.\n- Verification: real-SDK loopback failure/cancellation fixtures where practical, input EOF unit test, Windows/AWS live gate.\n- Status: Implemented owned pending cleanup, truthful activation/save state, existing-save preflight and EOF/cancel errors. Real SDK local XML lifecycle and actual closed-input subprocess tests pass; live IAM remains external.\n",
+      "severity": "medium (conditional as documented)",
+      "likelihood": "medium for failed/cancelled enrollment or save",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "IAM create/enable/delete",
+        "user input",
+        "config mutation",
+        "secret PNG"
+      ],
+      "remediation": [
+        "Remediation: validate save target first, owned bounded cleanup until activation, preserve original failures, return save errors and stop at EOF."
+      ],
+      "verification": [
+        "Verification: real-SDK loopback failure/cancellation fixtures where practical, input EOF unit test, Windows/AWS live gate.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented owned pending cleanup, truthful activation/save state, existing-save preflight and EOF/cancel errors. Real SDK local XML lifecycle and actual closed-input subprocess tests pass; live IAM remains external.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A19",
+      "title": "RDP/drive process and mapping teardown lacks ownership checks",
+      "category": "reliability/Windows resources",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/rdp.rs",
+        "src/rdp_windows.rs::{launch,FolderDriveGuard}",
+        "src/main.rs::cmd_launch"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: nonzero mstsc exit still returns success; credential/DefineDosDevice deletion results are ignored; mapping removal has no exact target; an ordinary file passes folder exists(); non-ASCII char is narrowed before validation; comma drive lists documented in CLI are not normalized for MSTSC. Temporary profile names are predictable/contain host text and use truncating writes."
+      ],
+      "root_cause": "Process/profile/drive resources lacked checked validation, exact ownership and complete lifecycle results.",
+      "realistic_impact_and_detail": "- Location: `rdp::{launch,FolderDriveGuard,is_drive_letter_in_use,resolve_drives_to_redirect}`.\n- Evidence: nonzero mstsc exit still returns success; credential/DefineDosDevice deletion results are ignored; mapping removal has no exact target; an ordinary file passes folder exists(); non-ASCII char is narrowed before validation; comma drive lists documented in CLI are not normalized for MSTSC. Temporary profile names are predictable/contain host text and use truncating writes.\n- Impact: misleading success, stale/wrong mappings, profile races and failed sharing. Severity medium; likelihood medium/high by subcase; confidence high.\n- Remediation: validated/normalized inputs, canonical directory and exact owned mapping cleanup, secure temp profile RAII, status propagation and explicit unsupported-platform errors.\n- Verification: `aud_012`, `aud_013`, profile/guard/status tests; actual Windows mapping gate remains external.\n- Status: Implemented normalized/checked profiles, canonical folder/exact mapping teardown, secure temp file, async owned child and status propagation; portable regressions plus complete Windows type/lint pass. Actual mstsc/DOS execution remains external.\n",
+      "severity": "medium (conditional as documented)",
+      "likelihood": "medium/high by process/drive subcase",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "mstsc",
+        "DOS definitions",
+        "temporary profile",
+        "drive selection",
+        "SSM shutdown"
+      ],
+      "remediation": [
+        "Remediation: validated/normalized inputs, canonical directory and exact owned mapping cleanup, secure temp profile RAII, status propagation and explicit unsupported-platform errors."
+      ],
+      "verification": [
+        "Verification: `aud_012`, `aud_013`, profile/guard/status tests; actual Windows mapping gate remains external.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented normalized/checked profiles, canonical folder/exact mapping teardown, secure temp file, async owned child and status propagation; portable regressions plus complete Windows type/lint pass. Actual mstsc/DOS execution remains external.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A20",
+      "title": "Hosts parsing/elevation can report work that did not happen",
+      "category": "reliability/elevation",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/hosts.rs::{mappings,add_hosts,ensure_hosts,elevation}",
+        "src/windows.rs::system_directory",
+        "src/main.rs::cmd_hosts"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: comment words count as aliases; case/IP ignored; ensure_hosts swallows reads; UAC launch success is reported as update success before child exit; relative config args can resolve differently after elevation; Windows path is hardcoded."
+      ],
+      "root_cause": "Comment/alias/IP assumptions and launch-only elevation were confused with completed validated updates.",
+      "realistic_impact_and_detail": "- Location: `HostsManager`, Windows `shell_execute_runas`.\n- Evidence: comment words count as aliases; case/IP ignored; ensure_hosts swallows reads; UAC launch success is reported as update success before child exit; relative config args can resolve differently after elevation; Windows path is hardcoded.\n- Impact: incomplete/wrong mappings and false success. Severity medium; likelihood medium; confidence high.\n- Remediation: validated exact host/IP parser, errors propagated, elevation awaited/status checked with correctly quoted absolute arguments, system-derived path.\n- Verification: `aud_014`, `aud_015`, conflict/comment/case/error tests, Windows API type-check and external UAC gate.\n- Status: Implemented exact parser/IP/conflict/batch preflight, bounded locked append/rollback, checked UAC wait/exit/postcondition and validated snapshot arguments. Local file/argument tests and complete Windows type/lint pass; actual elevation remains external.\n",
+      "severity": "medium (conditional as documented)",
+      "likelihood": "medium for comments/conflicts/UAC outcomes",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "system hosts inode",
+        "UAC child process",
+        "validated snapshot CLI"
+      ],
+      "remediation": [
+        "Remediation: validated exact host/IP parser, errors propagated, elevation awaited/status checked with correctly quoted absolute arguments, system-derived path."
+      ],
+      "verification": [
+        "Verification: `aud_014`, `aud_015`, conflict/comment/case/error tests, Windows API type-check and external UAC gate.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented exact parser/IP/conflict/batch preflight, bounded locked append/rollback, checked UAC wait/exit/postcondition and validated snapshot arguments. Local file/argument tests and complete Windows type/lint pass; actual elevation remains external.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A21",
+      "title": "Conflicting/ignored CLI choices and multi-export overwrite",
+      "category": "correctness/CLI/docs",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/cli.rs::ExportArgs",
+        "src/main.rs::{cmd_export,cmd_list}",
+        "README.md"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: standalone flag is ignored; --all and environment are accepted together; --all with a single output filename overwrites each previous profile; pointer exports omit the selected config path; help suggests nonexistent --fullscreen."
+      ],
+      "root_cause": "Conflicting or ignored choices and an unvalidated multi-output plan could overwrite exports or choose wrong sources.",
+      "realistic_impact_and_detail": "- Location: `ExportArgs`, `cmd_export`, `cmd_list`.\n- Evidence: standalone flag is ignored; --all and environment are accepted together; --all with a single output filename overwrites each previous profile; pointer exports omit the selected config path; help suggests nonexistent --fullscreen.\n- Impact: user requests ignored, lost exports, wrong profile source. Severity medium; likelihood medium; confidence high.\n- Remediation: Clap conflict rules, validate plan before writes, self-contained config pointer, accurate help.\n- Verification: `aud_016`, CLI parse/plan/export-load regressions.\n- Status: Implemented conflict/plan/source-pointer/export policy and corrected help/README commands/defaults; original parser regressions and 25 actual offline CLI checks pass.\n",
+      "severity": "medium (conditional as documented)",
+      "likelihood": "medium for conflicting/export plan use",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "CLI argument grammar",
+        "export plan/output",
+        "pointer loader",
+        "documentation"
+      ],
+      "remediation": [
+        "Remediation: Clap conflict rules, validate plan before writes, self-contained config pointer, accurate help."
+      ],
+      "verification": [
+        "Verification: `aud_016`, CLI parse/plan/export-load regressions.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented conflict/plan/source-pointer/export policy and corrected help/README commands/defaults; original parser regressions and 25 actual offline CLI checks pass.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A22",
+      "title": "Logging worker is deliberately leaked rather than flushed",
+      "category": "reliability/logging lifecycle",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/main.rs::{setup_logging,main}"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: WorkerGuard is mem::forget'd and process::exit is used on error. No guard drop can drain queued logs at normal/error exit."
+      ],
+      "root_cause": "The logging worker guard was deliberately leaked and process::exit bypassed orderly resource destruction.",
+      "realistic_impact_and_detail": "- Location: `src/main.rs::setup_logging`, main exit path.\n- Evidence: WorkerGuard is mem::forget'd and process::exit is used on error. No guard drop can drain queued logs at normal/error exit.\n- Impact: final diagnostic events lost; no clean resource shutdown. Severity medium; likelihood medium for fast failure; confidence high.\n- Remediation: return/retain guard, use ExitCode return so owned resources drain, keep logging initialization failures recoverable.\n- Verification: subprocess short-run/log-flush test where possible and full binary check.\n- Status: Implemented retained/flushed guard, fallible init and ExitCode ownership. Actual application subprocesses verified 12 distinct final diagnostic events persisted before process exit.\n",
+      "severity": "medium (conditional as documented)",
+      "likelihood": "medium for fast final/error exit",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "tracing appender worker",
+        "normal/error main return",
+        "diagnostic files"
+      ],
+      "remediation": [
+        "Remediation: return/retain guard, use ExitCode return so owned resources drain, keep logging initialization failures recoverable."
+      ],
+      "verification": [
+        "Verification: subprocess short-run/log-flush test where possible and full binary check.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented retained/flushed guard, fallible init and ExitCode ownership. Actual application subprocesses verified 12 distinct final diagnostic events persisted before process exit.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A23",
+      "title": "Tests encode developer-machine state and bypass important suites",
+      "category": "verification/fixture authenticity",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "tests/",
+        "tools/transport-tests/src/lib.rs",
+        ".github/workflows/native-transport.yml"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: tests require a Desktop, C: and D: and no E:, use fixed temp/keyring names, touch a real secure store by default; Windows workflow runs --lib --bin only (omits tests/). No QR utility contract tests existed."
+      ],
+      "root_cause": "Fixtures assumed one developer machine; normal CI omitted actual integration and utility suites.",
+      "realistic_impact_and_detail": "- Location: `tests/{shell,rdp,credentials_test,config}.rs`, `.github/workflows/native-transport.yml`.\n- Evidence: tests require a Desktop, C: and D: and no E:, use fixed temp/keyring names, touch a real secure store by default; Windows workflow runs --lib --bin only (omits tests/). No QR utility contract tests existed.\n- Impact: false failures or destructive/nonisolated tests; meaningful failures never exercised by CI. Severity medium verification gap; likelihood high across machines; confidence high.\n- Remediation: isolated fixtures/assertions against OS discovery rather than assumptions, opt-in real-store integration, portable actual-module coverage, run integration tests in CI.\n- Verification: complete portable application-core suite plus Windows all-target compile; CI supplied, not claimed remotely executed.\n- Status: Actual-module harness includes original application/QR/SDK suites; isolated fixtures and meaningful OS-boundary assertions pass. CI now includes integration/explicit credential/actual CLI steps; remote CI and native Windows execution are not claimed.\n",
+      "severity": "medium (conditional as documented)",
+      "likelihood": "high across differing machines/default CI",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "original integration suites",
+        "portable actual modules",
+        "Windows CI",
+        "live gates"
+      ],
+      "remediation": [
+        "Remediation: isolated fixtures/assertions against OS discovery rather than assumptions, opt-in real-store integration, portable actual-module coverage, run integration tests in CI."
+      ],
+      "verification": [
+        "Verification: complete portable application-core suite plus Windows all-target compile; CI supplied, not claimed remotely executed.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Actual-module harness includes original application/QR/SDK suites; isolated fixtures and meaningful OS-boundary assertions pass. CI now includes integration/explicit credential/actual CLI steps; remote CI and native Windows execution are not claimed.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A24",
+      "title": "Existing strict-lint failures were previously outside the transport scope",
+      "category": "quality/strict verification",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/cli.rs",
+        "src/hosts.rs",
+        "src/rdp.rs",
+        "src/shell.rs",
+        "tests/config.rs",
+        "tests/error.rs",
+        "rustfmt.toml"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: previous full-root lint required six category overrides. This mission now includes those areas; overrides are not an acceptable final verification shortcut."
+      ],
+      "root_cause": "Previously out-of-scope layout/API/test lint failures prevented a strict complete-root gate.",
+      "realistic_impact_and_detail": "- Location: `cli::TopCommand`, hosts SW_SHOW cast, RDP ASCII check, shell unwrap, tests/config and tests/error.\n- Evidence: previous full-root lint required six category overrides. This mission now includes those areas; overrides are not an acceptable final verification shortcut.\n- Impact: noisy/broken strict quality gate, minor enum/layout/maintainability costs. Severity low, not counted as security defects; confidence high.\n- Remediation: coherent local fixes, not blanket allow attributes or weakened assertions.\n- Verification: full root all-target Clippy with -D warnings and no category exemptions.\n- Status: Strict complete-root all-target Clippy passes on Linux AND Windows GNU with -D warnings and without the six old category exemptions; expanded-harness strict lint and stable fmt pass.\n",
+      "severity": "low/defense-in-depth",
+      "likelihood": "certain at the former strict gate",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "full root/harness Linux/Windows lint",
+        "stable rustfmt"
+      ],
+      "remediation": [
+        "Remediation: coherent local fixes, not blanket allow attributes or weakened assertions."
+      ],
+      "verification": [
+        "Verification: full root all-target Clippy with -D warnings and no category exemptions.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Strict complete-root all-target Clippy passes on Linux AND Windows GNU with -D warnings and without the six old category exemptions; expanded-harness strict lint and stable fmt pass.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A25",
+      "title": "Secret-bearing types derive unrestricted Debug",
+      "category": "defense-in-depth/representation",
+      "classification": "defense-in-depth risk, not an observed leak",
+      "locations_and_symbols": [
+        "src/config.rs::EnvironmentConfig",
+        "src/mfa.rs::{MfaCredentials,AwsAuthSource}",
+        "src/qr.rs structs",
+        "src/rdp.rs::LaunchOptions",
+        "src/cli.rs"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: Debug implementations can print passwords/seeds/tokens. No current production call logging these entire objects has been established; this is defense-in-depth/future-change risk, not a proven current exfiltration exploit."
+      ],
+      "root_cause": "Secret-bearing types exposed derived Debug even though whole-object production logging was not established.",
+      "realistic_impact_and_detail": "- Location: EnvironmentConfig, MfaCredentials, AwsAuthSource, QR structs, RDP launch options and CLI args.\n- Evidence: Debug implementations can print passwords/seeds/tokens. No current production call logging these entire objects has been established; this is defense-in-depth/future-change risk, not a proven current exfiltration exploit.\n- Severity low/medium; likelihood low today; confidence high on representation.\n- Remediation: remove unused Debug derives or implement redacted Debug at necessary public boundaries; retain useful error diagnostics without secret material.\n- Verification: sentinel-secret formatting tests/static call trace.\n- Status: Necessary Debug output redacted/unused derives removed; sentinel formatting tests and call tracing pass. This remains defense-in-depth, not a claim of an observed original production leak.\n",
+      "severity": "low/defense-in-depth",
+      "likelihood": "low current likelihood; future-change risk, no observed leak",
+      "confidence": "high on representation; no current whole-object production exfiltration established",
+      "affected_dependencies_and_callers": [
+        "config/auth/QR/RDP/CLI structs",
+        "future diagnostic callers"
+      ],
+      "remediation": [
+        "Remediation: remove unused Debug derives or implement redacted Debug at necessary public boundaries; retain useful error diagnostics without secret material."
+      ],
+      "verification": [
+        "Verification: sentinel-secret formatting tests/static call trace.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Necessary Debug output redacted/unused derives removed; sentinel formatting tests and call tracing pass. This remains defense-in-depth, not a claim of an observed original production leak.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A26",
+      "title": "Potentially genuine MFA seeds in tracked legacy references and prior ZIPs",
+      "category": "sensitive-material provenance",
+      "classification": "conditional sensitive-material risk, validity unknown",
+      "locations_and_symbols": [
+        "removed refs/environment.txt",
+        "removed refs/script.py",
+        "prior /home/user/mfz-native-*.zip",
+        "refs/README.md",
+        "mfz.ini.example"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence: two non-placeholder-looking 64-character Base-32 values paired with MFA device ARNs. A byte comparison confirmed the same values in `mfz/refs/environment.txt` in the v1 transfer-fix, v2 performance and v3 production ZIPs. Values are NOT reproduced in reports/new deliverables; `legacy-material-exposure.json` records only metadata."
+      ],
+      "root_cause": "An unused reference environment carried authentication-factor-like material into source/history/packages.",
+      "realistic_impact_and_detail": "- Category/location: sensitive material/provenance; baseline `refs/environment.txt` lines 15 and 26, original reference configuration and earlier delivery archives.\n- Evidence: two non-placeholder-looking 64-character Base-32 values paired with MFA device ARNs. A byte comparison confirmed the same values in `mfz/refs/environment.txt` in the v1 transfer-fix, v2 performance and v3 production ZIPs. Values are NOT reproduced in reports/new deliverables; `legacy-material-exposure.json` records only metadata.\n- Root cause/impact: a supposedly harmless reference config carried authentication-factor material into source packages. A TOTP seed is not sufficient alone to authenticate to AWS, but compromises the MFA factor if genuine. Active/revoked status and actual compromise are unknown; no credential probing was performed.\n- Severity high conditional on validity; likelihood unknown; confidence high on presence/archive replication, unknown on live validity. Affects documentation/examples, package generation, Git/history and the corresponding MFA devices.\n- Remediation: remove unused legacy Python/config artifacts after confirming no callers; provide sanitized current `mfz.ini.example` and provenance note. Preserve earlier artifacts per instruction, explicitly flag them as NOT sanitized. Never generate an unredacted deletion patch for the old config. If genuine, replace the corresponding devices; source removal cannot revoke credentials or erase Git/upstream history.\n- Verification: parsed legacy Python without executing imports, caller search, seed-shape classification and byte comparison of all three ZIPs; current files/reports contain no values. Final sanitized-package check pending.\n- Status: Removed active legacy artifacts after caller/provenance review; current package files have no exact known-value match. Earlier archives/history unchanged and explicitly flagged; genuine-device replacement/revocation is UNKNOWN and external.\n",
+      "severity": "high (conditional as documented)",
+      "likelihood": "unknown live validity; exposure/presence confirmed",
+      "confidence": "high on exact source/archive presence; live validity/revocation UNKNOWN",
+      "affected_dependencies_and_callers": [
+        "Git/upstream history",
+        "prior source ZIPs",
+        "corresponding MFA devices if genuine",
+        "new packaging"
+      ],
+      "remediation": [
+        "Remediation: remove unused legacy Python/config artifacts after confirming no callers; provide sanitized current `mfz.ini.example` and provenance note. Preserve earlier artifacts per instruction, explicitly flag them as NOT sanitized. Never generate an unredacted deletion patch for the old config. If genuine, replace the corresponding devices; source removal cannot revoke credentials or erase Git/upstream history."
+      ],
+      "verification": [
+        "Verification: parsed legacy Python without executing imports, caller search, seed-shape classification and byte comparison of all three ZIPs; current files/reports contain no values. Final sanitized-package check pending.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Removed active legacy artifacts after caller/provenance review; current package files have no exact known-value match. Earlier archives/history unchanged and explicitly flagged; genuine-device replacement/revocation is UNKNOWN and external.",
+      "closure_limit": "live validity/revocation unknown; old artifacts/history intentionally retained"
+    },
+    {
+      "id": "MFZ-A27",
+      "title": "Unregister deletes another application's extension data",
+      "category": "local data ownership/registry",
+      "classification": "confirmed source/dependency/workflow finding; impact qualified",
+      "locations_and_symbols": [
+        "src/shell.rs::{register_file_association,unregister_file_association,owns_association_command}"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence/root cause: after another app or another MFZ installation takes ownership, unregister still deletes its registration subtree. Registration also changes the extension before the open command is complete, so partial failure can leave a broken default."
+      ],
+      "root_cause": "Uninstall deleted an extension subtree without confirming current command/default ownership; install order was partial-failure unsafe.",
+      "realistic_impact_and_detail": "- Category/location: local data ownership; baseline `shell::unregister_file_association` recursively removes both `.mfz` and `mfz.session` without checking current command/default ownership.\n- Evidence/root cause: after another app or another MFZ installation takes ownership, unregister still deletes its registration subtree. Registration also changes the extension before the open command is complete, so partial failure can leave a broken default.\n- Impact: lost per-user extension/OpenWith configuration and dangling defaults. Severity medium; likelihood low/medium conditional on reassignment/partial failure; confidence high from direct source/caller trace. Affects per-user HKCU shell settings, not an elevation bypass.\n- Remediation: complete ProgID before changing extension, retain prior default, preserve unrelated subkeys, verify this executable's command before uninstall and notify Explorer. Do not bypass protected Windows UserChoice defaults.\n- Verification: portable ownership/quoting policy tests added; actual registry behavior requires Windows-target check and isolated Windows execution (not yet done).\n- Status: Implemented command ownership/prior-default/unrelated-subkey/orphan-default handling. Portable policy tests and complete Windows type/lint pass; actual registry/UserChoice behavior remains an external gate.\n",
+      "severity": "medium (conditional as documented)",
+      "likelihood": "low/medium with reassignment/partial install",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "HKCU Software/Classes",
+        "other app/installation defaults",
+        "Explorer notification"
+      ],
+      "remediation": [
+        "Remediation: complete ProgID before changing extension, retain prior default, preserve unrelated subkeys, verify this executable's command before uninstall and notify Explorer. Do not bypass protected Windows UserChoice defaults."
+      ],
+      "verification": [
+        "Verification: portable ownership/quoting policy tests added; actual registry behavior requires Windows-target check and isolated Windows execution (not yet done).",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Implemented command ownership/prior-default/unrelated-subkey/orphan-default handling. Portable policy tests and complete Windows type/lint pass; actual registry/UserChoice behavior remains an external gate.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    },
+    {
+      "id": "MFZ-A28",
+      "title": "Intermediate atomic-save implementation could broaden Windows ACLs",
+      "category": "remediation regression/file security",
+      "classification": "intermediate-remediation regression, caught before final packaging",
+      "locations_and_symbols": [
+        "src/storage.rs::atomic_write",
+        "src/storage_windows.rs::{temporary_file,replace_existing}"
+      ],
+      "baseline_behavior_and_evidence": [
+        "Evidence/root cause: a destination file may have a tighter DACL than its parent; inherited temporary-file security is not equivalent, and tightening only after writing would leave a secret-read window. This risk was introduced while correcting upstream's truncating writes, not attributed to the original direct-write implementation."
+      ],
+      "root_cause": "An intermediate atomic-temp remediation inherited broader parent ACLs instead of preserving sensitive-file security.",
+      "realistic_impact_and_detail": "- Category/location: remediation regression/security metadata; intermediate `storage::atomic_write` used a destination-directory-inherited tempfile and MoveFileEx replacement.\n- Evidence/root cause: a destination file may have a tighter DACL than its parent; inherited temporary-file security is not equivalent, and tightening only after writing would leave a secret-read window. This risk was introduced while correcting upstream's truncating writes, not attributed to the original direct-write implementation.\n- Impact: local secret exposure under a broader parent ACL; severity high conditional on permissions, likelihood environment-dependent, confidence high on Windows file semantics. Affects config, explicit secret exports and QR saves.\n- Remediation: private-at-creation descriptor granting the process user/SYSTEM for secret-bearing temp files; preserve an existing destination DACL with checked ReplaceFileW. Handle documented partial-failure states with a preserved recovery copy/no-clobber restoration. Do not use unsupported WRITE_THROUGH or ignore ACL errors. Existing destination grants are preserved, not promised to be revoked; protect output file ACLs too.\n- Verification: official Microsoft API contract inspected; protected-DACL-before-write and DACL-preserving replacement tests authored. Windows implementation/test target has NOT yet been checked or executed at this checkpoint.\n- Status: Intermediate ACL regression corrected with private creation/DACL preservation/recovery retention; complete Windows code and native-test targets type/lint pass. Real Windows ACL/partial-failure/cleanup execution remains an external gate.\n",
+      "severity": "high (conditional as documented)",
+      "likelihood": "environment dependent when destination ACL is tighter than its parent",
+      "confidence": "high on source/representation and observed local evidence; external behavior qualified in status",
+      "affected_dependencies_and_callers": [
+        "config",
+        "explicit secret exports",
+        "QR output",
+        "Windows destination security/recovery"
+      ],
+      "remediation": [
+        "Remediation: private-at-creation descriptor granting the process user/SYSTEM for secret-bearing temp files; preserve an existing destination DACL with checked ReplaceFileW. Handle documented partial-failure states with a preserved recovery copy/no-clobber restoration. Do not use unsupported WRITE_THROUGH or ignore ACL errors. Existing destination grants are preserved, not promised to be revoked; protect output file ACLs too."
+      ],
+      "verification": [
+        "Verification: official Microsoft API contract inspected; protected-DACL-before-write and DACL-preserving replacement tests authored. Windows implementation/test target has NOT yet been checked or executed at this checkpoint.",
+        "VERIFICATION.md (exact executed commands/evidence)",
+        "WINDOWS_ACCEPTANCE.md where native/cloud behavior is unavailable"
+      ],
+      "current_behavior_and_status": "Intermediate ACL regression corrected with private creation/DACL preservation/recovery retention; complete Windows code and native-test targets type/lint pass. Real Windows ACL/partial-failure/cleanup execution remains an external gate.",
+      "closure_limit": "Local checks do not imply live Windows/AWS/affected-VM acceptance or absence of every conceivable defect."
+    }
+  ]
+}

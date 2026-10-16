@@ -2,26 +2,18 @@ use std::fs;
 
 use mfz::config::{AuthType, ConfigLoader, EnvironmentConfig};
 
-fn create_temp_config(content: &str) -> std::path::PathBuf {
-    let temp_dir = std::env::temp_dir();
-    let file_path = temp_dir.join(format!(
-        "mfz_test_config_{}.ini",
-        std::time::UNIX_EPOCH.elapsed().unwrap().as_nanos()
-    ));
-    fs::write(&file_path, content).unwrap();
-    file_path
+fn create_temp_config(content: &str) -> (tempfile::TempDir, std::path::PathBuf) {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("mfz.ini");
+    fs::write(&path, content).unwrap();
+    (directory, path)
 }
 
 #[test]
 fn test_config_add_new() {
-    let temp_dir = std::env::temp_dir();
-    let file_path = temp_dir.join(format!(
-        "mfz_test_config_new_{}.ini",
-        std::time::UNIX_EPOCH.elapsed().unwrap().as_nanos()
-    ));
-    if file_path.exists() {
-        fs::remove_file(&file_path).unwrap();
-    }
+    let directory = tempfile::tempdir().unwrap();
+    let file_path = directory.path().join("mfz.ini");
+    assert!(!file_path.exists());
 
     let loader = ConfigLoader::new(&file_path);
     let env_config = EnvironmentConfig {
@@ -29,7 +21,7 @@ fn test_config_add_new() {
         aws_access_key_id: None,
         aws_secret_access_key: None,
         region: None,
-        auth_type: AuthType::Sso,
+        auth_type: AuthType::Provider,
         serial: None,
         secret: None,
         instance: Some("i-12345".to_string()),
@@ -107,7 +99,7 @@ local_port=13390
 rdp_host=prd-rdp
 "#;
 
-    let path = create_temp_config(content);
+    let (_directory, path) = create_temp_config(content);
     let loader = ConfigLoader::new(&path);
 
     let envs = loader.list_environments().unwrap();
@@ -134,7 +126,7 @@ profile=nsy_web_app_stg
 instance=i-abc
 "#;
 
-    let path = create_temp_config(content);
+    let (_directory, path) = create_temp_config(content);
     let loader = ConfigLoader::new(&path);
 
     let res = loader.load("bad");
@@ -165,7 +157,7 @@ local_port=2222
 rdp_host=h2
 "#;
 
-    let path = create_temp_config(content);
+    let (_directory, path) = create_temp_config(content);
     let loader = ConfigLoader::new(&path);
 
     let all = loader.get_all().unwrap();
@@ -192,7 +184,7 @@ shared_drives = C:,D:
 shared_folder = C:\Shared
 optimize_connection = true
 "#;
-    let path = create_temp_config(content);
+    let (_directory, path) = create_temp_config(content);
     let loader = ConfigLoader::new(&path);
     let env = loader.load("test_env").unwrap();
 
@@ -220,7 +212,7 @@ audio = true
 wallpaper = false
 font_smoothing = true
 "#;
-    let path = create_temp_config(content);
+    let (_directory, path) = create_temp_config(content);
     let loader = ConfigLoader::new(&path);
     let env = loader.load("stg").unwrap();
 
@@ -245,13 +237,10 @@ rdp_host = stg-rdp
 remote_port = 3389
 local_port = 13389
 "#;
-    let ini_path = create_temp_config(ini_content);
+    let (_directory, ini_path) = create_temp_config(ini_content);
     let loader = ConfigLoader::new(&ini_path);
 
-    let mfz_file = std::env::temp_dir().join(format!(
-        "test_pointer_{}.mfz",
-        std::time::UNIX_EPOCH.elapsed().unwrap().as_nanos()
-    ));
+    let mfz_file = _directory.path().join("test_pointer.mfz");
     fs::write(&mfz_file, "env = stg\n").unwrap();
 
     let (name, env) = loader
@@ -273,13 +262,11 @@ rdp_host = prd-rdp
 remote_port = 3389
 local_port = 13390
 "#;
-    let mfz_file = std::env::temp_dir().join(format!(
-        "test_standalone_{}.mfz",
-        std::time::UNIX_EPOCH.elapsed().unwrap().as_nanos()
-    ));
+    let directory = tempfile::tempdir().unwrap();
+    let mfz_file = directory.path().join("test_standalone.mfz");
     fs::write(&mfz_file, mfz_content).unwrap();
 
-    let dummy_ini = std::env::temp_dir().join("non_existent_mfz.ini");
+    let dummy_ini = directory.path().join("non_existent.ini");
     let loader = ConfigLoader::new(&dummy_ini);
 
     let (name, env) = loader
@@ -302,10 +289,10 @@ rdp_host = prd-rdp
 remote_port = 3389
 local_port = 13390
 "#;
-    let ini_path = create_temp_config(ini_content);
+    let (_directory, ini_path) = create_temp_config(ini_content);
     let loader = ConfigLoader::new(&ini_path);
 
-    let mfz_file = std::env::temp_dir().join(format!("prd.mfz"));
+    let mfz_file = _directory.path().join("prd.mfz");
     fs::write(&mfz_file, "").unwrap(); // empty file
 
     let (name, env) = loader
@@ -331,7 +318,7 @@ remote_port=3389
 local_port=13389
 rdp_host=stg-rdp
 "#;
-    let file = create_temp_config(content);
+    let (_directory, file) = create_temp_config(content);
     let loader = ConfigLoader::new(&file);
     let cfg = loader.load("stg_standalone").unwrap();
 
@@ -364,7 +351,7 @@ remote_port=3389
 local_port=13389
 rdp_host=stg-rdp
 "#;
-    let file = create_temp_config(content);
+    let (_directory, file) = create_temp_config(content);
     let loader = ConfigLoader::new(&file);
     let err = loader.load("invalid_env").unwrap_err();
     assert!(err
@@ -372,4 +359,80 @@ rdp_host=stg-rdp
         .contains("must specify either `aws_access_key_id`"));
 
     let _ = fs::remove_file(&file);
+}
+
+static CWD_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+#[test]
+fn test_default_config_discovery_prefers_extensionless_mfz() {
+    let _lock = CWD_MUTEX.lock().unwrap();
+    let directory = tempfile::tempdir().unwrap();
+    let mfz_path = directory.path().join("mfz");
+    let ini_path = directory.path().join("mfz.ini");
+
+    fs::write(&ini_path, "[stg]\nprofile=legacy\ninstance=i-legacy\nremote_port=3389\nlocal_port=13389\nrdp_host=legacy-host\n").unwrap();
+    fs::write(&mfz_path, "[stg]\nprofile=modern\ninstance=i-modern\nremote_port=3389\nlocal_port=13389\nrdp_host=modern-host\n").unwrap();
+
+    let previous = std::env::current_dir().unwrap();
+    std::env::set_current_dir(directory.path()).unwrap();
+
+    let resolved = ConfigLoader::resolve_default_config_path();
+    let loader = ConfigLoader::new(&resolved);
+    let env = loader.load("stg").unwrap();
+
+    std::env::set_current_dir(previous).unwrap();
+
+    assert_eq!(resolved, std::path::PathBuf::from("mfz"));
+    assert_eq!(env.profile.as_deref(), Some("modern"));
+}
+
+#[test]
+fn test_cli_path_resolution_auto_detects_ini_for_extensionless_argument() {
+    let directory = tempfile::tempdir().unwrap();
+    let ini_path = directory.path().join("production.ini");
+    fs::write(
+        &ini_path,
+        "[prd]\nprofile=test\ninstance=i-test\nremote_port=3389\nlocal_port=13389\nrdp_host=h\n",
+    )
+    .unwrap();
+
+    let without_ext = directory.path().join("production");
+    let resolved = ConfigLoader::resolve_cli_path(&without_ext);
+    assert_eq!(resolved, ini_path);
+}
+
+#[test]
+fn test_cli_path_resolution_preserves_exact_extensionless_file_when_present() {
+    let directory = tempfile::tempdir().unwrap();
+    let exact_path = directory.path().join("production");
+    fs::write(
+        &exact_path,
+        "[prd]\nprofile=test\ninstance=i-test\nremote_port=3389\nlocal_port=13389\nrdp_host=h\n",
+    )
+    .unwrap();
+
+    let resolved = ConfigLoader::resolve_cli_path(&exact_path);
+    assert_eq!(resolved, exact_path);
+}
+
+#[test]
+fn test_default_config_ignores_directory_named_mfz() {
+    let _lock = CWD_MUTEX.lock().unwrap();
+    let directory = tempfile::tempdir().unwrap();
+    let mfz_dir = directory.path().join("mfz");
+    fs::create_dir(&mfz_dir).unwrap();
+    let ini_path = directory.path().join("mfz.ini");
+    fs::write(
+        &ini_path,
+        "[stg]\nprofile=test\ninstance=i-test\nremote_port=3389\nlocal_port=13389\nrdp_host=h\n",
+    )
+    .unwrap();
+
+    let previous = std::env::current_dir().unwrap();
+    std::env::set_current_dir(directory.path()).unwrap();
+
+    let resolved = ConfigLoader::resolve_default_config_path();
+    std::env::set_current_dir(previous).unwrap();
+
+    assert_eq!(resolved, std::path::PathBuf::from("mfz.ini"));
 }

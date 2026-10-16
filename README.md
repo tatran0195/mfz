@@ -6,13 +6,22 @@
 
 ---
 
+> **Repository audit, 2026-10-15:** working remediation is documented in
+> [issue inventory](./docs/audit/ISSUES.md), [verification](./docs/audit/VERIFICATION.md)
+> and [coverage](./docs/audit/COVERAGE.md). Earlier source ZIPs contain a legacy
+> reference config with two potentially genuine MFA seeds (validity unknown).
+> Current legacy references were removed; if genuine, replace the corresponding
+> devices. Removing source does not revoke seeds or sanitize old archives/history.
+> See MFZ-A26; no seed values are reproduced here.
+
+
 ## 🌟 Why use MFZ?
 
 If you've ever found connecting to an AWS Windows server frustrating because of MFA codes, command-line tunnels, or searching for Instance IDs—**MFZ was built for you.**
 
 - 🎯 **No more searching**: Find your server by its name (Tags), not a random ID.
 - ⌨️ **Less typing**: Interactive menus let you pick your environment with a single click.
-- 🔒 **Super secure**: Keep your AWS secret keys, MFA secrets, and passwords in the Windows Credential Manager safe-box.
+- 🔒 **Credential storage**: Keep your AWS secret keys, MFA secrets, and passwords in the Windows Credential Manager store (protect plaintext files and explicit exports too).
 - 🚀 **One-click launch**: One command opens your Remote Desktop client automatically.
 - ⚡ **Zero external tools**: Pure-Rust native SSM WebSocket tunnel and direct STS auth—no AWS CLI or `session-manager-plugin` needed!
 
@@ -32,37 +41,51 @@ Or place the compiled `mfz.exe` into any folder in your system `PATH`.
 
 ### 2. Add your first Environment
 
-You can configure an environment by editing `mfz.ini` directly or using the CLI:
+You can configure an environment by editing `mfz` (or `mfz.ini`) directly or using the CLI:
 
-#### Option A: Direct in `mfz.ini` (Recommended — 100% Standalone)
+#### Option A: private configuration
 
-Create or edit `mfz.ini` in the same directory as `mfz.exe`:
+Start with [`mfz.ini.example`](./mfz.ini.example). The following values are
+**placeholders, not credentials to reuse**. Both ports and the descriptive host
+alias are required. Either choose an explicit instance or a unique running-instance
+tag; discovery rejects ambiguous matches.
 
 ```ini
 [my-server]
+profile = my-aws-profile
 region = ap-northeast-1
-aws_access_key_id = AKIAIOSFODNN7EXAMPLE
-aws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-serial = arn:aws:iam::123456789012:mfa/username
-secret = JBSWY3DPEHPK3PXP
 instance_tag = Name=MyServerName
+remote_port = 3389
+local_port = 13389
 rdp_host = my-server-rdp
 rdp_user = Administrator
 ```
 
-#### Option B: Via CLI Command
+For direct IAM keys, replace `profile` with `aws_access_key_id` and store its secret
+with `mfz config set-aws-secret my-server` (interactive prompt on Windows). For IAM
+TOTP, configure `serial` and its private Base-32 seed together, then run
+`mfz config secure my-server` to verify storage and remove plaintext. AWS MFA uses
+SHA1/six digits/30 seconds; do not use published demonstration seeds. Protect the
+file while editing it and never commit it.
+
+#### Option B: CLI
 
 ```bash
-# Standalone direct credentials (no ~/.aws files needed):
-mfz config add my-server \
-  --aws-access-key-id AKIAIOSFODNN7EXAMPLE \
-  --aws-secret-access-key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
-  --region ap-northeast-1 \
-  --instance-tag Name=MyServerName
+# Named SDK profile; inherits that profile's region unless overridden:
+mfz config add my-server --profile my-aws-profile \
+  --instance-tag Name=MyServerName --local-port 13389 --rdp-host my-server-rdp
 
-# Or using an existing ~/.aws/credentials profile:
-mfz config add my-server --profile my-aws-profile --instance-tag Name=MyServerName
+# Direct key ID without putting its secret into shell history:
+mfz config add direct-server --aws-access-key-id YOUR_ACCESS_KEY_ID \
+  --region ap-northeast-1 --instance i-0123456789abcdef0 \
+  --local-port 23389 --rdp-host direct-rdp
+mfz config set-aws-secret direct-server
 ```
+
+Add refuses to overwrite an existing environment; use `mfz config edit` for
+explicit changes. CLI secret arguments remain available, but may be visible in
+process arguments/shell history; prefer the prompt or a private config followed
+by verified secure migration.
 
 ### 3. Launch
 
@@ -84,9 +107,9 @@ mfz launch my-server
 
 Before you start, make sure your computer is ready:
 
-1. **Remote Desktop (`mstsc.exe`)**: Standard on all Windows PCs.
+1. **Windows Remote Desktop (`mstsc.exe`)**: required for desktop launch. Other platforms can use the native `--ssm-only` path when their credential source is available; Windows keyring operations are not simulated elsewhere.
 2. **Zero External Dependencies (Standalone Mode)**: MFZ contains a native Rust SSM WebSocket tunnel and direct STS/EC2 client engine. **No AWS CLI (`aws.exe`) or Session Manager plugin (`session-manager-plugin`) is required!**
-3. **AWS Profile Fallback (Optional)**: If you already use `~/.aws/credentials` or AWS IAM Identity Center (SSO), MFZ supports `profile = <name>` as a fallback.
+3. **Named AWS SDK profiles (optional)**: `profile = <name>` supports standard SDK credential providers, role/SSO caches and optional `credential_process`. The chosen profile supplies its region too, unless config/CLI overrides it. MFZ does not bootstrap a new interactive SSO login itself.
 
 ---
 
@@ -101,29 +124,40 @@ Don't want to type names? Just run `mfz launch`. A beautiful interactive menu wi
 By default, MFZ stores settings in `mfz.ini`. To move sensitive data (AWS secret keys, MFA secrets, or RDP passwords) to the secure Windows Credential Manager safe-box:
 
 ```bash
-mfz env secure my-server
+mfz config secure my-server
 ```
 
 You can also set your AWS Secret Key directly into the Windows Credential Manager without writing it to disk:
 
 ```bash
-mfz env set-aws-secret my-server
+mfz config set-aws-secret my-server
 ```
 
 ### 📝 Hostname Shortcuts
 
-Tired of typing `127.0.0.1:13389`? MFZ uses friendly names like `stg-rdp` or `prd-rdp`:
+Native tunneled RDP always connects to the owned numeric `127.0.0.1:<port>`
+endpoint; it does not trust DNS or a pre-existing hosts alias. `rdp_host` is kept
+as a descriptive/optional manual alias for existing configurations. Config add
+and launch no longer make implicit privileged hosts-file edits.
 
-- When you run `mfz config add`, MFZ **automatically adds** the hostname shortcut to your system hosts file (prompting for elevation via UAC if needed).
-- To sync all hostname shortcuts for existing environments in your configuration:
+To **explicitly** manage aliases:
 
 ```bash
-mfz hosts add
+mfz hosts add --config mfz.ini
+mfz hosts custom 127.0.0.1 my-server-rdp
 ```
+
+Updates validate the complete batch and reject a hostname already mapped to a
+different address. Windows elevation is awaited and its result verified, not
+reported successful merely because UAC launched a child.
 
 ### 🚀 Fast File Transfer & Shared Folders
 
-Transferring files through RDP clipboard copy-paste can be slow and prone to freezing. MFZ natively shares your local drives and optimizes RDP performance for ultra-fast transfers:
+Clipboard and redirected-drive transfers share the same RDP-over-SSM transport. MFZ's native tunnel uses bounded fair queues, immediate batched writes, and adaptive SSM acknowledgement/retry handling to avoid unbounded backlogs and data loss under transfer load. Drive redirection is supported, but it is not a separate file-transfer channel.
+
+If the **entire remote VM** becomes unresponsive, see the [native production-completion report](./docs/native-production-completion.md), [native transport performance report](./docs/native-transport-performance.md) and [Windows/EC2 investigation checklist](./docs/native-transfer-fix.md). The local transport fixes have automated regression coverage; the machine-wide symptom still needs live validation.
+
+Sharing options:
 
 - **Share a Specific Folder**: Want to share only a designated folder (e.g. `C:\Transfer` or `share_folder` in `mfz.ini`)?
 
@@ -131,7 +165,7 @@ Transferring files through RDP clipboard copy-paste can be slow and prone to fre
   mfz launch my-server --share-folder C:\Transfer
   ```
 
-  MFZ automatically maps this folder to a virtual drive letter (e.g. `Z:`) and shares it cleanly into `\\tsclient`, filtering out unmounted/empty optical drives, then unmounts it upon exit.
+  MFZ maps a canonical directory to an available virtual drive, redirects it into RDP and removes only its exact owned mapping on normal exit. `*` expands accessible local drives; abrupt process death is not guaranteed cleanup. `none` disables the explicit drive list, not a separately configured shared folder.
 - **Control Shared Drives**: Specify exact drives to share, all drives (`*`), or disable sharing:
 
   ```bash
@@ -167,6 +201,9 @@ Tired of opening a command prompt every time? MFZ supports custom `.mfz` extensi
    mfz register
    ```
 
+If Windows keeps another default app, choose MFZ through Open with/Settings;
+   registration does not bypass protected Windows UserChoice defaults.
+
 2. **Export shortcuts to your Desktop**:
 
    ```bash
@@ -174,14 +211,24 @@ Tired of opening a command prompt every time? MFZ supports custom `.mfz` extensi
    ```
 
 3. **Double-click to connect**:
-   - `stg.mfz` on your Desktop connects directly to STG!
-   - `prd.mfz` on your Desktop connects directly to PRD!
+   - Review before allowing the file/referenced config to be read, then confirm
+     the displayed target, credential use and shared resources before connecting.
+   - Do not trust a `.mfz` extension or copied environment name as authorization.
+     Unattended use requires explicit `--trust-profile` after independent review:
+
+     ```bash
+     mfz launch path/to/reviewed.mfz --trust-profile
+     ```
 
 #### Export Options
 
 - `mfz export stg`: Creates `stg.mfz` in the current directory.
 - `mfz export --all --desktop`: Creates `.mfz` quick-launch files for all configured profiles directly on your Desktop.
-- `mfz export prd --standalone`: Exports a self-contained portable profile containing full connection details.
+- `mfz export prd --standalone`: Exports portable **settings without secrets** (the default). The destination must supply credentials separately.
+- `mfz export prd --pointer --config C:\Private\mfz.ini`: Pins a pointer to the selected config instead of relying on another working directory.
+- `--force` explicitly replaces an existing export; otherwise output is no-clobber.
+- `--include-secrets` explicitly includes plaintext AWS/MFA/RDP secrets and prints a warning; use a private file/directory and never commit/share it. Existing output DACLs are preserved, so protect those grants too. This cannot be combined with `--pointer`.
+- Multiple exports require a directory, never one repeatedly overwritten filename.
 - `mfz unregister`: Removes the Windows Shell file association cleanly.
 
 ---
@@ -189,15 +236,70 @@ Tired of opening a command prompt every time? MFZ supports custom `.mfz` extensi
 ## ❓ Frequently Asked Questions
 
 **"Do I need to install AWS CLI or Session Manager Plugin?"**
-No! MFZ is completely self-contained. It uses pure Rust for STS token exchange and establishes native WebSocket port-forwarding tunnels directly to AWS Systems Manager.
+No AWS CLI or Session Manager plugin is required by the runtime. MFZ uses the native AWS Rust SDK and Rust WebSocket/SSM/smux transport. An optional SDK profile may itself depend on an external credential process or previously authenticated SSO cache; that is provider setup, not an MFZ transport fallback.
 
 **"I use SSO / AWS Identity Center. Does it work?"**
-Yes! MFZ automatically detects SSO profiles. Just make sure you are logged in using `aws sso login` and MFZ will handle the rest.
+MFZ uses the selected SDK profile and its existing SSO cache/provider support. It does not implement initial browser/device-login bootstrap; authenticate the profile with your approved SSO tooling first. SSO must not be confused with the no-MFA direct/static-key mode.
 
 **"Where are my settings stored?"**
-Settings are kept in `mfz.ini` in the same folder as the program. You can easily share this file with teammates (just make sure to secure your secrets first!).
+Without `--config`, MFZ discovers configuration files using modern CLI priority:
+1. Current working directory: `./mfz` *(modern clean format)*, `./mfz.ini` *(established default)*, or `./.mfz`
+2. Application executable directory: `<exe_dir>/mfz`, `<exe_dir>/mfz.ini`
+3. User & platform configuration directories: `$XDG_CONFIG_HOME/mfz/config`, `~/.config/mfz/config`, `~/.mfz/config`, `~/.mfz/mfz`, `~/.mfz/mfz.ini`, `%APPDATA%\mfz\config`, or `%APPDATA%\mfz\mfz.ini`.
+
+An **explicit** `--config <path>` accepts extensionless paths (e.g. `--config mfz` or `--config prod` auto-detects `mfz.ini` or `prod.ini` if present) while strictly maintaining directory isolation without falling back to ambient user paths. A pointer's relative config path is relative to the pointer.
+
+Only full-line `#`/`;` comments are comments inside configuration; those characters
+inside passwords/drive lists are literal. Significant whitespace, leading quotes
+or control characters use JSON-string escaping. Protect the file and its backups;
+secure migration does not erase old exports, Git history or filesystem snapshots.
 
 ---
+
+## Operational boundaries
+
+- RDP keeps NLA and warns on unverifiable server identity; no silent certificate
+  bypass or machine-wide UDP policy change is made. Performance hints in a `.rdp`
+  file do **not** prove UDP is disabled. Validate your server identity/policy.
+- Automatic RDP password use creates one exact-port, session-persistent credential
+  and refuses to overwrite an existing entry. Cleanup checks observed ownership;
+  it never deliberately deletes broad/unrelated user entries. Verify MSTSC's
+  credential-target behavior on supported Windows versions before deployment.
+- Secret-bearing temporary files are private at creation. Windows replacement
+  preserves the destination DACL. If replacement/recovery or old-backup cleanup
+  fails, inspect the reported paths; a recovery file may contain previous secrets.
+  Unsupported ACL/filesystem behavior is an error, not an insecure fallback.
+- `mfz qr generate` and `qr decode` intentionally display secrets. PNG writes are
+  no-clobber unless `--force` is explicit. Decode input is bounded to 16 MiB,
+  dimensions 4096×4096 and decoder allocation 64 MiB.
+- `mfz qr register --profile admin --username alice --save existing-env --config mfz.ini`
+  validates the existing save target before creating a device. Pending devices get
+  bounded cleanup on handled failures; an acknowledged active device is never
+  automatically deactivated because local saving failed. `--save` (alias
+  `--save-env`) explicitly stores plaintext and warns; then run `config secure`.
+- Loopback is not per-user authentication; trust the local machine and retain remote RDP authentication. Unsupported KMS handshake actions fail closed; no silent downgrade/fallback.
+- Live AWS/IAM, Windows UAC/Credential Manager/MSTSC and the affected VM remain
+  external acceptance gates. Local peers/benchmarks do not prove the whole-VM
+  transfer symptom resolved in your deployment. See the verification ledger.
+
+## Development verification
+
+Use current stable Rust (audit checks used 1.99.0; no lower tested-MSRV claim).
+The actual-module harness avoids linking the large EC2 SDK for portable regressions
+without substituting production implementations:
+
+```bash
+cargo check --locked --all-targets
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --manifest-path tools/transport-tests/Cargo.toml --locked --features session-sdk,enrollment-sdk
+cargo build --locked --bin mfz
+python tools/audit_cli_test.py --binary target/debug/mfz
+```
+
+The Windows workflow also runs all integration tests and an explicitly invoked,
+random-identity real Credential Manager round trip. No live cloud tests are hidden
+behind an ordinary unit-test pass.
+
 
 ## 👤 Author & Support
 

@@ -11,6 +11,6 @@ fn test_error_exit_codes() {
     assert_eq!(AppError::Iam("test".into()).exit_code(), 7);
     assert_eq!(AppError::Aws("test".into()).exit_code(), 9);
 
-    let io_err = std::io::Error::new(std::io::ErrorKind::Other, "test");
+    let io_err = std::io::Error::other("test");
     assert_eq!(AppError::Io(io_err).exit_code(), 8);
 }

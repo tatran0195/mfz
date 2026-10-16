@@ -1,0 +1,417 @@
+ Downloading crates ...
+  Downloaded cfg-if v1.0.4
+  Downloaded anstream v1.0.0
+  Downloaded anstyle v1.0.14
+  Downloaded anstyle-parse v1.0.0
+  Downloaded bytes-utils v0.1.4
+  Downloaded fnv v1.0.7
+  Downloaded block-buffer v0.12.0
+  Downloaded crypto-common v0.1.7
+  Downloaded base64-simd v0.8.0
+  Downloaded cc v1.2.60
+  Downloaded errno v0.3.14
+  Downloaded crypto-common v0.2.1
+  Downloaded futures-core v0.3.32
+  Downloaded ryu v1.0.23
+  Downloaded sha1 v0.11.0
+  Downloaded clap_lex v1.1.0
+  Downloaded deranged v0.5.8
+  Downloaded futures-macro v0.3.32
+  Downloaded block-buffer v0.10.4
+  Downloaded colorchoice v1.0.5
+  Downloaded futures-task v0.3.32
+  Downloaded cpufeatures v0.2.17
+  Downloaded itoa v1.0.18
+  Downloaded time-core v0.1.8
+  Downloaded cmov v0.5.3
+  Downloaded digest v0.11.2
+  Downloaded form_urlencoded v1.2.2
+  Downloaded http-body v1.0.1
+  Downloaded openssl-macros v0.1.1
+  Downloaded aws-smithy-runtime-api-macros v1.0.0
+  Downloaded configparser v3.1.0
+  Downloaded either v1.15.0
+  Downloaded fastrand v2.4.1
+  Downloaded unit-prefix v0.5.2
+  Downloaded colored v3.1.1
+  Downloaded futures-sink v0.3.32
+  Downloaded native-tls v0.2.18
+  Downloaded tokio-macros v2.7.0
+  Downloaded anstyle-query v1.1.5
+  Downloaded hex v0.4.3
+  Downloaded foreign-types v0.3.2
+  Downloaded foreign-types-shared v0.1.1
+  Downloaded http-body v0.4.6
+  Downloaded utf8parse v0.2.2
+  Downloaded cpufeatures v0.3.0
+  Downloaded ctutils v0.4.2
+  Downloaded percent-encoding v2.3.2
+  Downloaded rand_core v0.10.1
+  Downloaded data-encoding v2.11.1
+  Downloaded clap_derive v4.6.1
+  Downloaded console v0.16.3
+  Downloaded powerfmt v0.2.0
+  Downloaded pin-utils v0.1.0
+  Downloaded aws-credential-types v1.2.14
+  Downloaded find-msvc-tools v0.1.9
+  Downloaded heck v0.5.0
+  Downloaded is_terminal_polyfill v1.70.2
+  Downloaded lock_api v0.4.14
+  Downloaded num-conv v0.2.1
+  Downloaded outref v0.5.2
+  Downloaded scopeguard v1.2.0
+  Downloaded version_check v0.9.5
+  Downloaded autocfg v1.5.0
+  Downloaded clap v4.6.1
+  Downloaded generic-array v0.14.7
+  Downloaded http-body-util v0.1.3
+  Downloaded openssl-probe v0.2.1
+  Downloaded pin-project-lite v0.2.17
+  Downloaded aws-smithy-async v1.2.14
+  Downloaded aws-smithy-http v0.63.6
+  Downloaded chacha20 v0.10.2
+  Downloaded hmac v0.13.0
+  Downloaded num-integer v0.1.46
+  Downloaded pkg-config v0.3.33
+  Downloaded digest v0.10.7
+  Downloaded quote v1.0.45
+  Downloaded strsim v0.11.1
+  Downloaded bitflags v2.11.1
+  Downloaded bytes v1.11.1
+  Downloaded const-oid v0.10.2
+  Downloaded iana-time-zone v0.1.65
+  Downloaded hybrid-array v0.4.10
+  Downloaded once_cell v1.21.4
+  Downloaded sha2 v0.10.9
+  Downloaded shlex v1.3.0
+  Downloaded signal-hook-registry v1.4.8
+  Downloaded httparse v1.10.1
+  Downloaded parking_lot v0.12.5
+  Downloaded aws-sigv4 v1.4.3
+  Downloaded aws-smithy-runtime-api v1.12.0
+  Downloaded num-traits v0.2.19
+  Downloaded indicatif v0.18.4
+  Downloaded log v0.4.29
+  Downloaded parking_lot_core v0.9.12
+  Downloaded proc-macro2 v1.0.106
+  Downloaded time-macros v0.2.27
+  Downloaded getrandom v0.4.3
+  Downloaded http v1.4.0
+  Downloaded keyring v3.6.3
+  Downloaded aws-smithy-types v1.4.7
+  Downloaded memchr v2.8.0
+  Downloaded mio v1.2.0
+  Downloaded openssl-sys v0.9.117
+  Downloaded rand v0.10.3
+  Downloaded http v0.2.12
+  Downloaded vsimd v0.8.0
+  Downloaded chrono v0.4.44
+  Downloaded clap_builder v4.6.0
+  Downloaded thiserror v2.0.18
+  Downloaded tokio-native-tls v0.3.1
+  Downloaded zmij v1.0.23
+  Downloaded slab v0.4.12
+  Downloaded thiserror-impl v2.0.18
+  Downloaded futures-util v0.3.32
+  Downloaded portable-atomic v1.13.1
+  Downloaded smallvec v1.15.1
+  Downloaded openssl v0.10.81
+  Downloaded serde_derive v1.0.228
+  Downloaded sha2 v0.11.0
+  Downloaded rustix v1.1.4
+  Downloaded tokio-tungstenite v0.30.0
+  Downloaded tempfile v3.27.0
+  Downloaded tracing-attributes v0.1.31
+  Downloaded unicode-ident v1.0.24
+  Downloaded tracing-core v0.1.36
+  Downloaded zeroize v1.8.2
+  Downloaded serde_core v1.0.228
+  Downloaded socket2 v0.6.3
+  Downloaded libc v0.2.186
+  Downloaded tungstenite v0.30.0
+  Downloaded typenum v1.20.0
+  Downloaded uuid v1.23.1
+  Downloaded serde v1.0.228
+  Downloaded serde_json v1.0.151
+  Downloaded tokio-util v0.7.18
+  Downloaded time v0.3.47
+  Downloaded vcpkg v0.2.15
+  Downloaded unicode-width v0.2.2
+  Downloaded syn v2.0.117
+  Downloaded linux-raw-sys v0.12.1
+  Downloaded tracing v0.1.44
+  Downloaded tokio v1.52.1
+   Compiling proc-macro2 v1.0.106
+   Compiling quote v1.0.45
+   Compiling unicode-ident v1.0.24
+   Compiling libc v0.2.186
+   Compiling syn v2.0.117
+   Compiling cfg-if v1.0.4
+   Compiling bytes v1.11.1
+   Compiling typenum v1.20.0
+   Compiling pin-project-lite v0.2.17
+   Compiling itoa v1.0.18
+   Compiling parking_lot_core v0.9.12
+   Compiling find-msvc-tools v0.1.9
+   Compiling smallvec v1.15.1
+   Compiling scopeguard v1.2.0
+   Compiling shlex v1.3.0
+   Compiling cc v1.2.60
+   Compiling lock_api v0.4.14
+   Compiling errno v0.3.14
+   Compiling futures-core v0.3.32
+   Compiling autocfg v1.5.0
+   Compiling pkg-config v0.3.33
+   Compiling vcpkg v0.2.15
+   Compiling openssl-sys v0.9.117
+   Compiling num-traits v0.2.19
+   Compiling signal-hook-registry v1.4.8
+   Compiling parking_lot v0.12.5
+   Compiling http v1.4.0
+   Compiling hybrid-array v0.4.10
+   Compiling socket2 v0.6.3
+   Compiling mio v1.2.0
+   Compiling tokio-macros v2.7.0
+   Compiling tokio v1.52.1
+   Compiling futures-macro v0.3.32
+   Compiling cmov v0.5.3
+   Compiling futures-sink v0.3.32
+   Compiling slab v0.4.12
+   Compiling futures-task v0.3.32
+   Compiling futures-util v0.3.32
+   Compiling ctutils v0.4.2
+   Compiling crypto-common v0.2.1
+   Compiling block-buffer v0.12.0
+   Compiling once_cell v1.21.4
+   Compiling fnv v1.0.7
+   Compiling getrandom v0.4.3
+   Compiling cpufeatures v0.3.0
+   Compiling const-oid v0.10.2
+   Compiling rand_core v0.10.1
+   Compiling bitflags v2.11.1
+   Compiling version_check v0.9.5
+   Compiling powerfmt v0.2.0
+   Compiling deranged v0.5.8
+   Compiling generic-array v0.14.7
+   Compiling digest v0.11.2
+   Compiling http v0.2.12
+   Compiling http-body v1.0.1
+   Compiling foreign-types-shared v0.1.1
+   Compiling num-conv v0.2.1
+   Compiling serde_core v1.0.228
+   Compiling vsimd v0.8.0
+   Compiling outref v0.5.2
+   Compiling openssl v0.10.81
+   Compiling either v1.15.0
+   Compiling time-core v0.1.8
+   Compiling time v0.3.47
+   Compiling bytes-utils v0.1.4
+   Compiling base64-simd v0.8.0
+   Compiling foreign-types v0.3.2
+   Compiling http-body-util v0.1.3
+   Compiling http-body v0.4.6
+   Compiling tracing-core v0.1.36
+   Compiling num-integer v0.1.46
+   Compiling tracing-attributes v0.1.31
+   Compiling openssl-macros v0.1.1
+   Compiling pin-utils v0.1.0
+   Compiling native-tls v0.2.18
+   Compiling log v0.4.29
+   Compiling ryu v1.0.23
+   Compiling aws-smithy-types v1.4.7
+   Compiling tracing v0.1.44
+   Compiling aws-smithy-async v1.2.14
+   Compiling aws-smithy-runtime-api-macros v1.0.0
+   Compiling httparse v1.10.1
+   Compiling zeroize v1.8.2
+   Compiling utf8parse v0.2.2
+   Compiling thiserror v2.0.18
+   Compiling openssl-probe v0.2.1
+   Compiling anstyle-parse v1.0.0
+   Compiling aws-smithy-runtime-api v1.12.0
+   Compiling chacha20 v0.10.2
+   Compiling thiserror-impl v2.0.18
+   Compiling rustix v1.1.4
+   Compiling colorchoice v1.0.5
+   Compiling anstyle-query v1.1.5
+   Compiling zmij v1.0.23
+   Compiling percent-encoding v2.3.2
+   Compiling serde v1.0.228
+   Compiling anstyle v1.0.14
+   Compiling portable-atomic v1.13.1
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling anstream v1.0.0
+   Compiling rand v0.10.3
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling sha1 v0.11.0
+   Compiling serde_derive v1.0.228
+   Compiling data-encoding v2.11.1
+   Compiling strsim v0.11.1
+   Compiling clap_lex v1.1.0
+   Compiling linux-raw-sys v0.12.1
+   Compiling heck v0.5.0
+   Compiling serde_json v1.0.151
+   Compiling unicode-width v0.2.2
+   Compiling console v0.16.3
+   Compiling clap_derive v4.6.1
+   Compiling clap_builder v4.6.0
+   Compiling tungstenite v0.30.0
+   Compiling digest v0.10.7
+   Compiling form_urlencoded v1.2.2
+   Compiling aws-smithy-http v0.63.6
+   Compiling aws-credential-types v1.2.14
+   Compiling tokio-native-tls v0.3.1
+   Compiling sha2 v0.11.0
+   Compiling hmac v0.13.0
+   Compiling fastrand v2.4.1
+   Compiling cpufeatures v0.2.17
+   Compiling iana-time-zone v0.1.65
+   Compiling memchr v2.8.0
+   Compiling hex v0.4.3
+   Compiling unit-prefix v0.5.2
+   Compiling indicatif v0.18.4
+   Compiling aws-sigv4 v1.4.3
+   Compiling chrono v0.4.44
+   Compiling sha2 v0.10.9
+   Compiling tempfile v3.27.0
+   Compiling tokio-tungstenite v0.30.0
+   Compiling clap v4.6.1
+   Compiling uuid v1.23.1
+   Compiling keyring v3.6.3
+   Compiling tokio-util v0.7.18
+   Compiling configparser v3.1.0
+   Compiling colored v3.1.1
+   Compiling mfz-transport-tests v0.1.0 (/home/user/mfz/tools/transport-tests)
+    Finished `test` profile [unoptimized] target(s) in 1m 03s
+     Running unittests src/lib.rs (/home/user/.cache/mfz-target/debug/deps/mfz_transport_tests-1c1e23d2699ee7a8)
+
+running 16 tests
+test audit_regressions::aud_001_removing_secret_fields_actually_removes_persisted_keys ... FAILED
+test audit_regressions::aud_002_standalone_export_does_not_implicitly_disclose_secrets ... FAILED
+test audit_regressions::aud_004_invalid_boolean_is_rejected_not_treated_as_absent ... FAILED
+test audit_regressions::aud_003_export_environment_cannot_escape_destination_directory ... FAILED
+test audit_regressions::aud_005_zero_ports_are_not_valid_session_configuration ... FAILED
+test audit_regressions::aud_006_semicolons_and_hashes_are_literal_inside_values ... FAILED
+test audit_regressions::aud_007_malformed_standalone_does_not_launch_unrelated_stem_environment ... FAILED
+test audit_regressions::aud_008_pointer_config_paths_are_relative_to_the_pointer_file ... FAILED
+test audit_regressions::aud_009_environment_prefix_is_not_a_pointer_key ... FAILED
+test audit_regressions::aud_010_invalid_sections_are_not_silently_discarded ... FAILED
+test audit_regressions::aud_012_comma_separated_drive_lists_are_normalized_for_mstsc ... FAILED
+test audit_regressions::aud_011_standalone_without_configuration_is_an_error_not_a_pointer ... FAILED
+test audit_regressions::aud_013_non_ascii_drive_letters_are_not_truncated_to_ascii ... FAILED
+test audit_regressions::aud_014_inline_hosts_comments_are_not_host_aliases ... FAILED
+test audit_regressions::aud_015_hosts_input_cannot_inject_additional_entries ... FAILED
+test audit_regressions::aud_016_cli_rejects_ambiguous_export_modes ... FAILED
+
+failures:
+
+---- audit_regressions::aud_001_removing_secret_fields_actually_removes_persisted_keys stdout ----
+
+thread 'audit_regressions::aud_001_removing_secret_fields_actually_removes_persisted_keys' (3914) panicked at src/../../../tests/audit_regressions.rs:28:5:
+save retained removed secret fields
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- audit_regressions::aud_002_standalone_export_does_not_implicitly_disclose_secrets stdout ----
+
+thread 'audit_regressions::aud_002_standalone_export_does_not_implicitly_disclose_secrets' (3915) panicked at src/../../../tests/audit_regressions.rs:37:5:
+ordinary export silently includes secrets
+
+---- audit_regressions::aud_004_invalid_boolean_is_rejected_not_treated_as_absent stdout ----
+
+thread 'audit_regressions::aud_004_invalid_boolean_is_rejected_not_treated_as_absent' (3917) panicked at src/../../../tests/audit_regressions.rs:54:5:
+assertion failed: ConfigLoader::new(path).load("test").is_err()
+
+---- audit_regressions::aud_003_export_environment_cannot_escape_destination_directory stdout ----
+
+thread 'audit_regressions::aud_003_export_environment_cannot_escape_destination_directory' (3916) panicked at src/../../../tests/audit_regressions.rs:47:5:
+assertion failed: result.is_err()
+
+---- audit_regressions::aud_005_zero_ports_are_not_valid_session_configuration stdout ----
+
+thread 'audit_regressions::aud_005_zero_ports_are_not_valid_session_configuration' (3918) panicked at src/../../../tests/audit_regressions.rs:60:5:
+assertion failed: ConfigLoader::new(path).load("test").is_err()
+
+---- audit_regressions::aud_006_semicolons_and_hashes_are_literal_inside_values stdout ----
+
+thread 'audit_regressions::aud_006_semicolons_and_hashes_are_literal_inside_values' (3919) panicked at src/../../../tests/audit_regressions.rs:67:5:
+assertion `left == right` failed
+  left: Some("secret")
+ right: Some("secret#with;punctuation")
+
+---- audit_regressions::aud_007_malformed_standalone_does_not_launch_unrelated_stem_environment stdout ----
+
+thread 'audit_regressions::aud_007_malformed_standalone_does_not_launch_unrelated_stem_environment' (3920) panicked at src/../../../tests/audit_regressions.rs:76:5:
+assertion failed: ConfigLoader::new(path).load_from_file_or_name(profile.to_str().unwrap()).is_err()
+
+---- audit_regressions::aud_008_pointer_config_paths_are_relative_to_the_pointer_file stdout ----
+
+thread 'audit_regressions::aud_008_pointer_config_paths_are_relative_to_the_pointer_file' (3921) panicked at src/../../../tests/audit_regressions.rs:85:90:
+called `Result::unwrap()` on an `Err` value: Config("Config file not found: mfz.ini")
+
+---- audit_regressions::aud_009_environment_prefix_is_not_a_pointer_key stdout ----
+
+thread 'audit_regressions::aud_009_environment_prefix_is_not_a_pointer_key' (3922) panicked at src/../../../tests/audit_regressions.rs:96:94:
+called `Result::unwrap()` on an `Err` value: Config("Environment `wrong-target` not found. Available: test")
+
+---- audit_regressions::aud_010_invalid_sections_are_not_silently_discarded stdout ----
+
+thread 'audit_regressions::aud_010_invalid_sections_are_not_silently_discarded' (3923) panicked at src/../../../tests/audit_regressions.rs:103:5:
+assertion failed: ConfigLoader::new(path).get_all().is_err()
+
+---- audit_regressions::aud_012_comma_separated_drive_lists_are_normalized_for_mstsc stdout ----
+
+thread 'audit_regressions::aud_012_comma_separated_drive_lists_are_normalized_for_mstsc' (3925) panicked at src/../../../tests/audit_regressions.rs:114:5:
+assertion `left == right` failed
+  left: Some("c:, D:")
+ right: Some("C:;D:")
+
+---- audit_regressions::aud_011_standalone_without_configuration_is_an_error_not_a_pointer stdout ----
+
+thread 'audit_regressions::aud_011_standalone_without_configuration_is_an_error_not_a_pointer' (3924) panicked at src/../../../tests/audit_regressions.rs:109:5:
+assertion failed: shell::export_mfz_file("test", None, true, dir.path()).is_err()
+
+---- audit_regressions::aud_013_non_ascii_drive_letters_are_not_truncated_to_ascii stdout ----
+
+thread 'audit_regressions::aud_013_non_ascii_drive_letters_are_not_truncated_to_ascii' (3926) panicked at src/../../../tests/audit_regressions.rs:120:5:
+assertion failed: rdp::is_drive_letter_in_use('\u{141}')
+
+---- audit_regressions::aud_014_inline_hosts_comments_are_not_host_aliases stdout ----
+
+thread 'audit_regressions::aud_014_inline_hosts_comments_are_not_host_aliases' (3927) panicked at src/../../../tests/audit_regressions.rs:129:5:
+assertion failed: !hosts.has_host("nonexistent").unwrap()
+
+---- audit_regressions::aud_015_hosts_input_cannot_inject_additional_entries stdout ----
+  OK Added: 127.0.0.1  →  normal
+203.0.113.1 other-host
+
+thread 'audit_regressions::aud_015_hosts_input_cannot_inject_additional_entries' (3928) panicked at src/../../../tests/audit_regressions.rs:139:5:
+assertion failed: hosts.add_host("127.0.0.1", "normal\n203.0.113.1 other-host").is_err()
+
+---- audit_regressions::aud_016_cli_rejects_ambiguous_export_modes stdout ----
+
+thread 'audit_regressions::aud_016_cli_rejects_ambiguous_export_modes' (3929) panicked at src/../../../tests/audit_regressions.rs:145:5:
+assertion failed: Cli::try_parse_from(["mfz", "export", "test", "--all"]).is_err()
+
+
+failures:
+    audit_regressions::aud_001_removing_secret_fields_actually_removes_persisted_keys
+    audit_regressions::aud_002_standalone_export_does_not_implicitly_disclose_secrets
+    audit_regressions::aud_003_export_environment_cannot_escape_destination_directory
+    audit_regressions::aud_004_invalid_boolean_is_rejected_not_treated_as_absent
+    audit_regressions::aud_005_zero_ports_are_not_valid_session_configuration
+    audit_regressions::aud_006_semicolons_and_hashes_are_literal_inside_values
+    audit_regressions::aud_007_malformed_standalone_does_not_launch_unrelated_stem_environment
+    audit_regressions::aud_008_pointer_config_paths_are_relative_to_the_pointer_file
+    audit_regressions::aud_009_environment_prefix_is_not_a_pointer_key
+    audit_regressions::aud_010_invalid_sections_are_not_silently_discarded
+    audit_regressions::aud_011_standalone_without_configuration_is_an_error_not_a_pointer
+    audit_regressions::aud_012_comma_separated_drive_lists_are_normalized_for_mstsc
+    audit_regressions::aud_013_non_ascii_drive_letters_are_not_truncated_to_ascii
+    audit_regressions::aud_014_inline_hosts_comments_are_not_host_aliases
+    audit_regressions::aud_015_hosts_input_cannot_inject_additional_entries
+    audit_regressions::aud_016_cli_rejects_ambiguous_export_modes
+
+test result: FAILED. 0 passed; 16 failed; 0 ignored; 0 measured; 64 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

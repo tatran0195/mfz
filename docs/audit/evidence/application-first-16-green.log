@@ -1,0 +1,33 @@
+   Compiling mfz-transport-tests v0.1.0 (/home/user/mfz/tools/transport-tests)
+warning: function `windows_command_line` is never used
+  --> src/../../../src/validation.rs:80:15
+   |
+80 | pub(crate) fn windows_command_line(args: &[&str]) -> Result<String> {
+   |               ^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `mfz-transport-tests` (lib test) generated 1 warning
+    Finished `test` profile [unoptimized] target(s) in 7.14s
+     Running unittests src/lib.rs (/home/user/.cache/mfz-target/debug/deps/mfz_transport_tests-1c1e23d2699ee7a8)
+
+running 16 tests
+test audit_regressions::aud_002_standalone_export_does_not_implicitly_disclose_secrets ... ok
+test audit_regressions::aud_001_removing_secret_fields_actually_removes_persisted_keys ... ok
+test audit_regressions::aud_004_invalid_boolean_is_rejected_not_treated_as_absent ... ok
+test audit_regressions::aud_003_export_environment_cannot_escape_destination_directory ... ok
+test audit_regressions::aud_005_zero_ports_are_not_valid_session_configuration ... ok
+test audit_regressions::aud_006_semicolons_and_hashes_are_literal_inside_values ... ok
+test audit_regressions::aud_007_malformed_standalone_does_not_launch_unrelated_stem_environment ... ok
+test audit_regressions::aud_009_environment_prefix_is_not_a_pointer_key ... ok
+test audit_regressions::aud_008_pointer_config_paths_are_relative_to_the_pointer_file ... ok
+test audit_regressions::aud_011_standalone_without_configuration_is_an_error_not_a_pointer ... ok
+test audit_regressions::aud_010_invalid_sections_are_not_silently_discarded ... ok
+test audit_regressions::aud_012_comma_separated_drive_lists_are_normalized_for_mstsc ... ok
+test audit_regressions::aud_013_non_ascii_drive_letters_are_not_truncated_to_ascii ... ok
+test audit_regressions::aud_014_inline_hosts_comments_are_not_host_aliases ... ok
+test audit_regressions::aud_015_hosts_input_cannot_inject_additional_entries ... ok
+test audit_regressions::aud_016_cli_rejects_ambiguous_export_modes ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 64 filtered out; finished in 0.00s
+

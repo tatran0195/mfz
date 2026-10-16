@@ -11,7 +11,7 @@ fn test_build_rdp_content_default_fullscreen_no_optimization() {
         optimization: OptimizationSettings::default(),
     };
 
-    let content = build_rdp_file_content(&opts);
+    let content = build_rdp_file_content(&opts).unwrap();
 
     assert!(content.contains("full address:s:stg-rdp:13389"));
     assert!(content.contains("screen mode id:i:2"));
@@ -31,10 +31,10 @@ fn test_build_rdp_content_windowed_speed_optimization() {
         fullscreen: false,
         username: None,
         drives_to_redirect: Some("C:;D:"),
-        optimization: OptimizationSettings::from_profile_name(Some("speed")),
+        optimization: OptimizationSettings::from_profile_name(Some("speed")).unwrap(),
     };
 
-    let content = build_rdp_file_content(&opts);
+    let content = build_rdp_file_content(&opts).unwrap();
 
     assert!(content.contains("full address:s:prd-rdp:3389"));
     assert!(content.contains("screen mode id:i:1"));
@@ -49,7 +49,7 @@ fn test_build_rdp_content_windowed_speed_optimization() {
 
 #[test]
 fn test_build_rdp_content_balanced_with_audio_override() {
-    let mut opt = OptimizationSettings::from_profile_name(Some("balanced"));
+    let mut opt = OptimizationSettings::from_profile_name(Some("balanced")).unwrap();
     opt.audio = Some(false); // override audio off in balanced mode
 
     let opts = RdpProfileOptions {
@@ -61,7 +61,7 @@ fn test_build_rdp_content_balanced_with_audio_override() {
         optimization: opt,
     };
 
-    let content = build_rdp_file_content(&opts);
+    let content = build_rdp_file_content(&opts).unwrap();
     assert!(content.contains("connection type:i:6"));
     assert!(content.contains("audiomode:i:2"));
     assert!(content.contains("drivestoredirect:s:"));
@@ -71,26 +71,29 @@ fn test_build_rdp_content_balanced_with_audio_override() {
 fn test_resolve_drives_to_redirect() {
     use mfz::rdp::resolve_drives_to_redirect;
 
-    assert_eq!(resolve_drives_to_redirect(Some("none"), None), None);
     assert_eq!(
-        resolve_drives_to_redirect(Some("C:"), Some('Z')),
+        resolve_drives_to_redirect(Some("none"), None).unwrap(),
+        None
+    );
+    assert_eq!(
+        resolve_drives_to_redirect(Some("C:"), Some('Z')).unwrap(),
         Some("C:;Z:".to_string())
     );
     assert_eq!(
-        resolve_drives_to_redirect(None, Some('Z')),
+        resolve_drives_to_redirect(None, Some('Z')).unwrap(),
         Some("Z:".to_string())
     );
     assert_eq!(
-        resolve_drives_to_redirect(Some("none"), Some('Z')),
+        resolve_drives_to_redirect(Some("none"), Some('Z')).unwrap(),
         Some("Z:".to_string())
     );
 
-    // When * is requested, it should resolve ready drives (e.g. C:, D:) and never panic
-    let all_drives = resolve_drives_to_redirect(Some("*"), None);
-    assert!(all_drives.is_some());
-    let drives_str = all_drives.unwrap();
-    assert!(drives_str.contains("C:"));
-    assert!(drives_str.contains("D:"));
-    // It should not contain empty optical drive E:
-    assert!(!drives_str.contains("E:"));
+    // The operating system owns which drives exist; do not assert a developer's
+    // C:/D:/empty-E: layout on every platform. Exact wildcard/empty-drive cases
+    // are separately tested at the production enumeration boundary.
+    let expected = mfz::rdp::get_ready_local_drives().unwrap();
+    assert_eq!(
+        resolve_drives_to_redirect(Some("*"), None).unwrap(),
+        (!expected.is_empty()).then(|| expected.join(";"))
+    );
 }

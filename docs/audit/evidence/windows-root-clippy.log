@@ -1,0 +1,5 @@
+   Compiling mfz v0.1.0 (/home/user/mfz)
+    Checking aws-sdk-ec2 v1.223.0
+    Checking aws-sdk-iam v1.108.0
+    Checking aws-sdk-ssm v1.109.0
+    Finished `dev` profile [unoptimized] target(s) in 8m 18s

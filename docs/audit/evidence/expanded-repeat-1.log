@@ -1,0 +1,162 @@
+    Finished `test` profile [unoptimized] target(s) in 0.24s
+     Running unittests src/lib.rs (/home/user/.cache/mfz-target/debug/deps/mfz_transport_tests-d80ef2bc3d7a340b)
+
+running 149 tests
+test audit_regressions::aud_001_removing_secret_fields_actually_removes_persisted_keys ... ok
+test audit_regressions::aud_002_standalone_export_does_not_implicitly_disclose_secrets ... ok
+test audit_regressions::aud_003_export_environment_cannot_escape_destination_directory ... ok
+test audit_regressions::aud_005_zero_ports_are_not_valid_session_configuration ... ok
+test audit_regressions::aud_004_invalid_boolean_is_rejected_not_treated_as_absent ... ok
+test audit_regressions::aud_006_semicolons_and_hashes_are_literal_inside_values ... ok
+test audit_regressions::aud_007_malformed_standalone_does_not_launch_unrelated_stem_environment ... ok
+test audit_regressions::aud_009_environment_prefix_is_not_a_pointer_key ... ok
+test audit_regressions::aud_010_invalid_sections_are_not_silently_discarded ... ok
+test audit_regressions::aud_011_standalone_without_configuration_is_an_error_not_a_pointer ... ok
+test audit_regressions::aud_012_comma_separated_drive_lists_are_normalized_for_mstsc ... ok
+test audit_regressions::aud_013_non_ascii_drive_letters_are_not_truncated_to_ascii ... ok
+test audit_regressions::aud_008_pointer_config_paths_are_relative_to_the_pointer_file ... ok
+test audit_regressions::aud_015_hosts_input_cannot_inject_additional_entries ... ok
+test audit_regressions::aud_014_inline_hosts_comments_are_not_host_aliases ... ok
+test cli::config_origin_tests::omitted_and_explicit_default_config_paths_keep_distinct_origins ... ok
+test audit_regressions::aud_016_cli_rejects_ambiguous_export_modes ... ok
+test config::empty_password_regression::explicit_empty_password_is_not_replaced_by_a_vault_lookup ... ok
+test config::remediation_tests::external_profiles_do_not_gain_keyring_authority_by_copying_a_section_or_stem ... ok
+test config::remediation_tests::failed_secure_readback_preserves_all_plaintext_and_file_bytes ... ok
+test config::remediation_tests::insertion_does_not_overwrite_existing_environment ... ok
+test config::remediation_tests::quoted_passwords_and_literal_comment_characters_round_trip_exactly ... ok
+test config::remediation_tests::lock_covers_read_and_update_closure_and_can_be_retried_after_release ... ok
+test config::remediation_tests::readonly_persistence_failure_preserves_original_config ... ok
+test config::remediation_tests::symlink_write_is_rejected_without_modifying_target ... ok
+test credentials::tests::invalid_environment_names_never_reach_the_backend ... ok
+test credentials::tests::unsupported_backend_is_not_successful_persistence ... ok
+test config::remediation_tests::verified_secure_migration_removes_legacy_and_canonical_secret_keys ... ok
+test enrollment::input_tests::eof_prompt_returns_error_without_spinning ... ok
+test enrollment::tests::invalid_save_environment_fails_before_any_remote_mutation ... ok
+test enrollment::tests::cancelled_input_deletes_only_the_new_pending_device_through_the_real_sdk ... ok
+test enrollment::tests::missing_seed_and_failed_png_persistence_cleanup_pending_devices ... ok
+test enrollment::tests::save_failure_after_activation_is_not_success_or_active_device_deletion ... ok
+test existing_config_tests::test_config_add_new ... ok
+test existing_config_tests::test_config_get_all ... ok
+test existing_config_tests::test_config_list_and_load ... ok
+test enrollment::tests::successful_activation_updates_the_existing_real_config_and_auth_type ... ok
+test existing_config_tests::test_config_load_pointer_mfz ... ok
+test existing_config_tests::test_config_load_standalone_mfz ... ok
+test existing_config_tests::test_config_load_stem_fallback_mfz ... ok
+test existing_config_tests::test_config_missing_required ... ok
+test existing_config_tests::test_config_share_folder_alias_and_fullscreen ... ok
+test existing_config_tests::test_config_shared_drives_and_optimization ... ok
+test existing_config_tests::test_missing_auth_error ... ok
+test existing_error_tests::test_error_exit_codes ... ok
+test existing_config_tests::test_standalone_config_parsing ... ok
+test existing_hosts_tests::conflicting_and_invalid_batches_do_not_partially_append ... ok
+test existing_hosts_tests::test_hosts_add_new_entry ... ok
+test existing_hosts_tests::test_dynamic_profile_hosts_sync ... ok
+test existing_hosts_tests::test_hosts_ensure_hosts_batch ... ok
+test existing_hosts_tests::test_hosts_has_host_and_ensure ... ok
+test existing_hosts_tests::test_hosts_skip_existing ... ok
+test existing_mfa_tests::test_mfa_credentials_is_valid ... ok
+test existing_mfa_tests::test_mfa_manager_creation_with_direct_auth ... ok
+test existing_rdp_tests::test_build_rdp_content_balanced_with_audio_override ... ok
+test existing_rdp_tests::test_build_rdp_content_default_fullscreen_no_optimization ... ok
+test existing_rdp_tests::test_build_rdp_content_windowed_speed_optimization ... ok
+test existing_mfa_tests::test_build_totp_reproducibility ... ok
+test existing_shell_tests::desktop_export_does_not_claim_windows_support_on_other_platforms ... ok
+test existing_rdp_tests::test_resolve_drives_to_redirect ... ok
+test existing_shell_tests::test_export_pointer_and_load ... ok
+test go_interop::smux_go_interop_large_multistream_duplex_and_fin_drain ... ignored, requires compiled AWS-vendored Go peer; see transport-tests/README.md
+test go_interop::smux_go_interop_slow_first_stream_does_not_starve_second_stream ... ignored, requires compiled AWS-vendored Go peer; see transport-tests/README.md
+test instance_selection::tests::all_pages_and_duplicate_records_preserve_one_unique_target ... ok
+test existing_shell_tests::test_export_standalone_and_load ... ok
+test instance_selection::tests::another_target_on_any_page_is_not_arbitrarily_selected ... ok
+test instance_selection::tests::repeated_and_unbounded_page_tokens_fail_explicitly ... ok
+test mfa::tests::direct_non_mfa_credentials_do_not_invent_a_session_token_or_sdk_expiry ... ok
+test otp::tests::padding_case_and_invalid_secrets_are_handled_consistently ... ok
+test mfa::tests::incomplete_mfa_and_empty_auth_fail_before_provider_or_network_access ... ok
+test qr::tests::compressed_image_dimensions_and_input_size_are_bounded_before_qr_scanning ... ok
+test qr::tests::png_save_is_no_clobber_unless_overwrite_is_explicit ... ok
+test qr::tests::real_uri_parsing_decodes_padding_and_rejects_wrong_schemes_and_duplicate_secrets ... ok
+test qr::independent_uri_contract::generated_uri_is_understood_by_an_independent_totp_implementation ... ok
+test rdp::remediation_tests::profile_injection_and_non_tunnel_launch_destinations_are_rejected_before_side_effects ... ok
+test rdp::remediation_tests::profile_settings_have_unique_keys_and_honor_wallpaper_and_audio_overrides ... ok
+test rdp::remediation_tests::wildcard_expands_only_ready_drives_and_never_falls_back_to_unavailable_devices ... ok
+test shell::remediation_tests::association_command_has_an_option_separator_and_uninstall_does_not_claim_another_executable ... ok
+test shell::remediation_tests::export_defaults_are_no_clobber_and_explicit_secret_inclusion_is_reversible ... ok
+test smux::tests::active_and_closing_streams_and_keepalives_are_bounded ... ok
+test smux::tests::cancelled_full_queue_write_accepts_no_bytes_and_other_stream_writes ... ok
+test smux::tests::close_unblocks_global_receive_credit_and_pending_write ... ok
+test smux::tests::closed_session_rejects_open_and_keepalive_and_id_overflow ... ok
+test smux::tests::control_frames_have_no_payload ... ok
+test smux::tests::fin_on_drop_is_not_lost_or_allowed_to_overtake_full_data_queue ... ok
+test smux::tests::frames_reassemble_across_arbitrary_chunk_boundaries ... ok
+test smux::tests::frames_round_trip ... ok
+test smux::tests::half_close_retains_read_data_until_remote_fin_and_eof ... ok
+test smux::tests::header_layout_matches_smux_v1 ... ok
+test smux::tests::rejects_invalid_commands_and_control_payloads ... ok
+test smux::tests::round_robin_prevents_bulk_writer_from_monopolizing_output ... ok
+test qr::tests::special_labels_are_encoded_and_the_actual_png_round_trips ... ok
+test smux::tests::stalled_stream_does_not_block_another_stream_below_shared_budget ... ok
+test smux::tests::tiny_frames_survive_original_256_frame_failure ... ok
+test ssm::sdk_tests::failed_native_start_uses_sdk_termination_before_retry_or_return ... ok
+test ssm::sdk_tests::missing_start_response_fields_terminate_the_created_remote_session ... ok
+test ssm::sdk_tests::selected_profile_region_and_long_lived_token_option_reach_production_start ... ok
+test ssm::sdk_tests::websocket_signing_uses_the_sdk_resolved_region_not_a_hardcoded_fallback ... ok
+test ssm_flow::tests::ack_silence_uses_bounded_gap_probes_instead_of_replaying_the_entire_window ... ok
+test ssm_flow::tests::conflicting_buffered_replay_and_overflowing_sequence_are_rejected ... ok
+test ssm_flow::tests::exponential_backoff_is_capped_and_deadline_index_never_keeps_stale_entries ... ok
+test ssm_flow::tests::options_fail_fast_instead_of_creating_zero_or_unbounded_queues ... ok
+test ssm_flow::tests::rtt_clock_starts_at_flush_instead_of_queue_time ... ok
+test ssm_flow::tests::rtt_updates_are_adaptive_bounded_and_retransmissions_obey_karns_rule ... ok
+test smux::tests::slow_reader_backpressures_only_at_session_budget_and_loses_nothing ... ok
+test ssm_flow::tests::selective_future_acks_do_not_allow_unbounded_sending_past_a_gap ... ok
+test ssm_lifecycle::tests::drop_requests_cleanup_after_a_cancelled_or_failed_start ... ok
+test ssm_lifecycle::tests::cleanup_error_is_reported_to_explicit_shutdown ... ok
+test ssm_lifecycle::tests::lease_defers_cleanup_until_requested_and_finishes_exactly_once ... ok
+test ssm_lifecycle::tests::hung_cleanup_is_bounded_instead_of_stranding_a_background_task ... ok
+test ssm_lifecycle::tests::unexpected_transport_exit_triggers_cleanup_without_manual_stop ... ok
+test ssm_tunnel::tests::test_ack_payload_serialization ... ok
+test ssm_tunnel::tests::test_msg_type_padding_and_name ... ok
+test ssm_tunnel::tests::test_ssm_frame_decode_truncated ... ok
+test ssm_tunnel::tests::test_ssm_frame_encode_decode_roundtrip ... ok
+test ssm_tunnel::tests::test_token_frame_serialization ... ok
+test ssm_tunnel::transport_tests::abort_before_first_poll_still_signals_transport_completion ... ok
+test ssm_lifecycle::tests::preflight_never_connects_to_a_running_forwarder ... ok
+test ssm_tunnel::transport_tests::async_shutdown_awaits_backpressured_tasks_and_releases_the_port ... ok
+test ssm_tunnel::transport_tests::cancelling_shutdown_keeps_parent_owned_so_drop_can_abort_it ... ok
+test ssm_tunnel::transport_tests::full_input_window_still_services_controls_and_new_data_waits_for_ack ... ok
+test ssm_tunnel::transport_tests::handshake_checks_agent_version_session_type_and_kms_support ... ok
+test ssm_tunnel::transport_tests::malformed_headers_and_corrupt_payloads_are_rejected ... ok
+test ssm_tunnel::transport_tests::multi_megabyte_bidirectional_copies_survive_a_lost_ssm_input_frame ... ok
+test ssm_tunnel::transport_tests::oversized_input_data_is_rejected_without_consuming_a_sequence ... ok
+test ssm_tunnel::transport_tests::public_readiness_surfaces_startup_error_and_does_not_treat_liveness_as_ready ... ok
+test ssm_tunnel::transport_tests::publication_controls_and_empty_payloads_allow_unused_metadata ... ok
+test ssm_tunnel::transport_tests::receive_window_is_bounded_by_bytes_as_well_as_frame_count ... ok
+test ssm_tunnel::transport_tests::receive_window_orders_and_deduplicates_without_replaying_bytes ... ok
+test ssm_tunnel::transport_tests::receive_window_reserves_room_for_the_missing_sequence ... ok
+test ssm_tunnel::transport_tests::retries_preserve_exact_wire_bytes_and_eventually_fail_instead_of_hanging ... ok
+test ssm_tunnel::transport_tests::saturated_outgoing_ack_queue_cannot_hide_incoming_input_credit ... ok
+test ssm_tunnel::transport_tests::send_window_is_bounded_and_only_matching_selective_acks_release_capacity ... ok
+test ssm_tunnel::transport_tests::sigv4_omits_security_token_for_long_lived_keys_and_preserves_sts_tokens ... ok
+test ssm_tunnel::transport_tests::start_publication_alone_does_not_signal_listener_ready ... ok
+test ssm_tunnel::transport_tests::blocked_dispatcher_does_not_block_input_acks_or_pings_and_overflow_is_not_acked ... ok
+test ssm_tunnel::transport_tests::unresponsive_parent_has_a_bounded_shutdown_fallback ... ok
+test ssm_tunnel::transport_tests::stopping_public_handle_closes_backpressured_tasks_and_tcp_sockets ... ok
+test ssm_tunnel::writer_benchmark::writer_throughput_matrix ... ignored, opt-in microbenchmark; use --release --ignored --nocapture
+test ssm_writer::tests::blocked_flush_has_a_deadline_instead_of_hanging_indefinitely ... ok
+test ssm_writer::tests::closed_input_drains_last_ack_without_needing_control_sender_to_close ... ok
+test ssm_writer::tests::continuously_ready_controls_do_not_starve_data ... ok
+test ssm_writer::tests::ready_frames_are_flushed_in_bounded_batches_not_one_by_one ... ok
+test ssm_writer::tests::single_message_does_not_wait_for_batch_to_fill ... ok
+test transport_buffer::tests::normal_owned_storage_is_reused_instead_of_unconditionally_copying ... ok
+test transport_buffer::tests::shared_and_unique_tiny_tail_slices_do_not_pin_large_allocations ... ok
+test validation::tests::malformed_drives_and_file_boundary_names_are_rejected ... ok
+test validation::tests::windows_argument_quoting_preserves_spaces_quotes_and_trailing_slashes ... ok
+test ssm_tunnel::transport_tests::websocket_writer_retransmits_an_unacknowledged_frame_unchanged ... ok
+
+test result: ok. 146 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 2.47s
+
+   Doc-tests mfz_transport_tests
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

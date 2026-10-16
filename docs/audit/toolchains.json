@@ -1,0 +1,15 @@
+{
+  "executed_versions": {
+    "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)",
+    "cargo": "cargo 1.99.0 (5f94df478 2026-08-27)",
+    "go": "go version go1.27.2 linux/amd64"
+  },
+  "targets": [
+    "x86_64-unknown-linux-gnu",
+    "x86_64-pc-windows-gnu"
+  ],
+  "windows_execution": false,
+  "build_jobs": 1,
+  "dev_debuginfo": 0,
+  "temporary_swap": "8 GiB used for EC2 compilation; both files disabled and removed after checks"
+}

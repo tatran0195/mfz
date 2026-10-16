@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/home/user/mfz/tools/audit_cli_test.py", line 121, in <module>
+    main()
+    ~~~~^^
+  File "/home/user/mfz/tools/audit_cli_test.py", line 108, in main
+    run(["config", "list", "--config", "mfz.ini"], success=False)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/mfz/tools/audit_cli_test.py", line 58, in run
+    assert result.returncode != 0, (arguments, result.stdout, result.stderr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: (['config', 'list', '--config', 'mfz.ini'], '\n ███╗   ███╗███████╗███████╗\n ████╗ ████║██╔════╝╚══███╔╝\n ██╔████╔██║█████╗    ███╔╝ \n ██║╚██╔╝██║██╔══╝   ███╔╝  \n ██║ ╚═╝ ██║██║     ███████╗\n ╚═╝     ╚═╝╚═╝     ╚══════╝\n\n  AWS MFA + SSM Port Forwarding + RDP Session Manager v0.1.0\n\n──────────────────────────────────────────────────────────────────────────────────────────\n\n\n  > Environment Configurations\n  ────────────────────────────────────────────────────\n    ▸ test\n      Instance:    i-local-test\n      AWS Auth:    Direct Key (AKIDEXAMPLE)\n      Region:      us-east-1\n      Auth Type:   Mfa\n      MFA Secret:  mfz.ini (Plaintext)\n      RDP Pass:    mfz.ini (Plaintext)\n      Remote:      test-rdp:3389\n      Local:       127.0.0.1:13389\n      RDP User:    Administrator\n\n', '')

@@ -1,0 +1,29 @@
+{
+  "policy": "prior artifacts preserved byte-for-byte; do not redistribute as sanitized releases",
+  "artifacts": [
+    {
+      "file": "mfz-native-transfer-fix.zip",
+      "bytes": 292751,
+      "sha256": "b6ef0ea8d2ece07377a3910b77481642fa4bb52d7cece257329101ad7ddca4d9",
+      "unchanged": true,
+      "sanitized": false,
+      "contains_legacy_material": true
+    },
+    {
+      "file": "mfz-native-performance.zip",
+      "bytes": 441243,
+      "sha256": "043db00d9f59570af8339e2602fb3b6b062d2576f0d978a60e5dc21ecdec412e",
+      "unchanged": true,
+      "sanitized": false,
+      "contains_legacy_material": true
+    },
+    {
+      "file": "mfz-native-production.zip",
+      "bytes": 468302,
+      "sha256": "7d1e42732913b50866a02f360becbbffabf8e8a022cc8b25379e48e1646cd011",
+      "unchanged": true,
+      "sanitized": false,
+      "contains_legacy_material": true
+    }
+  ]
+}

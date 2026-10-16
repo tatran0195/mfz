@@ -1,0 +1,390 @@
+{
+  "date": "2026-10-15",
+  "candidate": "production-v3",
+  "scope": "Production writer only, masked WebSocket over bounded in-memory duplex; no TLS, AWS, network or RDP; time includes final ACK drain",
+  "host": {
+    "os": "Linux-6.1.158+-x86_64-with-glibc2.41",
+    "cpu": "Intel Xeon @ 2.60GHz",
+    "logical_cpus": 2,
+    "rust": "1.99.0 (b940084d7 2026-09-28)",
+    "profile": "release",
+    "tokio_test_runtime": "single-thread"
+  },
+  "original_mfz_base": "0817c50175cc6c8714776fff9467684ecab98426",
+  "prior_performance_tree": "aa17200bc8f0f366ae67f86a3d85b42a3148b557",
+  "official_plugin_revision": "6430675a44032a551be1937fb27a2d3fdfeb27f7",
+  "candidate_source_sha256": {
+    "src/smux.rs": "8bbb048acac0bf5d3a1253022953558ad4dc019c3c62eb30af5db007fcf249b7",
+    "src/ssm_protocol.rs": "f0659c197e6aa4e6c8315aa69eb62d1a3d0152a5d78deab2793e0d2074145355",
+    "src/ssm_flow.rs": "e39f8c0b5c52ef263b65a01c111bc099f4bf7a874a2436638ed6dfa79629189d",
+    "src/ssm_writer.rs": "068022fbc6e8cdd5461590d0e88cba11cf6c6a34db62c09687dd5fa3fc44370f",
+    "src/ssm_tunnel.rs": "8686ec05845a59f0288c10e40f0c921eb5ece5b694afef514f447ed1977eb333",
+    "src/transport_buffer.rs": "9244fc24c9864b27e6602af9bd77fb40620818a7801522e8f04fc4bca6882a4f",
+    "src/ssm_writer_bench.rs": "23da9a79031e3c59e226147a91b43c34351d4814e2a563bb77d25ce91c6fc961",
+    "src/ssm.rs": "8409ec6bccc7391b6ca4405a90a247dcaedd4d71e5c0d6112702804a0a6509c6",
+    "src/ssm_lifecycle.rs": "4ecba1a0f0fdfeb247e5f074414d3f030e802dc779d895a07f6108fad45406db",
+    "Cargo.lock": "1dbb971aa8db61d2c0974d6632b35cf32454afe1f76e03a75416913b5914a9c3",
+    "tools/transport-tests/Cargo.lock": "9e4aeaf9621ac6ea7697d642bf6f5603ea37a9b53a7ca5d15adc5179c34099be"
+  },
+  "parameters": {
+    "window_sequence_span": 8192,
+    "new_data_batch_messages": 64,
+    "maximum_active_retry_probes": 8,
+    "fixed_send_sleep": false,
+    "batch_linger": false,
+    "websocket": "0.30.0",
+    "input_queue": 256
+  },
+  "comparison_note": "Equal 4 MiB payloads; three new samples per RTT vs one historical stability-v1 sample per RTT, same host/toolchain; not official plugin or original MFZ. Hot-path source unchanged from performance-v2.",
+  "samples_4_mib": [
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 23.27796,
+      "implementation": "production-v3",
+      "mib_per_second": 171.8363636676066,
+      "payload_mib": 4,
+      "rtt_ms": 0,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample": 1
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 71.403258,
+      "implementation": "production-v3",
+      "mib_per_second": 56.019852763581184,
+      "payload_mib": 4,
+      "rtt_ms": 50,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample": 1
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 265.967781,
+      "implementation": "production-v3",
+      "mib_per_second": 15.039415620044593,
+      "payload_mib": 4,
+      "rtt_ms": 250,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample": 1
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 516.3302,
+      "implementation": "production-v3",
+      "mib_per_second": 7.746980517506046,
+      "payload_mib": 4,
+      "rtt_ms": 500,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample": 1
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 18.587622000000003,
+      "implementation": "production-v3",
+      "mib_per_second": 215.19697355584267,
+      "payload_mib": 4,
+      "rtt_ms": 0,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample": 2
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 69.68383,
+      "implementation": "production-v3",
+      "mib_per_second": 57.40212614605139,
+      "payload_mib": 4,
+      "rtt_ms": 50,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample": 2
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 267.867521,
+      "implementation": "production-v3",
+      "mib_per_second": 14.932754762754534,
+      "payload_mib": 4,
+      "rtt_ms": 250,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample": 2
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 514.006747,
+      "implementation": "production-v3",
+      "mib_per_second": 7.781999017223017,
+      "payload_mib": 4,
+      "rtt_ms": 500,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample": 2
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 19.139508,
+      "implementation": "production-v3",
+      "mib_per_second": 208.99178808567075,
+      "payload_mib": 4,
+      "rtt_ms": 0,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample": 3
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 67.62188900000001,
+      "implementation": "production-v3",
+      "mib_per_second": 59.15244396677531,
+      "payload_mib": 4,
+      "rtt_ms": 50,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample": 3
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 263.680959,
+      "implementation": "production-v3",
+      "mib_per_second": 15.169847740124458,
+      "payload_mib": 4,
+      "rtt_ms": 250,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample": 3
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 516.251519,
+      "implementation": "production-v3",
+      "mib_per_second": 7.748161221391002,
+      "payload_mib": 4,
+      "rtt_ms": 500,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample": 3
+    }
+  ],
+  "summary_4_mib": [
+    {
+      "rtt_ms": 0,
+      "median_mib_per_second": 208.99178808567075,
+      "previous_stability_mib_per_second": 0.45837226341488335,
+      "speedup_over_previous_stability": 455.9433560152121,
+      "write_calls_per_4_mib": 64,
+      "duplicates": 0
+    },
+    {
+      "rtt_ms": 50,
+      "median_mib_per_second": 57.40212614605139,
+      "previous_stability_mib_per_second": 0.4552665791134555,
+      "speedup_over_previous_stability": 126.08464750000107,
+      "write_calls_per_4_mib": 64,
+      "duplicates": 0
+    },
+    {
+      "rtt_ms": 250,
+      "median_mib_per_second": 15.039415620044593,
+      "previous_stability_mib_per_second": 0.44388036532043856,
+      "speedup_over_previous_stability": 33.881687037874705,
+      "write_calls_per_4_mib": 64,
+      "duplicates": 0
+    },
+    {
+      "rtt_ms": 500,
+      "median_mib_per_second": 7.748161221391002,
+      "previous_stability_mib_per_second": 0.24398860726087354,
+      "speedup_over_previous_stability": 31.75624185233632,
+      "write_calls_per_4_mib": 64,
+      "duplicates": 0
+    }
+  ],
+  "samples_larger_transfers": [
+    {
+      "data_frames": 16384,
+      "duplicate_frames": 0,
+      "elapsed_ms": 56.959646,
+      "implementation": "production-v3",
+      "mib_per_second": 280.9006221702993,
+      "payload_mib": 16,
+      "rtt_ms": 0,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 256
+    },
+    {
+      "data_frames": 16384,
+      "duplicate_frames": 0,
+      "elapsed_ms": 150.129421,
+      "implementation": "production-v3",
+      "mib_per_second": 106.5747132935389,
+      "payload_mib": 16,
+      "rtt_ms": 50,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 256
+    },
+    {
+      "data_frames": 16384,
+      "duplicate_frames": 0,
+      "elapsed_ms": 541.81095,
+      "implementation": "production-v3",
+      "mib_per_second": 29.53059549645499,
+      "payload_mib": 16,
+      "rtt_ms": 250,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 256
+    },
+    {
+      "data_frames": 16384,
+      "duplicate_frames": 0,
+      "elapsed_ms": 1041.418736,
+      "implementation": "production-v3",
+      "mib_per_second": 15.363656756795663,
+      "payload_mib": 16,
+      "rtt_ms": 500,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 256
+    },
+    {
+      "data_frames": 65536,
+      "duplicate_frames": 0,
+      "elapsed_ms": 226.89383099999998,
+      "implementation": "production-v3",
+      "mib_per_second": 282.0702516147299,
+      "payload_mib": 64,
+      "rtt_ms": 0,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 1024
+    },
+    {
+      "data_frames": 65536,
+      "duplicate_frames": 0,
+      "elapsed_ms": 453.131485,
+      "implementation": "production-v3",
+      "mib_per_second": 141.2393579316167,
+      "payload_mib": 64,
+      "rtt_ms": 50,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 1039
+    },
+    {
+      "data_frames": 65536,
+      "duplicate_frames": 0,
+      "elapsed_ms": 2059.624099,
+      "implementation": "production-v3",
+      "mib_per_second": 31.073631363642342,
+      "payload_mib": 64,
+      "rtt_ms": 250,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 1036
+    },
+    {
+      "data_frames": 65536,
+      "duplicate_frames": 0,
+      "elapsed_ms": 4056.416058,
+      "implementation": "production-v3",
+      "mib_per_second": 15.777474274065208,
+      "payload_mib": 64,
+      "rtt_ms": 500,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 1035
+    }
+  ],
+  "benchmark_process_resource_samples": [
+    {
+      "user_seconds": 0.08,
+      "system_seconds": 0.0,
+      "elapsed_seconds": 0.88,
+      "max_rss_kib": 11372,
+      "payload_mib_per_rtt": 4,
+      "sample": 1,
+      "rtts_ms": [
+        0,
+        50,
+        250,
+        500
+      ]
+    },
+    {
+      "user_seconds": 0.07,
+      "system_seconds": 0.0,
+      "elapsed_seconds": 0.87,
+      "max_rss_kib": 11264,
+      "payload_mib_per_rtt": 4,
+      "sample": 2,
+      "rtts_ms": [
+        0,
+        50,
+        250,
+        500
+      ]
+    },
+    {
+      "user_seconds": 0.07,
+      "system_seconds": 0.0,
+      "elapsed_seconds": 0.87,
+      "max_rss_kib": 11336,
+      "payload_mib_per_rtt": 4,
+      "sample": 3,
+      "rtts_ms": [
+        0,
+        50,
+        250,
+        500
+      ]
+    },
+    {
+      "user_seconds": 0.26,
+      "system_seconds": 0.01,
+      "elapsed_seconds": 1.79,
+      "max_rss_kib": 17676,
+      "payload_mib_per_rtt": 16,
+      "rtts_ms": [
+        0,
+        50,
+        250,
+        500
+      ]
+    },
+    {
+      "user_seconds": 0.99,
+      "system_seconds": 0.11,
+      "elapsed_seconds": 6.8,
+      "max_rss_kib": 19632,
+      "payload_mib_per_rtt": 64,
+      "rtts_ms": [
+        0,
+        50,
+        250,
+        500
+      ]
+    }
+  ],
+  "resource_scope_note": "GNU time measures entire release test process and local mock peer across four RTT cases, not the production app, TLS, SSM agent or VM; includes benchmark buffers/allocators. Not an allocation-count profile or a hard RSS bound.",
+  "validation": {
+    "portable_tests": 61,
+    "sdk_enabled_tests_including_portable": 64,
+    "repetitions_each": 3,
+    "actual_go_smux_tests": 2,
+    "full_windows_app_all_targets_check": "passed",
+    "strict_transport_and_sdk_clippy": "passed without lint overrides",
+    "root_clippy": "passes with six unchanged out-of-scope lint categories allowed; not an unconditional repository-wide -D warnings pass",
+    "live_aws_or_windows_execution": false
+  }
+}

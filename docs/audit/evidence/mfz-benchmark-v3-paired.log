@@ -1,0 +1,36 @@
+    Finished `release` profile [optimized] target(s) in 0.07s
+     Running unittests src/lib.rs (/home/user/.cache/mfz-target/release/deps/mfz_transport_tests-2d4a55964c252705)
+
+running 1 test
+BENCH {"data_frames":4096,"duplicate_frames":0,"elapsed_ms":28.923558,"implementation":"preserved-v3-same-worker","mib_per_second":138.2955720731177,"payload_mib":4,"rtt_ms":0,"scope":"writer microbenchmark; in-memory peer; no TLS or AWS","transport_write_calls":64}
+BENCH {"data_frames":4096,"duplicate_frames":0,"elapsed_ms":77.41260899999999,"implementation":"preserved-v3-same-worker","mib_per_second":51.67116896938586,"payload_mib":4,"rtt_ms":50,"scope":"writer microbenchmark; in-memory peer; no TLS or AWS","transport_write_calls":64}
+BENCH {"data_frames":4096,"duplicate_frames":0,"elapsed_ms":268.532991,"implementation":"preserved-v3-same-worker","mib_per_second":14.895748880255834,"payload_mib":4,"rtt_ms":250,"scope":"writer microbenchmark; in-memory peer; no TLS or AWS","transport_write_calls":64}
+BENCH {"data_frames":4096,"duplicate_frames":0,"elapsed_ms":522.428516,"implementation":"preserved-v3-same-worker","mib_per_second":7.6565498962924154,"payload_mib":4,"rtt_ms":500,"scope":"writer microbenchmark; in-memory peer; no TLS or AWS","transport_write_calls":64}
+test ssm_tunnel::writer_benchmark::writer_throughput_matrix ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 63 filtered out; finished in 0.90s
+
+    Finished `release` profile [optimized] target(s) in 0.08s
+     Running unittests src/lib.rs (/home/user/.cache/mfz-target/release/deps/mfz_transport_tests-2d4a55964c252705)
+
+running 1 test
+BENCH {"data_frames":4096,"duplicate_frames":0,"elapsed_ms":22.603076,"implementation":"preserved-v3-same-worker","mib_per_second":176.9670641287938,"payload_mib":4,"rtt_ms":0,"scope":"writer microbenchmark; in-memory peer; no TLS or AWS","transport_write_calls":64}
+BENCH {"data_frames":4096,"duplicate_frames":0,"elapsed_ms":71.755628,"implementation":"preserved-v3-same-worker","mib_per_second":55.74475635555722,"payload_mib":4,"rtt_ms":50,"scope":"writer microbenchmark; in-memory peer; no TLS or AWS","transport_write_calls":64}
+BENCH {"data_frames":4096,"duplicate_frames":0,"elapsed_ms":268.91985,"implementation":"preserved-v3-same-worker","mib_per_second":14.874320359765186,"payload_mib":4,"rtt_ms":250,"scope":"writer microbenchmark; in-memory peer; no TLS or AWS","transport_write_calls":64}
+BENCH {"data_frames":4096,"duplicate_frames":0,"elapsed_ms":519.7902730000001,"implementation":"preserved-v3-same-worker","mib_per_second":7.695411414518716,"payload_mib":4,"rtt_ms":500,"scope":"writer microbenchmark; in-memory peer; no TLS or AWS","transport_write_calls":64}
+test ssm_tunnel::writer_benchmark::writer_throughput_matrix ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 63 filtered out; finished in 0.88s
+
+    Finished `release` profile [optimized] target(s) in 0.07s
+     Running unittests src/lib.rs (/home/user/.cache/mfz-target/release/deps/mfz_transport_tests-2d4a55964c252705)
+
+running 1 test
+BENCH {"data_frames":4096,"duplicate_frames":0,"elapsed_ms":21.915018,"implementation":"preserved-v3-same-worker","mib_per_second":182.52323589239123,"payload_mib":4,"rtt_ms":0,"scope":"writer microbenchmark; in-memory peer; no TLS or AWS","transport_write_calls":64}
+BENCH {"data_frames":4096,"duplicate_frames":0,"elapsed_ms":71.127256,"implementation":"preserved-v3-same-worker","mib_per_second":56.23723203943085,"payload_mib":4,"rtt_ms":50,"scope":"writer microbenchmark; in-memory peer; no TLS or AWS","transport_write_calls":64}
+BENCH {"data_frames":4096,"duplicate_frames":0,"elapsed_ms":268.679735,"implementation":"preserved-v3-same-worker","mib_per_second":14.887613314044694,"payload_mib":4,"rtt_ms":250,"scope":"writer microbenchmark; in-memory peer; no TLS or AWS","transport_write_calls":64}
+BENCH {"data_frames":4096,"duplicate_frames":0,"elapsed_ms":520.774152,"implementation":"preserved-v3-same-worker","mib_per_second":7.680872763439304,"payload_mib":4,"rtt_ms":500,"scope":"writer microbenchmark; in-memory peer; no TLS or AWS","transport_write_calls":64}
+test ssm_tunnel::writer_benchmark::writer_throughput_matrix ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 63 filtered out; finished in 0.88s
+

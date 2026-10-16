@@ -1,0 +1,2466 @@
+{
+  "checked_at": "2026-10-15",
+  "source": "https://api.osv.dev/v1/querybatch",
+  "packages": [
+    {
+      "name": "ab_glyph",
+      "version": "0.2.32",
+      "advisories": []
+    },
+    {
+      "name": "ab_glyph_rasterizer",
+      "version": "0.1.10",
+      "advisories": []
+    },
+    {
+      "name": "adler2",
+      "version": "2.0.1",
+      "advisories": []
+    },
+    {
+      "name": "aho-corasick",
+      "version": "1.1.4",
+      "advisories": []
+    },
+    {
+      "name": "aligned-vec",
+      "version": "0.6.4",
+      "advisories": []
+    },
+    {
+      "name": "android_system_properties",
+      "version": "0.1.5",
+      "advisories": []
+    },
+    {
+      "name": "anstream",
+      "version": "1.0.0",
+      "advisories": []
+    },
+    {
+      "name": "anstyle",
+      "version": "1.0.14",
+      "advisories": []
+    },
+    {
+      "name": "anstyle-parse",
+      "version": "1.0.0",
+      "advisories": []
+    },
+    {
+      "name": "anstyle-query",
+      "version": "1.1.5",
+      "advisories": []
+    },
+    {
+      "name": "anstyle-wincon",
+      "version": "3.0.11",
+      "advisories": []
+    },
+    {
+      "name": "anyhow",
+      "version": "1.0.102",
+      "advisories": [
+        {
+          "id": "RUSTSEC-2026-0190",
+          "modified": "2026-06-29T14:15:03.650725Z"
+        }
+      ]
+    },
+    {
+      "name": "approx",
+      "version": "0.5.1",
+      "advisories": []
+    },
+    {
+      "name": "arbitrary",
+      "version": "1.4.2",
+      "advisories": []
+    },
+    {
+      "name": "arg_enum_proc_macro",
+      "version": "0.3.4",
+      "advisories": []
+    },
+    {
+      "name": "arrayvec",
+      "version": "0.7.6",
+      "advisories": []
+    },
+    {
+      "name": "atomic-waker",
+      "version": "1.1.2",
+      "advisories": []
+    },
+    {
+      "name": "autocfg",
+      "version": "1.5.0",
+      "advisories": []
+    },
+    {
+      "name": "av1-grain",
+      "version": "0.2.5",
+      "advisories": []
+    },
+    {
+      "name": "avif-serialize",
+      "version": "0.8.8",
+      "advisories": []
+    },
+    {
+      "name": "aws-config",
+      "version": "1.8.16",
+      "advisories": []
+    },
+    {
+      "name": "aws-credential-types",
+      "version": "1.2.14",
+      "advisories": []
+    },
+    {
+      "name": "aws-lc-rs",
+      "version": "1.16.3",
+      "advisories": []
+    },
+    {
+      "name": "aws-lc-sys",
+      "version": "0.40.0",
+      "advisories": []
+    },
+    {
+      "name": "aws-runtime",
+      "version": "1.7.3",
+      "advisories": []
+    },
+    {
+      "name": "aws-sdk-ec2",
+      "version": "1.223.0",
+      "advisories": []
+    },
+    {
+      "name": "aws-sdk-iam",
+      "version": "1.108.0",
+      "advisories": []
+    },
+    {
+      "name": "aws-sdk-ssm",
+      "version": "1.109.0",
+      "advisories": []
+    },
+    {
+      "name": "aws-sdk-sso",
+      "version": "1.98.0",
+      "advisories": []
+    },
+    {
+      "name": "aws-sdk-ssooidc",
+      "version": "1.100.0",
+      "advisories": []
+    },
+    {
+      "name": "aws-sdk-sts",
+      "version": "1.103.0",
+      "advisories": []
+    },
+    {
+      "name": "aws-sigv4",
+      "version": "1.4.3",
+      "advisories": []
+    },
+    {
+      "name": "aws-smithy-async",
+      "version": "1.2.14",
+      "advisories": []
+    },
+    {
+      "name": "aws-smithy-http",
+      "version": "0.63.6",
+      "advisories": []
+    },
+    {
+      "name": "aws-smithy-http-client",
+      "version": "1.1.12",
+      "advisories": []
+    },
+    {
+      "name": "aws-smithy-json",
+      "version": "0.62.5",
+      "advisories": [
+        {
+          "id": "GHSA-8ffr-xgwf-xj56",
+          "modified": "2026-10-02T23:01:22.700563Z"
+        }
+      ]
+    },
+    {
+      "name": "aws-smithy-observability",
+      "version": "0.2.6",
+      "advisories": []
+    },
+    {
+      "name": "aws-smithy-query",
+      "version": "0.60.15",
+      "advisories": []
+    },
+    {
+      "name": "aws-smithy-runtime",
+      "version": "1.11.1",
+      "advisories": []
+    },
+    {
+      "name": "aws-smithy-runtime-api",
+      "version": "1.12.0",
+      "advisories": []
+    },
+    {
+      "name": "aws-smithy-runtime-api-macros",
+      "version": "1.0.0",
+      "advisories": []
+    },
+    {
+      "name": "aws-smithy-types",
+      "version": "1.4.7",
+      "advisories": []
+    },
+    {
+      "name": "aws-smithy-xml",
+      "version": "0.60.15",
+      "advisories": []
+    },
+    {
+      "name": "aws-types",
+      "version": "1.3.15",
+      "advisories": []
+    },
+    {
+      "name": "base16ct",
+      "version": "0.1.1",
+      "advisories": []
+    },
+    {
+      "name": "base32",
+      "version": "0.5.1",
+      "advisories": []
+    },
+    {
+      "name": "base64",
+      "version": "0.22.1",
+      "advisories": []
+    },
+    {
+      "name": "base64-simd",
+      "version": "0.8.0",
+      "advisories": []
+    },
+    {
+      "name": "base64ct",
+      "version": "1.8.3",
+      "advisories": []
+    },
+    {
+      "name": "bit-set",
+      "version": "0.8.0",
+      "advisories": []
+    },
+    {
+      "name": "bit-vec",
+      "version": "0.8.0",
+      "advisories": []
+    },
+    {
+      "name": "bit_field",
+      "version": "0.10.3",
+      "advisories": []
+    },
+    {
+      "name": "bitflags",
+      "version": "1.3.2",
+      "advisories": []
+    },
+    {
+      "name": "bitflags",
+      "version": "2.11.1",
+      "advisories": []
+    },
+    {
+      "name": "bitstream-io",
+      "version": "2.6.0",
+      "advisories": []
+    },
+    {
+      "name": "block-buffer",
+      "version": "0.10.4",
+      "advisories": []
+    },
+    {
+      "name": "block-buffer",
+      "version": "0.12.0",
+      "advisories": []
+    },
+    {
+      "name": "built",
+      "version": "0.7.7",
+      "advisories": []
+    },
+    {
+      "name": "bumpalo",
+      "version": "3.20.2",
+      "advisories": []
+    },
+    {
+      "name": "bytemuck",
+      "version": "1.25.0",
+      "advisories": []
+    },
+    {
+      "name": "byteorder",
+      "version": "1.5.0",
+      "advisories": []
+    },
+    {
+      "name": "byteorder-lite",
+      "version": "0.1.0",
+      "advisories": []
+    },
+    {
+      "name": "bytes",
+      "version": "1.11.1",
+      "advisories": []
+    },
+    {
+      "name": "bytes-utils",
+      "version": "0.1.4",
+      "advisories": []
+    },
+    {
+      "name": "cc",
+      "version": "1.2.60",
+      "advisories": []
+    },
+    {
+      "name": "cfg-expr",
+      "version": "0.15.8",
+      "advisories": []
+    },
+    {
+      "name": "cfg-if",
+      "version": "1.0.4",
+      "advisories": []
+    },
+    {
+      "name": "chacha20",
+      "version": "0.10.2",
+      "advisories": []
+    },
+    {
+      "name": "chrono",
+      "version": "0.4.44",
+      "advisories": []
+    },
+    {
+      "name": "chrono-tz",
+      "version": "0.10.4",
+      "advisories": []
+    },
+    {
+      "name": "clap",
+      "version": "4.6.1",
+      "advisories": []
+    },
+    {
+      "name": "clap_builder",
+      "version": "4.6.0",
+      "advisories": []
+    },
+    {
+      "name": "clap_derive",
+      "version": "4.6.1",
+      "advisories": []
+    },
+    {
+      "name": "clap_lex",
+      "version": "1.1.0",
+      "advisories": []
+    },
+    {
+      "name": "cmake",
+      "version": "0.1.58",
+      "advisories": []
+    },
+    {
+      "name": "cmov",
+      "version": "0.5.3",
+      "advisories": [
+        {
+          "id": "GHSA-3rjw-m598-pq24",
+          "modified": "2026-09-10T03:51:10.250390Z"
+        }
+      ]
+    },
+    {
+      "name": "codepage-437",
+      "version": "0.1.0",
+      "advisories": []
+    },
+    {
+      "name": "color_quant",
+      "version": "1.1.0",
+      "advisories": []
+    },
+    {
+      "name": "colorchoice",
+      "version": "1.0.5",
+      "advisories": []
+    },
+    {
+      "name": "colored",
+      "version": "3.1.1",
+      "advisories": []
+    },
+    {
+      "name": "configparser",
+      "version": "3.1.0",
+      "advisories": []
+    },
+    {
+      "name": "console",
+      "version": "0.16.3",
+      "advisories": []
+    },
+    {
+      "name": "const-oid",
+      "version": "0.9.6",
+      "advisories": []
+    },
+    {
+      "name": "const-oid",
+      "version": "0.10.2",
+      "advisories": []
+    },
+    {
+      "name": "constant_time_eq",
+      "version": "0.3.1",
+      "advisories": []
+    },
+    {
+      "name": "core-foundation",
+      "version": "0.10.1",
+      "advisories": []
+    },
+    {
+      "name": "core-foundation-sys",
+      "version": "0.8.7",
+      "advisories": []
+    },
+    {
+      "name": "cpufeatures",
+      "version": "0.2.17",
+      "advisories": []
+    },
+    {
+      "name": "cpufeatures",
+      "version": "0.3.0",
+      "advisories": []
+    },
+    {
+      "name": "crc32fast",
+      "version": "1.5.0",
+      "advisories": []
+    },
+    {
+      "name": "crossbeam-channel",
+      "version": "0.5.15",
+      "advisories": []
+    },
+    {
+      "name": "crossbeam-deque",
+      "version": "0.8.6",
+      "advisories": []
+    },
+    {
+      "name": "crossbeam-epoch",
+      "version": "0.9.18",
+      "advisories": [
+        {
+          "id": "RUSTSEC-2026-0204",
+          "modified": "2026-07-06T22:30:04.159269Z"
+        }
+      ]
+    },
+    {
+      "name": "crossbeam-utils",
+      "version": "0.8.21",
+      "advisories": []
+    },
+    {
+      "name": "crossterm",
+      "version": "0.25.0",
+      "advisories": []
+    },
+    {
+      "name": "crossterm",
+      "version": "0.28.1",
+      "advisories": []
+    },
+    {
+      "name": "crossterm_winapi",
+      "version": "0.9.1",
+      "advisories": []
+    },
+    {
+      "name": "crunchy",
+      "version": "0.2.4",
+      "advisories": []
+    },
+    {
+      "name": "crypto-bigint",
+      "version": "0.4.9",
+      "advisories": []
+    },
+    {
+      "name": "crypto-bigint",
+      "version": "0.5.5",
+      "advisories": []
+    },
+    {
+      "name": "crypto-common",
+      "version": "0.1.7",
+      "advisories": []
+    },
+    {
+      "name": "crypto-common",
+      "version": "0.2.1",
+      "advisories": []
+    },
+    {
+      "name": "csv",
+      "version": "1.4.0",
+      "advisories": []
+    },
+    {
+      "name": "csv-core",
+      "version": "0.1.13",
+      "advisories": []
+    },
+    {
+      "name": "ctutils",
+      "version": "0.4.2",
+      "advisories": []
+    },
+    {
+      "name": "data-encoding",
+      "version": "2.11.1",
+      "advisories": []
+    },
+    {
+      "name": "der",
+      "version": "0.6.1",
+      "advisories": []
+    },
+    {
+      "name": "deranged",
+      "version": "0.5.8",
+      "advisories": []
+    },
+    {
+      "name": "digest",
+      "version": "0.10.7",
+      "advisories": []
+    },
+    {
+      "name": "digest",
+      "version": "0.11.2",
+      "advisories": []
+    },
+    {
+      "name": "displaydoc",
+      "version": "0.2.5",
+      "advisories": []
+    },
+    {
+      "name": "dunce",
+      "version": "1.0.5",
+      "advisories": []
+    },
+    {
+      "name": "dyn-clone",
+      "version": "1.0.20",
+      "advisories": []
+    },
+    {
+      "name": "ecdsa",
+      "version": "0.14.8",
+      "advisories": []
+    },
+    {
+      "name": "either",
+      "version": "1.15.0",
+      "advisories": []
+    },
+    {
+      "name": "elliptic-curve",
+      "version": "0.12.3",
+      "advisories": []
+    },
+    {
+      "name": "encode_unicode",
+      "version": "1.0.0",
+      "advisories": []
+    },
+    {
+      "name": "encoding_rs",
+      "version": "0.8.35",
+      "advisories": []
+    },
+    {
+      "name": "equator",
+      "version": "0.4.2",
+      "advisories": []
+    },
+    {
+      "name": "equator-macro",
+      "version": "0.4.2",
+      "advisories": []
+    },
+    {
+      "name": "equivalent",
+      "version": "1.0.2",
+      "advisories": []
+    },
+    {
+      "name": "errno",
+      "version": "0.3.14",
+      "advisories": []
+    },
+    {
+      "name": "exr",
+      "version": "1.74.0",
+      "advisories": []
+    },
+    {
+      "name": "fancy-regex",
+      "version": "0.17.0",
+      "advisories": []
+    },
+    {
+      "name": "fastrand",
+      "version": "2.4.1",
+      "advisories": []
+    },
+    {
+      "name": "fax",
+      "version": "0.2.6",
+      "advisories": []
+    },
+    {
+      "name": "fax_derive",
+      "version": "0.2.0",
+      "advisories": []
+    },
+    {
+      "name": "fdeflate",
+      "version": "0.3.7",
+      "advisories": []
+    },
+    {
+      "name": "ff",
+      "version": "0.12.1",
+      "advisories": []
+    },
+    {
+      "name": "find-msvc-tools",
+      "version": "0.1.9",
+      "advisories": []
+    },
+    {
+      "name": "flate2",
+      "version": "1.1.9",
+      "advisories": []
+    },
+    {
+      "name": "fnv",
+      "version": "1.0.7",
+      "advisories": []
+    },
+    {
+      "name": "foreign-types",
+      "version": "0.3.2",
+      "advisories": []
+    },
+    {
+      "name": "foreign-types-shared",
+      "version": "0.1.1",
+      "advisories": []
+    },
+    {
+      "name": "form_urlencoded",
+      "version": "1.2.2",
+      "advisories": []
+    },
+    {
+      "name": "fs_extra",
+      "version": "1.3.0",
+      "advisories": []
+    },
+    {
+      "name": "futures-channel",
+      "version": "0.3.32",
+      "advisories": []
+    },
+    {
+      "name": "futures-core",
+      "version": "0.3.32",
+      "advisories": []
+    },
+    {
+      "name": "futures-macro",
+      "version": "0.3.32",
+      "advisories": []
+    },
+    {
+      "name": "futures-sink",
+      "version": "0.3.32",
+      "advisories": []
+    },
+    {
+      "name": "futures-task",
+      "version": "0.3.32",
+      "advisories": []
+    },
+    {
+      "name": "futures-util",
+      "version": "0.3.32",
+      "advisories": []
+    },
+    {
+      "name": "fuzzy-matcher",
+      "version": "0.3.7",
+      "advisories": []
+    },
+    {
+      "name": "fxhash",
+      "version": "0.2.1",
+      "advisories": [
+        {
+          "id": "RUSTSEC-2025-0057",
+          "modified": "2025-09-05T19:09:01Z"
+        }
+      ]
+    },
+    {
+      "name": "generic-array",
+      "version": "0.14.7",
+      "advisories": []
+    },
+    {
+      "name": "getrandom",
+      "version": "0.2.17",
+      "advisories": []
+    },
+    {
+      "name": "getrandom",
+      "version": "0.3.4",
+      "advisories": []
+    },
+    {
+      "name": "getrandom",
+      "version": "0.4.3",
+      "advisories": []
+    },
+    {
+      "name": "gif",
+      "version": "0.13.3",
+      "advisories": []
+    },
+    {
+      "name": "group",
+      "version": "0.12.1",
+      "advisories": []
+    },
+    {
+      "name": "h2",
+      "version": "0.3.27",
+      "advisories": [
+        {
+          "id": "RUSTSEC-2026-0258",
+          "modified": "2026-10-12T18:00:10.934581Z"
+        }
+      ]
+    },
+    {
+      "name": "h2",
+      "version": "0.4.13",
+      "advisories": [
+        {
+          "id": "RUSTSEC-2026-0258",
+          "modified": "2026-10-12T18:00:10.934581Z"
+        }
+      ]
+    },
+    {
+      "name": "half",
+      "version": "2.7.1",
+      "advisories": []
+    },
+    {
+      "name": "hashbrown",
+      "version": "0.17.0",
+      "advisories": []
+    },
+    {
+      "name": "heck",
+      "version": "0.5.0",
+      "advisories": []
+    },
+    {
+      "name": "hex",
+      "version": "0.4.3",
+      "advisories": []
+    },
+    {
+      "name": "hmac",
+      "version": "0.12.1",
+      "advisories": []
+    },
+    {
+      "name": "hmac",
+      "version": "0.13.0",
+      "advisories": []
+    },
+    {
+      "name": "http",
+      "version": "0.2.12",
+      "advisories": []
+    },
+    {
+      "name": "http",
+      "version": "1.4.0",
+      "advisories": []
+    },
+    {
+      "name": "http-body",
+      "version": "0.4.6",
+      "advisories": []
+    },
+    {
+      "name": "http-body",
+      "version": "1.0.1",
+      "advisories": []
+    },
+    {
+      "name": "http-body-util",
+      "version": "0.1.3",
+      "advisories": []
+    },
+    {
+      "name": "httparse",
+      "version": "1.10.1",
+      "advisories": []
+    },
+    {
+      "name": "httpdate",
+      "version": "1.0.3",
+      "advisories": []
+    },
+    {
+      "name": "hybrid-array",
+      "version": "0.4.10",
+      "advisories": []
+    },
+    {
+      "name": "hyper",
+      "version": "0.14.32",
+      "advisories": []
+    },
+    {
+      "name": "hyper",
+      "version": "1.9.0",
+      "advisories": []
+    },
+    {
+      "name": "hyper-rustls",
+      "version": "0.24.2",
+      "advisories": []
+    },
+    {
+      "name": "hyper-rustls",
+      "version": "0.27.9",
+      "advisories": []
+    },
+    {
+      "name": "hyper-util",
+      "version": "0.1.20",
+      "advisories": []
+    },
+    {
+      "name": "iana-time-zone",
+      "version": "0.1.65",
+      "advisories": []
+    },
+    {
+      "name": "iana-time-zone-haiku",
+      "version": "0.1.2",
+      "advisories": []
+    },
+    {
+      "name": "icu_collections",
+      "version": "2.2.0",
+      "advisories": []
+    },
+    {
+      "name": "icu_locale_core",
+      "version": "2.2.0",
+      "advisories": []
+    },
+    {
+      "name": "icu_normalizer",
+      "version": "2.2.0",
+      "advisories": []
+    },
+    {
+      "name": "icu_normalizer_data",
+      "version": "2.2.0",
+      "advisories": []
+    },
+    {
+      "name": "icu_properties",
+      "version": "2.2.0",
+      "advisories": []
+    },
+    {
+      "name": "icu_properties_data",
+      "version": "2.2.0",
+      "advisories": []
+    },
+    {
+      "name": "icu_provider",
+      "version": "2.2.0",
+      "advisories": []
+    },
+    {
+      "name": "idna",
+      "version": "1.1.0",
+      "advisories": []
+    },
+    {
+      "name": "idna_adapter",
+      "version": "1.2.1",
+      "advisories": []
+    },
+    {
+      "name": "image",
+      "version": "0.25.8",
+      "advisories": []
+    },
+    {
+      "name": "image-webp",
+      "version": "0.2.4",
+      "advisories": []
+    },
+    {
+      "name": "imageproc",
+      "version": "0.25.0",
+      "advisories": [
+        {
+          "id": "GHSA-5qv7-j6w5-fr4m",
+          "modified": "2026-05-07T09:11:25.320002Z"
+        },
+        {
+          "id": "GHSA-qg8r-f7x3-25f7",
+          "modified": "2026-09-10T03:51:06.799196Z"
+        },
+        {
+          "id": "GHSA-w5p8-4jcx-2j6r",
+          "modified": "2026-09-10T03:51:07.150066Z"
+        },
+        {
+          "id": "RUSTSEC-2026-0115",
+          "modified": "2026-05-07T08:56:41Z"
+        },
+        {
+          "id": "RUSTSEC-2026-0116",
+          "modified": "2026-05-07T08:56:41Z"
+        },
+        {
+          "id": "RUSTSEC-2026-0117",
+          "modified": "2026-05-07T08:56:41Z"
+        }
+      ]
+    },
+    {
+      "name": "imgref",
+      "version": "1.12.0",
+      "advisories": []
+    },
+    {
+      "name": "indexmap",
+      "version": "2.14.0",
+      "advisories": []
+    },
+    {
+      "name": "indicatif",
+      "version": "0.18.4",
+      "advisories": []
+    },
+    {
+      "name": "inquire",
+      "version": "0.7.5",
+      "advisories": []
+    },
+    {
+      "name": "interpolate_name",
+      "version": "0.2.4",
+      "advisories": []
+    },
+    {
+      "name": "ipnet",
+      "version": "2.12.0",
+      "advisories": []
+    },
+    {
+      "name": "is_terminal_polyfill",
+      "version": "1.70.2",
+      "advisories": []
+    },
+    {
+      "name": "itertools",
+      "version": "0.12.1",
+      "advisories": []
+    },
+    {
+      "name": "itoa",
+      "version": "1.0.18",
+      "advisories": []
+    },
+    {
+      "name": "jobserver",
+      "version": "0.1.34",
+      "advisories": []
+    },
+    {
+      "name": "js-sys",
+      "version": "0.3.95",
+      "advisories": []
+    },
+    {
+      "name": "keyring",
+      "version": "3.6.3",
+      "advisories": []
+    },
+    {
+      "name": "lazy_static",
+      "version": "1.5.0",
+      "advisories": []
+    },
+    {
+      "name": "lebe",
+      "version": "0.5.3",
+      "advisories": []
+    },
+    {
+      "name": "libc",
+      "version": "0.2.186",
+      "advisories": []
+    },
+    {
+      "name": "libfuzzer-sys",
+      "version": "0.4.12",
+      "advisories": []
+    },
+    {
+      "name": "libm",
+      "version": "0.2.16",
+      "advisories": []
+    },
+    {
+      "name": "linux-raw-sys",
+      "version": "0.4.15",
+      "advisories": []
+    },
+    {
+      "name": "linux-raw-sys",
+      "version": "0.12.1",
+      "advisories": []
+    },
+    {
+      "name": "litemap",
+      "version": "0.8.2",
+      "advisories": []
+    },
+    {
+      "name": "lock_api",
+      "version": "0.4.14",
+      "advisories": []
+    },
+    {
+      "name": "log",
+      "version": "0.4.29",
+      "advisories": []
+    },
+    {
+      "name": "loop9",
+      "version": "0.1.5",
+      "advisories": []
+    },
+    {
+      "name": "matchers",
+      "version": "0.2.0",
+      "advisories": []
+    },
+    {
+      "name": "matrixmultiply",
+      "version": "0.3.10",
+      "advisories": []
+    },
+    {
+      "name": "maybe-rayon",
+      "version": "0.1.1",
+      "advisories": []
+    },
+    {
+      "name": "memchr",
+      "version": "2.8.0",
+      "advisories": []
+    },
+    {
+      "name": "miniz_oxide",
+      "version": "0.8.9",
+      "advisories": []
+    },
+    {
+      "name": "mio",
+      "version": "0.8.11",
+      "advisories": []
+    },
+    {
+      "name": "mio",
+      "version": "1.2.0",
+      "advisories": []
+    },
+    {
+      "name": "moxcms",
+      "version": "0.7.11",
+      "advisories": []
+    },
+    {
+      "name": "multimap",
+      "version": "0.10.1",
+      "advisories": []
+    },
+    {
+      "name": "nalgebra",
+      "version": "0.32.6",
+      "advisories": []
+    },
+    {
+      "name": "native-tls",
+      "version": "0.2.18",
+      "advisories": []
+    },
+    {
+      "name": "new_debug_unreachable",
+      "version": "1.0.6",
+      "advisories": []
+    },
+    {
+      "name": "newline-converter",
+      "version": "0.3.0",
+      "advisories": []
+    },
+    {
+      "name": "nom",
+      "version": "8.0.0",
+      "advisories": []
+    },
+    {
+      "name": "noop_proc_macro",
+      "version": "0.3.0",
+      "advisories": []
+    },
+    {
+      "name": "nu-ansi-term",
+      "version": "0.50.3",
+      "advisories": []
+    },
+    {
+      "name": "num",
+      "version": "0.4.3",
+      "advisories": []
+    },
+    {
+      "name": "num-bigint",
+      "version": "0.4.6",
+      "advisories": []
+    },
+    {
+      "name": "num-complex",
+      "version": "0.4.6",
+      "advisories": []
+    },
+    {
+      "name": "num-conv",
+      "version": "0.2.1",
+      "advisories": []
+    },
+    {
+      "name": "num-derive",
+      "version": "0.4.2",
+      "advisories": []
+    },
+    {
+      "name": "num-integer",
+      "version": "0.1.46",
+      "advisories": []
+    },
+    {
+      "name": "num-iter",
+      "version": "0.1.45",
+      "advisories": []
+    },
+    {
+      "name": "num-rational",
+      "version": "0.4.2",
+      "advisories": []
+    },
+    {
+      "name": "num-traits",
+      "version": "0.2.19",
+      "advisories": []
+    },
+    {
+      "name": "once_cell",
+      "version": "1.21.4",
+      "advisories": []
+    },
+    {
+      "name": "once_cell_polyfill",
+      "version": "1.70.2",
+      "advisories": []
+    },
+    {
+      "name": "openssl",
+      "version": "0.10.81",
+      "advisories": []
+    },
+    {
+      "name": "openssl-macros",
+      "version": "0.1.1",
+      "advisories": []
+    },
+    {
+      "name": "openssl-probe",
+      "version": "0.2.1",
+      "advisories": []
+    },
+    {
+      "name": "openssl-sys",
+      "version": "0.9.117",
+      "advisories": []
+    },
+    {
+      "name": "outref",
+      "version": "0.5.2",
+      "advisories": []
+    },
+    {
+      "name": "owned_ttf_parser",
+      "version": "0.25.1",
+      "advisories": []
+    },
+    {
+      "name": "p256",
+      "version": "0.11.1",
+      "advisories": []
+    },
+    {
+      "name": "parking_lot",
+      "version": "0.12.5",
+      "advisories": []
+    },
+    {
+      "name": "parking_lot_core",
+      "version": "0.9.12",
+      "advisories": []
+    },
+    {
+      "name": "paste",
+      "version": "1.0.15",
+      "advisories": [
+        {
+          "id": "RUSTSEC-2024-0436",
+          "modified": "2026-01-27T22:03:15.694766Z"
+        }
+      ]
+    },
+    {
+      "name": "percent-encoding",
+      "version": "2.3.2",
+      "advisories": []
+    },
+    {
+      "name": "phf",
+      "version": "0.12.1",
+      "advisories": []
+    },
+    {
+      "name": "phf_shared",
+      "version": "0.12.1",
+      "advisories": []
+    },
+    {
+      "name": "pin-project-lite",
+      "version": "0.2.17",
+      "advisories": []
+    },
+    {
+      "name": "pin-utils",
+      "version": "0.1.0",
+      "advisories": []
+    },
+    {
+      "name": "pkcs8",
+      "version": "0.9.0",
+      "advisories": []
+    },
+    {
+      "name": "pkg-config",
+      "version": "0.3.33",
+      "advisories": []
+    },
+    {
+      "name": "png",
+      "version": "0.18.1",
+      "advisories": []
+    },
+    {
+      "name": "portable-atomic",
+      "version": "1.13.1",
+      "advisories": []
+    },
+    {
+      "name": "potential_utf",
+      "version": "0.1.5",
+      "advisories": []
+    },
+    {
+      "name": "powerfmt",
+      "version": "0.2.0",
+      "advisories": []
+    },
+    {
+      "name": "ppv-lite86",
+      "version": "0.2.21",
+      "advisories": []
+    },
+    {
+      "name": "proc-macro2",
+      "version": "1.0.106",
+      "advisories": []
+    },
+    {
+      "name": "profiling",
+      "version": "1.0.17",
+      "advisories": []
+    },
+    {
+      "name": "profiling-procmacros",
+      "version": "1.0.17",
+      "advisories": []
+    },
+    {
+      "name": "pxfm",
+      "version": "0.1.29",
+      "advisories": []
+    },
+    {
+      "name": "qoi",
+      "version": "0.4.1",
+      "advisories": []
+    },
+    {
+      "name": "qr2term",
+      "version": "0.3.3",
+      "advisories": []
+    },
+    {
+      "name": "qrcode",
+      "version": "0.14.1",
+      "advisories": []
+    },
+    {
+      "name": "quick-error",
+      "version": "2.0.1",
+      "advisories": []
+    },
+    {
+      "name": "quote",
+      "version": "1.0.45",
+      "advisories": []
+    },
+    {
+      "name": "r-efi",
+      "version": "5.3.0",
+      "advisories": []
+    },
+    {
+      "name": "r-efi",
+      "version": "6.0.0",
+      "advisories": []
+    },
+    {
+      "name": "rand",
+      "version": "0.8.6",
+      "advisories": []
+    },
+    {
+      "name": "rand",
+      "version": "0.9.4",
+      "advisories": []
+    },
+    {
+      "name": "rand",
+      "version": "0.10.3",
+      "advisories": []
+    },
+    {
+      "name": "rand_chacha",
+      "version": "0.3.1",
+      "advisories": []
+    },
+    {
+      "name": "rand_chacha",
+      "version": "0.9.0",
+      "advisories": []
+    },
+    {
+      "name": "rand_core",
+      "version": "0.6.4",
+      "advisories": []
+    },
+    {
+      "name": "rand_core",
+      "version": "0.9.5",
+      "advisories": []
+    },
+    {
+      "name": "rand_core",
+      "version": "0.10.1",
+      "advisories": []
+    },
+    {
+      "name": "rand_distr",
+      "version": "0.4.3",
+      "advisories": []
+    },
+    {
+      "name": "rav1e",
+      "version": "0.7.1",
+      "advisories": []
+    },
+    {
+      "name": "ravif",
+      "version": "0.11.20",
+      "advisories": []
+    },
+    {
+      "name": "rawpointer",
+      "version": "0.2.1",
+      "advisories": []
+    },
+    {
+      "name": "rayon",
+      "version": "1.12.0",
+      "advisories": []
+    },
+    {
+      "name": "rayon-core",
+      "version": "1.13.0",
+      "advisories": []
+    },
+    {
+      "name": "redox_syscall",
+      "version": "0.5.18",
+      "advisories": []
+    },
+    {
+      "name": "regex",
+      "version": "1.12.3",
+      "advisories": []
+    },
+    {
+      "name": "regex-automata",
+      "version": "0.4.14",
+      "advisories": []
+    },
+    {
+      "name": "regex-lite",
+      "version": "0.1.9",
+      "advisories": []
+    },
+    {
+      "name": "regex-syntax",
+      "version": "0.8.10",
+      "advisories": []
+    },
+    {
+      "name": "rfc6979",
+      "version": "0.3.1",
+      "advisories": []
+    },
+    {
+      "name": "rgb",
+      "version": "0.8.53",
+      "advisories": []
+    },
+    {
+      "name": "ring",
+      "version": "0.17.14",
+      "advisories": []
+    },
+    {
+      "name": "rustc_version",
+      "version": "0.4.1",
+      "advisories": []
+    },
+    {
+      "name": "rustix",
+      "version": "0.38.44",
+      "advisories": []
+    },
+    {
+      "name": "rustix",
+      "version": "1.1.4",
+      "advisories": []
+    },
+    {
+      "name": "rustls",
+      "version": "0.21.12",
+      "advisories": [
+        {
+          "id": "RUSTSEC-2026-0346",
+          "modified": "2026-10-14T13:30:02.480694Z"
+        },
+        {
+          "id": "RUSTSEC-2026-0349",
+          "modified": "2026-10-14T13:30:02.475705Z"
+        }
+      ]
+    },
+    {
+      "name": "rustls",
+      "version": "0.23.39",
+      "advisories": [
+        {
+          "id": "GHSA-2mjx-qc3c-rqvc",
+          "modified": "2026-10-05T23:45:08.859781Z"
+        },
+        {
+          "id": "RUSTSEC-2026-0285",
+          "modified": "2026-10-12T18:00:10.944958Z"
+        },
+        {
+          "id": "RUSTSEC-2026-0346",
+          "modified": "2026-10-14T13:30:02.480694Z"
+        },
+        {
+          "id": "RUSTSEC-2026-0348",
+          "modified": "2026-10-14T13:30:02.480925Z"
+        },
+        {
+          "id": "RUSTSEC-2026-0349",
+          "modified": "2026-10-14T13:30:02.475705Z"
+        }
+      ]
+    },
+    {
+      "name": "rustls-native-certs",
+      "version": "0.8.3",
+      "advisories": []
+    },
+    {
+      "name": "rustls-pki-types",
+      "version": "1.14.0",
+      "advisories": []
+    },
+    {
+      "name": "rustls-webpki",
+      "version": "0.101.7",
+      "advisories": [
+        {
+          "id": "GHSA-82j2-j2ch-gfr8",
+          "modified": "2026-09-19T03:55:33.412079Z"
+        },
+        {
+          "id": "GHSA-965h-392x-2mh5",
+          "modified": "2026-09-19T03:55:32.245575Z"
+        },
+        {
+          "id": "GHSA-xgp8-3hg3-c2mh",
+          "modified": "2026-09-19T03:55:49.146112Z"
+        },
+        {
+          "id": "RUSTSEC-2026-0098",
+          "modified": "2026-09-19T08:42:27Z"
+        },
+        {
+          "id": "RUSTSEC-2026-0099",
+          "modified": "2026-09-19T08:42:27Z"
+        },
+        {
+          "id": "RUSTSEC-2026-0104",
+          "modified": "2026-09-19T08:42:27Z"
+        }
+      ]
+    },
+    {
+      "name": "rustls-webpki",
+      "version": "0.103.13",
+      "advisories": []
+    },
+    {
+      "name": "rustversion",
+      "version": "1.0.22",
+      "advisories": []
+    },
+    {
+      "name": "rxing",
+      "version": "0.8.5",
+      "advisories": []
+    },
+    {
+      "name": "rxing-one-d-proc-derive",
+      "version": "0.8.0",
+      "advisories": []
+    },
+    {
+      "name": "ryu",
+      "version": "1.0.23",
+      "advisories": []
+    },
+    {
+      "name": "safe_arch",
+      "version": "0.7.4",
+      "advisories": []
+    },
+    {
+      "name": "schannel",
+      "version": "0.1.29",
+      "advisories": []
+    },
+    {
+      "name": "scopeguard",
+      "version": "1.2.0",
+      "advisories": []
+    },
+    {
+      "name": "sct",
+      "version": "0.7.1",
+      "advisories": []
+    },
+    {
+      "name": "sec1",
+      "version": "0.3.0",
+      "advisories": []
+    },
+    {
+      "name": "security-framework",
+      "version": "3.7.0",
+      "advisories": []
+    },
+    {
+      "name": "security-framework-sys",
+      "version": "2.17.0",
+      "advisories": []
+    },
+    {
+      "name": "semver",
+      "version": "1.0.28",
+      "advisories": []
+    },
+    {
+      "name": "serde",
+      "version": "1.0.228",
+      "advisories": []
+    },
+    {
+      "name": "serde_core",
+      "version": "1.0.228",
+      "advisories": []
+    },
+    {
+      "name": "serde_derive",
+      "version": "1.0.228",
+      "advisories": []
+    },
+    {
+      "name": "serde_json",
+      "version": "1.0.151",
+      "advisories": []
+    },
+    {
+      "name": "serde_spanned",
+      "version": "0.6.9",
+      "advisories": []
+    },
+    {
+      "name": "sha1",
+      "version": "0.10.6",
+      "advisories": []
+    },
+    {
+      "name": "sha1",
+      "version": "0.11.0",
+      "advisories": []
+    },
+    {
+      "name": "sha2",
+      "version": "0.10.9",
+      "advisories": []
+    },
+    {
+      "name": "sha2",
+      "version": "0.11.0",
+      "advisories": []
+    },
+    {
+      "name": "sharded-slab",
+      "version": "0.1.7",
+      "advisories": []
+    },
+    {
+      "name": "shlex",
+      "version": "1.3.0",
+      "advisories": []
+    },
+    {
+      "name": "signal-hook",
+      "version": "0.3.18",
+      "advisories": []
+    },
+    {
+      "name": "signal-hook-mio",
+      "version": "0.2.5",
+      "advisories": []
+    },
+    {
+      "name": "signal-hook-registry",
+      "version": "1.4.8",
+      "advisories": []
+    },
+    {
+      "name": "signature",
+      "version": "1.6.4",
+      "advisories": []
+    },
+    {
+      "name": "simba",
+      "version": "0.8.1",
+      "advisories": []
+    },
+    {
+      "name": "simd-adler32",
+      "version": "0.3.9",
+      "advisories": []
+    },
+    {
+      "name": "simd_helpers",
+      "version": "0.1.0",
+      "advisories": []
+    },
+    {
+      "name": "siphasher",
+      "version": "1.0.2",
+      "advisories": []
+    },
+    {
+      "name": "slab",
+      "version": "0.4.12",
+      "advisories": []
+    },
+    {
+      "name": "smallvec",
+      "version": "1.15.1",
+      "advisories": []
+    },
+    {
+      "name": "socket2",
+      "version": "0.5.10",
+      "advisories": []
+    },
+    {
+      "name": "socket2",
+      "version": "0.6.3",
+      "advisories": []
+    },
+    {
+      "name": "spki",
+      "version": "0.6.0",
+      "advisories": []
+    },
+    {
+      "name": "stable_deref_trait",
+      "version": "1.2.1",
+      "advisories": []
+    },
+    {
+      "name": "strsim",
+      "version": "0.11.1",
+      "advisories": []
+    },
+    {
+      "name": "subtle",
+      "version": "2.6.1",
+      "advisories": []
+    },
+    {
+      "name": "symlink",
+      "version": "0.1.0",
+      "advisories": []
+    },
+    {
+      "name": "syn",
+      "version": "2.0.117",
+      "advisories": []
+    },
+    {
+      "name": "synstructure",
+      "version": "0.13.2",
+      "advisories": []
+    },
+    {
+      "name": "system-deps",
+      "version": "6.2.2",
+      "advisories": []
+    },
+    {
+      "name": "target-lexicon",
+      "version": "0.12.16",
+      "advisories": []
+    },
+    {
+      "name": "tempfile",
+      "version": "3.27.0",
+      "advisories": []
+    },
+    {
+      "name": "thiserror",
+      "version": "1.0.69",
+      "advisories": []
+    },
+    {
+      "name": "thiserror",
+      "version": "2.0.18",
+      "advisories": []
+    },
+    {
+      "name": "thiserror-impl",
+      "version": "1.0.69",
+      "advisories": []
+    },
+    {
+      "name": "thiserror-impl",
+      "version": "2.0.18",
+      "advisories": []
+    },
+    {
+      "name": "thread_local",
+      "version": "1.1.9",
+      "advisories": []
+    },
+    {
+      "name": "tiff",
+      "version": "0.10.3",
+      "advisories": []
+    },
+    {
+      "name": "time",
+      "version": "0.3.47",
+      "advisories": []
+    },
+    {
+      "name": "time-core",
+      "version": "0.1.8",
+      "advisories": []
+    },
+    {
+      "name": "time-macros",
+      "version": "0.2.27",
+      "advisories": []
+    },
+    {
+      "name": "tinystr",
+      "version": "0.8.3",
+      "advisories": []
+    },
+    {
+      "name": "tokio",
+      "version": "1.52.1",
+      "advisories": []
+    },
+    {
+      "name": "tokio-macros",
+      "version": "2.7.0",
+      "advisories": []
+    },
+    {
+      "name": "tokio-native-tls",
+      "version": "0.3.1",
+      "advisories": []
+    },
+    {
+      "name": "tokio-rustls",
+      "version": "0.24.1",
+      "advisories": []
+    },
+    {
+      "name": "tokio-rustls",
+      "version": "0.26.4",
+      "advisories": []
+    },
+    {
+      "name": "tokio-tungstenite",
+      "version": "0.30.0",
+      "advisories": []
+    },
+    {
+      "name": "tokio-util",
+      "version": "0.7.18",
+      "advisories": []
+    },
+    {
+      "name": "toml",
+      "version": "0.5.11",
+      "advisories": []
+    },
+    {
+      "name": "toml",
+      "version": "0.8.23",
+      "advisories": []
+    },
+    {
+      "name": "toml_datetime",
+      "version": "0.6.11",
+      "advisories": []
+    },
+    {
+      "name": "toml_edit",
+      "version": "0.22.27",
+      "advisories": []
+    },
+    {
+      "name": "totp-rs",
+      "version": "5.7.1",
+      "advisories": []
+    },
+    {
+      "name": "tower",
+      "version": "0.5.3",
+      "advisories": []
+    },
+    {
+      "name": "tower-layer",
+      "version": "0.3.3",
+      "advisories": []
+    },
+    {
+      "name": "tower-service",
+      "version": "0.3.3",
+      "advisories": []
+    },
+    {
+      "name": "tracing",
+      "version": "0.1.44",
+      "advisories": []
+    },
+    {
+      "name": "tracing-appender",
+      "version": "0.2.5",
+      "advisories": []
+    },
+    {
+      "name": "tracing-attributes",
+      "version": "0.1.31",
+      "advisories": []
+    },
+    {
+      "name": "tracing-core",
+      "version": "0.1.36",
+      "advisories": []
+    },
+    {
+      "name": "tracing-log",
+      "version": "0.2.0",
+      "advisories": []
+    },
+    {
+      "name": "tracing-subscriber",
+      "version": "0.3.23",
+      "advisories": []
+    },
+    {
+      "name": "try-lock",
+      "version": "0.2.5",
+      "advisories": []
+    },
+    {
+      "name": "ttf-parser",
+      "version": "0.25.1",
+      "advisories": [
+        {
+          "id": "RUSTSEC-2026-0192",
+          "modified": "2026-06-29T21:15:04.384453Z"
+        }
+      ]
+    },
+    {
+      "name": "tungstenite",
+      "version": "0.30.0",
+      "advisories": []
+    },
+    {
+      "name": "typenum",
+      "version": "1.20.0",
+      "advisories": []
+    },
+    {
+      "name": "unicode-ident",
+      "version": "1.0.24",
+      "advisories": []
+    },
+    {
+      "name": "unicode-segmentation",
+      "version": "1.13.2",
+      "advisories": []
+    },
+    {
+      "name": "unicode-width",
+      "version": "0.1.14",
+      "advisories": []
+    },
+    {
+      "name": "unicode-width",
+      "version": "0.2.2",
+      "advisories": []
+    },
+    {
+      "name": "unit-prefix",
+      "version": "0.5.2",
+      "advisories": []
+    },
+    {
+      "name": "untrusted",
+      "version": "0.9.0",
+      "advisories": []
+    },
+    {
+      "name": "uriparse",
+      "version": "0.6.4",
+      "advisories": []
+    },
+    {
+      "name": "url",
+      "version": "2.5.8",
+      "advisories": []
+    },
+    {
+      "name": "urlencoding",
+      "version": "2.1.3",
+      "advisories": []
+    },
+    {
+      "name": "utf8_iter",
+      "version": "1.0.4",
+      "advisories": []
+    },
+    {
+      "name": "utf8parse",
+      "version": "0.2.2",
+      "advisories": []
+    },
+    {
+      "name": "uuid",
+      "version": "1.23.1",
+      "advisories": []
+    },
+    {
+      "name": "v_frame",
+      "version": "0.3.9",
+      "advisories": []
+    },
+    {
+      "name": "valuable",
+      "version": "0.1.1",
+      "advisories": []
+    },
+    {
+      "name": "vcpkg",
+      "version": "0.2.15",
+      "advisories": []
+    },
+    {
+      "name": "version-compare",
+      "version": "0.2.1",
+      "advisories": []
+    },
+    {
+      "name": "version_check",
+      "version": "0.9.5",
+      "advisories": []
+    },
+    {
+      "name": "vsimd",
+      "version": "0.8.0",
+      "advisories": []
+    },
+    {
+      "name": "want",
+      "version": "0.3.1",
+      "advisories": []
+    },
+    {
+      "name": "wasi",
+      "version": "0.11.1+wasi-snapshot-preview1",
+      "advisories": []
+    },
+    {
+      "name": "wasip2",
+      "version": "1.0.3+wasi-0.2.9",
+      "advisories": []
+    },
+    {
+      "name": "wasm-bindgen",
+      "version": "0.2.118",
+      "advisories": []
+    },
+    {
+      "name": "wasm-bindgen-macro",
+      "version": "0.2.118",
+      "advisories": []
+    },
+    {
+      "name": "wasm-bindgen-macro-support",
+      "version": "0.2.118",
+      "advisories": []
+    },
+    {
+      "name": "wasm-bindgen-shared",
+      "version": "0.2.118",
+      "advisories": []
+    },
+    {
+      "name": "web-time",
+      "version": "1.1.0",
+      "advisories": []
+    },
+    {
+      "name": "weezl",
+      "version": "0.1.12",
+      "advisories": []
+    },
+    {
+      "name": "wide",
+      "version": "0.7.33",
+      "advisories": []
+    },
+    {
+      "name": "winapi",
+      "version": "0.3.9",
+      "advisories": []
+    },
+    {
+      "name": "winapi-i686-pc-windows-gnu",
+      "version": "0.4.0",
+      "advisories": []
+    },
+    {
+      "name": "winapi-x86_64-pc-windows-gnu",
+      "version": "0.4.0",
+      "advisories": []
+    },
+    {
+      "name": "windows-core",
+      "version": "0.62.2",
+      "advisories": []
+    },
+    {
+      "name": "windows-implement",
+      "version": "0.60.2",
+      "advisories": []
+    },
+    {
+      "name": "windows-interface",
+      "version": "0.59.3",
+      "advisories": []
+    },
+    {
+      "name": "windows-link",
+      "version": "0.2.1",
+      "advisories": []
+    },
+    {
+      "name": "windows-result",
+      "version": "0.4.1",
+      "advisories": []
+    },
+    {
+      "name": "windows-strings",
+      "version": "0.5.1",
+      "advisories": []
+    },
+    {
+      "name": "windows-sys",
+      "version": "0.48.0",
+      "advisories": []
+    },
+    {
+      "name": "windows-sys",
+      "version": "0.52.0",
+      "advisories": []
+    },
+    {
+      "name": "windows-sys",
+      "version": "0.59.0",
+      "advisories": []
+    },
+    {
+      "name": "windows-sys",
+      "version": "0.60.2",
+      "advisories": []
+    },
+    {
+      "name": "windows-sys",
+      "version": "0.61.2",
+      "advisories": []
+    },
+    {
+      "name": "windows-targets",
+      "version": "0.48.5",
+      "advisories": []
+    },
+    {
+      "name": "windows-targets",
+      "version": "0.52.6",
+      "advisories": []
+    },
+    {
+      "name": "windows-targets",
+      "version": "0.53.5",
+      "advisories": []
+    },
+    {
+      "name": "windows_aarch64_gnullvm",
+      "version": "0.48.5",
+      "advisories": []
+    },
+    {
+      "name": "windows_aarch64_gnullvm",
+      "version": "0.52.6",
+      "advisories": []
+    },
+    {
+      "name": "windows_aarch64_gnullvm",
+      "version": "0.53.1",
+      "advisories": []
+    },
+    {
+      "name": "windows_aarch64_msvc",
+      "version": "0.48.5",
+      "advisories": []
+    },
+    {
+      "name": "windows_aarch64_msvc",
+      "version": "0.52.6",
+      "advisories": []
+    },
+    {
+      "name": "windows_aarch64_msvc",
+      "version": "0.53.1",
+      "advisories": []
+    },
+    {
+      "name": "windows_i686_gnu",
+      "version": "0.48.5",
+      "advisories": []
+    },
+    {
+      "name": "windows_i686_gnu",
+      "version": "0.52.6",
+      "advisories": []
+    },
+    {
+      "name": "windows_i686_gnu",
+      "version": "0.53.1",
+      "advisories": []
+    },
+    {
+      "name": "windows_i686_gnullvm",
+      "version": "0.52.6",
+      "advisories": []
+    },
+    {
+      "name": "windows_i686_gnullvm",
+      "version": "0.53.1",
+      "advisories": []
+    },
+    {
+      "name": "windows_i686_msvc",
+      "version": "0.48.5",
+      "advisories": []
+    },
+    {
+      "name": "windows_i686_msvc",
+      "version": "0.52.6",
+      "advisories": []
+    },
+    {
+      "name": "windows_i686_msvc",
+      "version": "0.53.1",
+      "advisories": []
+    },
+    {
+      "name": "windows_x86_64_gnu",
+      "version": "0.48.5",
+      "advisories": []
+    },
+    {
+      "name": "windows_x86_64_gnu",
+      "version": "0.52.6",
+      "advisories": []
+    },
+    {
+      "name": "windows_x86_64_gnu",
+      "version": "0.53.1",
+      "advisories": []
+    },
+    {
+      "name": "windows_x86_64_gnullvm",
+      "version": "0.48.5",
+      "advisories": []
+    },
+    {
+      "name": "windows_x86_64_gnullvm",
+      "version": "0.52.6",
+      "advisories": []
+    },
+    {
+      "name": "windows_x86_64_gnullvm",
+      "version": "0.53.1",
+      "advisories": []
+    },
+    {
+      "name": "windows_x86_64_msvc",
+      "version": "0.48.5",
+      "advisories": []
+    },
+    {
+      "name": "windows_x86_64_msvc",
+      "version": "0.52.6",
+      "advisories": []
+    },
+    {
+      "name": "windows_x86_64_msvc",
+      "version": "0.53.1",
+      "advisories": []
+    },
+    {
+      "name": "winnow",
+      "version": "0.7.15",
+      "advisories": []
+    },
+    {
+      "name": "winreg",
+      "version": "0.52.0",
+      "advisories": []
+    },
+    {
+      "name": "winres",
+      "version": "0.1.12",
+      "advisories": []
+    },
+    {
+      "name": "wit-bindgen",
+      "version": "0.57.1",
+      "advisories": []
+    },
+    {
+      "name": "writeable",
+      "version": "0.6.3",
+      "advisories": []
+    },
+    {
+      "name": "xmlparser",
+      "version": "0.13.6",
+      "advisories": []
+    },
+    {
+      "name": "yoke",
+      "version": "0.8.2",
+      "advisories": []
+    },
+    {
+      "name": "yoke-derive",
+      "version": "0.8.2",
+      "advisories": []
+    },
+    {
+      "name": "zerocopy",
+      "version": "0.8.48",
+      "advisories": []
+    },
+    {
+      "name": "zerocopy-derive",
+      "version": "0.8.48",
+      "advisories": []
+    },
+    {
+      "name": "zerofrom",
+      "version": "0.1.7",
+      "advisories": []
+    },
+    {
+      "name": "zerofrom-derive",
+      "version": "0.1.7",
+      "advisories": []
+    },
+    {
+      "name": "zeroize",
+      "version": "1.8.2",
+      "advisories": []
+    },
+    {
+      "name": "zerotrie",
+      "version": "0.2.4",
+      "advisories": []
+    },
+    {
+      "name": "zerovec",
+      "version": "0.11.6",
+      "advisories": []
+    },
+    {
+      "name": "zerovec-derive",
+      "version": "0.11.3",
+      "advisories": []
+    },
+    {
+      "name": "zmij",
+      "version": "1.0.23",
+      "advisories": []
+    },
+    {
+      "name": "zune-core",
+      "version": "0.4.12",
+      "advisories": []
+    },
+    {
+      "name": "zune-inflate",
+      "version": "0.2.54",
+      "advisories": []
+    },
+    {
+      "name": "zune-jpeg",
+      "version": "0.4.21",
+      "advisories": []
+    }
+  ]
+}

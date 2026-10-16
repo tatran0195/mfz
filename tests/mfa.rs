@@ -6,7 +6,7 @@ fn test_mfa_credentials_is_valid() {
     let creds = MfaCredentials {
         access_key_id: "test".into(),
         secret_access_key: "test".into(),
-        session_token: "test".into(),
+        session_token: Some("test".into()),
         expiration: Utc::now() + Duration::minutes(5),
     };
     assert!(creds.is_valid());
@@ -14,7 +14,7 @@ fn test_mfa_credentials_is_valid() {
     let expired = MfaCredentials {
         access_key_id: "test".into(),
         secret_access_key: "test".into(),
-        session_token: "test".into(),
+        session_token: Some("test".into()),
         expiration: Utc::now() - Duration::minutes(5),
     };
     assert!(!expired.is_valid());
@@ -22,7 +22,7 @@ fn test_mfa_credentials_is_valid() {
     let slightly_valid = MfaCredentials {
         access_key_id: "test".into(),
         secret_access_key: "test".into(),
-        session_token: "test".into(),
+        session_token: Some("test".into()),
         expiration: Utc::now() + Duration::seconds(65), // 60s buffer in mfa.rs
     };
     assert!(slightly_valid.is_valid());

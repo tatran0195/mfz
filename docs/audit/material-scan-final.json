@@ -1,0 +1,8 @@
+{
+  "scope": "all current tracked plus explicitly owned nonignored new source/package files; no Git/history/baseline/cache",
+  "file_count": 157,
+  "known_legacy_values": 2,
+  "matches": [],
+  "values_recorded": false,
+  "limitation": "exact known-value scan, not proof every possible secret is absent"
+}

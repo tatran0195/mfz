@@ -11,10 +11,7 @@ reorder_modules = true
 # Use 2021 edition rules
 edition = "2021"
 
-# --- Import Grouping (Requires Nightly) ---
-# cargo +nightly fmt
-group_imports = "StdExternalCrate"
-imports_granularity = "Crate"
+# Import regrouping is intentionally omitted: CI uses stable rustfmt.
 
 # --- General Style ---
 # Max line length

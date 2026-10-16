@@ -16,7 +16,7 @@ MFZ is built in Rust to provide a high-performance, completely self-contained bi
 
 ```mermaid
 graph TD
-    A["CLI / Double-Click: launch &lt;target&gt;"] --> B["Resolve Config (mfz.ini or .mfz)"]
+    A["CLI / Double-Click: launch &lt;target&gt;"] --> B["Resolve Config (mfz / mfz.ini or .mfz)"]
     
     subgraph Credentials ["1. Credential Resolution"]
         B --> C{"Auth Source?"}
@@ -72,16 +72,33 @@ Previous architectures relied on spawning `aws.exe` and `session-manager-plugin`
    - Invokes `ssm.start_session()` with document `AWS-StartPortForwardingSession` to obtain a `SessionId`, `StreamUrl`, and `TokenValue`.
    - Establishes a TLS WebSocket connection directly to the AWS Systems Manager gateway.
    - Implements AWS Systems Manager binary message framing:
-     - 4-byte header length, 4-byte message type, 8-byte sequence number, flags, and binary payloads.
-     - Performs initial handshake with `ClientToken`.
-     - Bridges local TCP sockets bi-directionally with the encrypted SSM WebSocket stream.
-     - Responds to SSM Ping/Pong frames to maintain persistent tunnel health.
+     - 4-byte header length, 32-byte message type, 8-byte sequence number, flags, UUID, SHA-256 payload digest, and binary payloads.
+     - Authenticates with the `TokenValue` JSON frame and completes the agent's port-session handshake before signaling listener readiness.
+     - Bridges local TCP sockets through smux v1 and SSM WebSocket framing with bounded queues in both directions.
+     - Batches ready 1 KiB SSM data messages without a fixed sleep, protects sequence-span credit after selective ACKs, and retries bounded gap probes with adaptive RTT/Karn/backoff and original wire bytes.
+     - Keeps ACK/Pong/control traffic progressing independently of backpressured TCP consumers.
+     - Owns all child tasks so stop/error/abort cannot leave detached connections running.
+
+### Native Transport Performance and Tests
+
+The native transport's regression suite can run without AWS credentials or Windows integration:
+
+```bash
+cargo test --manifest-path tools/transport-tests/Cargo.toml --locked
+cargo clippy --manifest-path tools/transport-tests/Cargo.toml --locked --all-targets -- -D warnings
+```
+
+It compiles the actual production transport modules, including local TCP/WebSocket tests with concurrent transfers, queue saturation, loss/retry, and cancellation. Add `--features session-sdk` to include the actual MFA/session SDK modules and real-SDK loopback tests (no AWS account). The complete Windows-target application type-check also passed; type-checking is not Windows execution or live AWS/RDP validation.
+
+See the [production-completion report](./docs/native-production-completion.md) for native remote cleanup, signing-region/readiness fixes, validation and the required `ssm:TerminateSession` permission.
+
+See [the current performance report](./docs/native-transport-performance.md) for the official-plugin comparison, limits and measured benchmarks; [the harness README](./tools/transport-tests/README.md) for actual AWS-vendored Go smux interoperability; and [the original investigation](./docs/native-transfer-fix.md) for the whole-VM diagnostic checklist.
 
 ---
 
 ## ⚙️ Advanced Configuration
 
-### `mfz.ini` Full Schema
+### Configuration Schema (`mfz` / `mfz.ini`)
 
 | Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
@@ -153,7 +170,7 @@ When `mfz launch <input>` runs, it checks whether `<input>` is a file or environ
 
 ### Prerequisites
 
-- Stable Rust (v1.70+)
+- Current stable Rust (the locked AWS transport dependencies require v1.91.1+)
 - Windows 10/11 environment (for native Credential Manager, RDP `mstsc.exe`, and registry shell association)
 
 ### Build & Test Commands

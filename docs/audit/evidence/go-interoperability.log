@@ -1,0 +1,22 @@
+    Blocking waiting for file lock on build directory
+   Compiling bitflags v2.11.1
+   Compiling openssl v0.10.81
+   Compiling aws-smithy-types v1.4.9
+   Compiling aws-smithy-runtime-api v1.12.3
+   Compiling native-tls v0.2.18
+   Compiling tungstenite v0.30.0
+   Compiling aws-smithy-http v0.63.6
+   Compiling tokio-native-tls v0.3.1
+   Compiling aws-credential-types v1.2.14
+   Compiling aws-sigv4 v1.4.3
+   Compiling tokio-tungstenite v0.30.0
+   Compiling mfz-transport-tests v0.1.0 (/home/user/mfz/tools/transport-tests)
+    Finished `test` profile [unoptimized] target(s) in 1m 08s
+     Running unittests src/lib.rs (/home/user/.cache/mfz-target/debug/deps/mfz_transport_tests-b52e8067982d6852)
+
+running 2 tests
+test go_interop::smux_go_interop_slow_first_stream_does_not_starve_second_stream ... ok
+test go_interop::smux_go_interop_large_multistream_duplex_and_fin_drain ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 63 filtered out; finished in 0.49s
+

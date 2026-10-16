@@ -1,0 +1,1 @@
+PASS: 25 actual-application offline subprocess checks; isolated files, no AWS/hosts/keyring mutations

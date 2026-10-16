@@ -1,0 +1,323 @@
+{
+  "date": "2026-10-15",
+  "scope": "Production writer only, masked WebSocket over bounded in-memory duplex; no TLS, AWS, network or RDP; time includes final ACK drain",
+  "comparison": "Previous delivered MFZ stability candidate, not original MFZ or the official plugin",
+  "host": {
+    "os": "Linux-6.1.158+-x86_64-with-glibc2.41",
+    "cpu": "Intel Xeon @ 2.60GHz",
+    "logical_cpus": 2,
+    "rust": "1.99.0 (b940084d7 2026-09-28)",
+    "profile": "release",
+    "tokio_test_runtime": "single-thread"
+  },
+  "original_mfz_base": "0817c50175cc6c8714776fff9467684ecab98426",
+  "baseline_staged_tree": "da4e572ae1f62f52d5e690092273b9a73daebc85",
+  "baseline_delivered_zip_sha256": "b6ef0ea8d2ece07377a3910b77481642fa4bb52d7cece257329101ad7ddca4d9",
+  "official_plugin_revision": "6430675a44032a551be1937fb27a2d3fdfeb27f7",
+  "candidate_source_sha256": {
+    "src/smux.rs": "8bbb048acac0bf5d3a1253022953558ad4dc019c3c62eb30af5db007fcf249b7",
+    "src/ssm_protocol.rs": "f0659c197e6aa4e6c8315aa69eb62d1a3d0152a5d78deab2793e0d2074145355",
+    "src/ssm_flow.rs": "e39f8c0b5c52ef263b65a01c111bc099f4bf7a874a2436638ed6dfa79629189d",
+    "src/ssm_writer.rs": "068022fbc6e8cdd5461590d0e88cba11cf6c6a34db62c09687dd5fa3fc44370f",
+    "src/ssm_tunnel.rs": "f8c3a7d7c8fffefbcab5644703547b73f2c84e20b8ddbdc5c834e845e4b26864",
+    "src/transport_buffer.rs": "9244fc24c9864b27e6602af9bd77fb40620818a7801522e8f04fc4bca6882a4f",
+    "src/ssm_writer_bench.rs": "23da9a79031e3c59e226147a91b43c34351d4814e2a563bb77d25ce91c6fc961"
+  },
+  "baseline_parameters": {
+    "window_messages": 128,
+    "minimum_send_ms": 1,
+    "websocket": "0.24.0",
+    "input_queue": 128
+  },
+  "candidate_parameters": {
+    "window_sequence_span": 8192,
+    "new_data_batch_messages": 64,
+    "maximum_active_retry_probes": 8,
+    "fixed_send_sleep": false,
+    "batch_linger": false,
+    "websocket": "0.30.0",
+    "input_queue": 256
+  },
+  "baseline_4_mib_samples": [
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 8726.53151,
+      "implementation": "stability-v1",
+      "mib_per_second": 0.45837226341488335,
+      "payload_mib": 4,
+      "rtt_ms": 0,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 4096
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 8786.061141999999,
+      "implementation": "stability-v1",
+      "mib_per_second": 0.4552665791134555,
+      "payload_mib": 4,
+      "rtt_ms": 50,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 4096
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 9011.437118,
+      "implementation": "stability-v1",
+      "mib_per_second": 0.44388036532043856,
+      "payload_mib": 4,
+      "rtt_ms": 250,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 4096
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 16394.208094,
+      "implementation": "stability-v1",
+      "mib_per_second": 0.24398860726087354,
+      "payload_mib": 4,
+      "rtt_ms": 500,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 4096
+    }
+  ],
+  "candidate_4_mib_samples": [
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 17.613777,
+      "implementation": "performance-v2-final",
+      "mib_per_second": 227.09496095016985,
+      "payload_mib": 4,
+      "rtt_ms": 0,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample_run": 1
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 67.208538,
+      "implementation": "performance-v2-final",
+      "mib_per_second": 59.51624777197207,
+      "payload_mib": 4,
+      "rtt_ms": 50,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample_run": 1
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 266.084533,
+      "implementation": "performance-v2-final",
+      "mib_per_second": 15.032816657554461,
+      "payload_mib": 4,
+      "rtt_ms": 250,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample_run": 1
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 514.528077,
+      "implementation": "performance-v2-final",
+      "mib_per_second": 7.7741141422686635,
+      "payload_mib": 4,
+      "rtt_ms": 500,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample_run": 1
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 15.495563,
+      "implementation": "performance-v2-final",
+      "mib_per_second": 258.1384103307508,
+      "payload_mib": 4,
+      "rtt_ms": 0,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample_run": 2
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 65.764347,
+      "implementation": "performance-v2-final",
+      "mib_per_second": 60.82322994859205,
+      "payload_mib": 4,
+      "rtt_ms": 50,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample_run": 2
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 263.732411,
+      "implementation": "performance-v2-final",
+      "mib_per_second": 15.166888228993592,
+      "payload_mib": 4,
+      "rtt_ms": 250,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample_run": 2
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 515.715749,
+      "implementation": "performance-v2-final",
+      "mib_per_second": 7.7562106795385075,
+      "payload_mib": 4,
+      "rtt_ms": 500,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample_run": 2
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 15.583062,
+      "implementation": "performance-v2-final",
+      "mib_per_second": 256.68896138640787,
+      "payload_mib": 4,
+      "rtt_ms": 0,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample_run": 3
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 65.250061,
+      "implementation": "performance-v2-final",
+      "mib_per_second": 61.30262468260375,
+      "payload_mib": 4,
+      "rtt_ms": 50,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample_run": 3
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 266.016897,
+      "implementation": "performance-v2-final",
+      "mib_per_second": 15.036638819225082,
+      "payload_mib": 4,
+      "rtt_ms": 250,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample_run": 3
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 518.161796,
+      "implementation": "performance-v2-final",
+      "mib_per_second": 7.719596525406516,
+      "payload_mib": 4,
+      "rtt_ms": 500,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64,
+      "sample_run": 3
+    }
+  ],
+  "equal_size_comparison": [
+    {
+      "rtt_ms": 0,
+      "payload_mib": 4,
+      "baseline_mib_per_second": 0.45837226341488335,
+      "candidate_median_mib_per_second": 256.68896138640787,
+      "speedup": 560.0010774519154,
+      "baseline_write_calls": 4096,
+      "candidate_write_calls": 64
+    },
+    {
+      "rtt_ms": 50,
+      "payload_mib": 4,
+      "baseline_mib_per_second": 0.4552665791134555,
+      "candidate_median_mib_per_second": 60.82322994859205,
+      "speedup": 133.5991542955638,
+      "baseline_write_calls": 4096,
+      "candidate_write_calls": 64
+    },
+    {
+      "rtt_ms": 250,
+      "payload_mib": 4,
+      "baseline_mib_per_second": 0.44388036532043856,
+      "candidate_median_mib_per_second": 15.036638819225082,
+      "speedup": 33.87543129638115,
+      "baseline_write_calls": 4096,
+      "candidate_write_calls": 64
+    },
+    {
+      "rtt_ms": 500,
+      "payload_mib": 4,
+      "baseline_mib_per_second": 0.24398860726087354,
+      "candidate_median_mib_per_second": 7.7562106795385075,
+      "speedup": 31.78923297531486,
+      "baseline_write_calls": 4096,
+      "candidate_write_calls": 64
+    }
+  ],
+  "candidate_16_mib_multiple_window_rounds": [
+    {
+      "data_frames": 16384,
+      "duplicate_frames": 0,
+      "elapsed_ms": 57.14722,
+      "implementation": "performance-v2-final",
+      "mib_per_second": 279.9786236320857,
+      "payload_mib": 16,
+      "rtt_ms": 0,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 256
+    },
+    {
+      "data_frames": 16384,
+      "duplicate_frames": 0,
+      "elapsed_ms": 138.679666,
+      "implementation": "performance-v2-final",
+      "mib_per_second": 115.37379964558033,
+      "payload_mib": 16,
+      "rtt_ms": 50,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 256
+    },
+    {
+      "data_frames": 16384,
+      "duplicate_frames": 0,
+      "elapsed_ms": 555.954285,
+      "implementation": "performance-v2-final",
+      "mib_per_second": 28.779344690184374,
+      "payload_mib": 16,
+      "rtt_ms": 250,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 256
+    },
+    {
+      "data_frames": 16384,
+      "duplicate_frames": 0,
+      "elapsed_ms": 1040.3604799999998,
+      "implementation": "performance-v2-final",
+      "mib_per_second": 15.379284687938167,
+      "payload_mib": 16,
+      "rtt_ms": 500,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 256
+    }
+  ],
+  "limitations": [
+    "Only one baseline sample per RTT; three candidate samples per RTT",
+    "No CPU/RSS/allocation-count profile was taken",
+    "Underlying poll_write calls are not claimed as live TLS/OS syscall counts",
+    "An in-memory benchmark is not an AWS throughput guarantee"
+  ]
+}

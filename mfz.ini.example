@@ -1,0 +1,23 @@
+# Example only. Copy to a PRIVATE mfz.ini and replace the profile/target.
+# Never commit real AWS keys, MFA seeds, RDP passwords or exported secret PNGs.
+[example]
+profile = your-aws-sdk-profile
+region = ap-southeast-1
+instance = i-0123456789abcdef0
+remote_port = 3389
+local_port = 13389
+rdp_host = example-rdp
+rdp_user = Administrator
+fullscreen = true
+optimize = balanced
+shared_drives = none
+
+# Optional IAM-user MFA: configure BOTH the device ARN and its PRIVATE seed.
+# serial = arn:aws:iam::123456789012:mfa/example-user
+# secret = REPLACE_WITH_YOUR_PRIVATE_BASE32_SEED
+# After temporarily adding plaintext secrets, run: mfz config secure example
+# MFA seed must satisfy AWS/TOTP requirements; do not use published demo keys.
+
+# Optional folder redirection (explicitly trust the path before launching):
+# shared_folder = C:\Users\YourName\Documents\ToShare
+# Optional explicit drive list: shared_drives = C:;D:

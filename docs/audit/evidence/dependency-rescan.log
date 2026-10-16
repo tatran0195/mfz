@@ -1,0 +1,22 @@
+Scanned 200/428 exact versions
+Scanned 400/428 exact versions
+Scanned 428/428 exact versions
+{
+  "matched_package_versions": 2,
+  "matches": [
+    [
+      "fxhash",
+      "0.2.1",
+      [
+        "RUSTSEC-2025-0057"
+      ]
+    ],
+    [
+      "paste",
+      "1.0.15",
+      [
+        "RUSTSEC-2024-0436"
+      ]
+    ]
+  ]
+}

@@ -1,9 +1,23 @@
+#[cfg(windows)]
 use mfz::credentials::CredentialStore;
 
+#[cfg(windows)]
 #[test]
+#[ignore = "Requires an interactive Windows Credential Manager; explicitly run --test credentials_test -- --ignored (random disposable entries only)"]
 fn test_aws_secret_keyring_roundtrip() {
-    let test_env = "test_env_keyring_spec";
+    let test_env = format!("mfz_test_{}", uuid::Uuid::new_v4());
+    let test_env = test_env.as_str();
     let test_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
+
+    struct Cleanup<'a>(&'a str);
+    impl Drop for Cleanup<'_> {
+        fn drop(&mut self) {
+            if let Err(error) = CredentialStore::delete_secrets(self.0) {
+                eprintln!("Test credential cleanup failed: {error}");
+            }
+        }
+    }
+    let _cleanup = Cleanup(test_env);
 
     // Set
     let set_res = CredentialStore::set_aws_secret_key(test_env, test_key);

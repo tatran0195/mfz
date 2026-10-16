@@ -1,0 +1,50 @@
+{
+  "method": "one release-mode 4 MiB run per RTT, same preserved production writer; in-memory peer, no TLS/AWS/RDP/guest",
+  "not_a_full_system_or_statistical_performance_claim": true,
+  "samples": [
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 31.734118,
+      "implementation": "repository-remediation",
+      "mib_per_second": 126.04730341016568,
+      "payload_mib": 4,
+      "rtt_ms": 0,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 77.469977,
+      "implementation": "repository-remediation",
+      "mib_per_second": 51.63290548027399,
+      "payload_mib": 4,
+      "rtt_ms": 50,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 271.853129,
+      "implementation": "repository-remediation",
+      "mib_per_second": 14.713827332846332,
+      "payload_mib": 4,
+      "rtt_ms": 250,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64
+    },
+    {
+      "data_frames": 4096,
+      "duplicate_frames": 0,
+      "elapsed_ms": 519.005201,
+      "implementation": "repository-remediation",
+      "mib_per_second": 7.707051860545805,
+      "payload_mib": 4,
+      "rtt_ms": 500,
+      "scope": "writer microbenchmark; in-memory peer; no TLS or AWS",
+      "transport_write_calls": 64
+    }
+  ]
+}

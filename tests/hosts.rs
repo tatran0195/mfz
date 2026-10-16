@@ -4,11 +4,8 @@ use mfz::hosts::HostsManager;
 
 #[test]
 fn test_hosts_add_new_entry() {
-    let temp_dir = std::env::temp_dir();
-    let file_path = temp_dir.join(format!(
-        "hosts_test_{}.txt",
-        std::time::UNIX_EPOCH.elapsed().unwrap().as_nanos()
-    ));
+    let temp_dir = tempfile::tempdir().unwrap();
+    let file_path = temp_dir.path().join("hosts");
 
     // Initial content with comments
     fs::write(&file_path, "# Test hosts file\n127.0.0.1 localhost\n").unwrap();
@@ -26,21 +23,18 @@ fn test_hosts_add_new_entry() {
 
 #[test]
 fn test_hosts_skip_existing() {
-    let temp_dir = std::env::temp_dir();
-    let file_path = temp_dir.join(format!(
-        "hosts_test_skip_{}.txt",
-        std::time::UNIX_EPOCH.elapsed().unwrap().as_nanos()
-    ));
+    let temp_dir = tempfile::tempdir().unwrap();
+    let file_path = temp_dir.path().join("hosts");
 
     fs::write(&file_path, "127.0.0.1\texisting-srv\n").unwrap();
 
     let mgr = HostsManager::with_path(file_path.clone());
 
     // Add same entry again
-    mgr.add_host("1.2.3.4", "existing-srv").unwrap();
+    assert!(mgr.add_host("1.2.3.4", "existing-srv").is_err());
 
     let result = fs::read_to_string(&file_path).unwrap();
-    // It should not have been added again, and IP should not have changed (it skips by hostname)
+    // A conflicting address must be reported, never silently presented as a successful update.
     assert!(!result.contains("1.2.3.4"));
 
     fs::remove_file(&file_path).unwrap();
@@ -48,11 +42,8 @@ fn test_hosts_skip_existing() {
 
 #[test]
 fn test_hosts_has_host_and_ensure() {
-    let temp_dir = std::env::temp_dir();
-    let file_path = temp_dir.join(format!(
-        "hosts_test_ensure_{}.txt",
-        std::time::UNIX_EPOCH.elapsed().unwrap().as_nanos()
-    ));
+    let temp_dir = tempfile::tempdir().unwrap();
+    let file_path = temp_dir.path().join("hosts");
 
     fs::write(&file_path, "127.0.0.1\tlocalhost\n").unwrap();
     let mgr = HostsManager::with_path(file_path.clone());
@@ -75,17 +66,14 @@ fn test_hosts_has_host_and_ensure() {
 
 #[test]
 fn test_hosts_ensure_hosts_batch() {
-    let temp_dir = std::env::temp_dir();
-    let file_path = temp_dir.join(format!(
-        "hosts_test_batch_{}.txt",
-        std::time::UNIX_EPOCH.elapsed().unwrap().as_nanos()
-    ));
+    let temp_dir = tempfile::tempdir().unwrap();
+    let file_path = temp_dir.path().join("hosts");
 
     fs::write(&file_path, "127.0.0.1\tlocalhost\n").unwrap();
     let mgr = HostsManager::with_path(file_path.clone());
 
     let entries = [("127.0.0.1", "host-a"), ("127.0.0.1", "host-b")];
-    mgr.ensure_hosts(&entries, None).unwrap();
+    mgr.ensure_hosts(&entries).unwrap();
 
     assert!(mgr.has_host("host-a").unwrap());
     assert!(mgr.has_host("host-b").unwrap());
@@ -95,17 +83,11 @@ fn test_hosts_ensure_hosts_batch() {
 
 #[test]
 fn test_dynamic_profile_hosts_sync() {
-    let temp_dir = std::env::temp_dir();
-    let hosts_path = temp_dir.join(format!(
-        "hosts_dyn_{}.txt",
-        std::time::UNIX_EPOCH.elapsed().unwrap().as_nanos()
-    ));
+    let temp_dir = tempfile::tempdir().unwrap();
+    let hosts_path = temp_dir.path().join("hosts");
     fs::write(&hosts_path, "# hosts\n").unwrap();
 
-    let ini_path = temp_dir.join(format!(
-        "mfz_test_{}.ini",
-        std::time::UNIX_EPOCH.elapsed().unwrap().as_nanos()
-    ));
+    let ini_path = temp_dir.path().join("mfz.ini");
     fs::write(
         &ini_path,
         "[stg]\ninstance=i-12345\nrdp_host=stg-rdp\nremote_port=3389\nlocal_port=13389\nprofile=dev\n\n[prd]\ninstance=i-67890\nrdp_host=prd-rdp\nremote_port=3389\nlocal_port=23389\nprofile=prod\n",
@@ -128,11 +110,31 @@ fn test_dynamic_profile_hosts_sync() {
         .collect();
 
     let mgr = HostsManager::with_path(hosts_path.clone());
-    mgr.ensure_hosts(&entries, None).unwrap();
+    mgr.ensure_hosts(&entries).unwrap();
 
     assert!(mgr.has_host("stg-rdp").unwrap());
     assert!(mgr.has_host("prd-rdp").unwrap());
 
     fs::remove_file(&hosts_path).unwrap();
     fs::remove_file(&ini_path).unwrap();
+}
+
+#[test]
+fn conflicting_and_invalid_batches_do_not_partially_append() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("hosts");
+    let original = "127.0.0.1 localhost\n203.0.113.1 EXISTING\n";
+    fs::write(&path, original).unwrap();
+    let manager = HostsManager::with_path(path.clone());
+    for entries in [
+        vec![("127.0.0.1", "safe"), ("127.0.0.1", "bad\ninjected")],
+        vec![("127.0.0.1", "safe"), ("127.0.0.1", "existing")],
+        vec![("127.0.0.1", "duplicate"), ("203.0.113.1", "DUPLICATE")],
+    ] {
+        assert!(manager.add_hosts(&entries).is_err());
+        assert_eq!(fs::read_to_string(&path).unwrap(), original);
+    }
+    let missing = HostsManager::with_path(directory.path().join("not-created"));
+    assert!(missing.ensure_host("127.0.0.1", "valid").is_err());
+    assert!(!directory.path().join("not-created").exists());
 }
