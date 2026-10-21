@@ -65,6 +65,13 @@ impl CredentialStore {
     pub fn get_rdp_password(env_name: &str) -> Result<Option<String>> {
         Self::get(env_name, "rdp-password")
     }
+    pub fn set_rdp_username(env_name: &str, username: &str) -> Result<()> {
+        validation::single_line(username, "RDP username")?;
+        Self::set(env_name, "rdp-user", username)
+    }
+    pub fn get_rdp_username(env_name: &str) -> Result<Option<String>> {
+        Self::get(env_name, "rdp-user")
+    }
     pub fn set_aws_secret_key(env_name: &str, secret: &str) -> Result<()> {
         Self::set(env_name, "aws-secret", secret)
     }
@@ -74,7 +81,7 @@ impl CredentialStore {
 
     pub fn delete_secrets(env_name: &str) -> Result<()> {
         let mut failures = Vec::new();
-        for kind in ["totp-secret", "rdp-password", "aws-secret"] {
+        for kind in ["totp-secret", "rdp-password", "rdp-user", "aws-secret"] {
             match Self::entry(env_name, kind)?.delete_credential() {
                 Ok(()) | Err(keyring::Error::NoEntry) => {}
                 Err(error) => failures.push(format!("{kind}: {error}")),

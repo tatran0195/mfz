@@ -28,15 +28,24 @@ pub fn get_desktop_dir() -> Result<PathBuf> {
 
 #[cfg(any(windows, test))]
 fn association_command(executable: &str) -> Result<String> {
-    validation::windows_command_line(&[executable, "launch", "--", "%1"])
+    validation::windows_command_line(&[executable, "launch", "--trust-profile", "--", "%1"])
+}
+
+#[cfg(test)]
+#[test]
+fn file_association_launches_the_selected_profile_without_questions() {
+    let command = association_command("C:\\Program Files\\MFZ\\mfz.exe").unwrap();
+    assert!(command.contains("--trust-profile"));
+    assert!(command.ends_with("\"--\" \"%1\""));
 }
 
 #[cfg(any(windows, test))]
 fn owns_association_command(command: &str, executable: &str) -> Result<bool> {
     let current = association_command(executable)?;
+    let previous_escaped = validation::windows_command_line(&[executable, "launch", "--", "%1"])?;
     let previous = format!("\"{executable}\" launch -- \"%1\"");
     let legacy = format!("\"{executable}\" launch \"%1\"");
-    Ok([current, previous, legacy]
+    Ok([current, previous_escaped, previous, legacy]
         .iter()
         .any(|expected| expected.eq_ignore_ascii_case(command)))
 }

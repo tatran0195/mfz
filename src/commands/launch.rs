@@ -1,5 +1,8 @@
 use crate::{
-    auth::mfa::{self, MfaSessionManager},
+    auth::{
+        mfa::{self, MfaSessionManager},
+        CredentialStore,
+    },
     aws,
     cli::LaunchArgs,
     config::ConfigLoader,
@@ -11,6 +14,88 @@ use crate::{
 use colored::Colorize;
 use inquire::Select;
 use tracing::info;
+
+fn remember_rdp_password(
+    password: Option<String>,
+    prompt: impl FnOnce() -> Result<String>,
+    save: impl FnOnce(&str) -> Result<()>,
+) -> Result<Option<String>> {
+    if password.is_some() {
+        return Ok(password);
+    }
+    let password = prompt()?;
+    if password.contains('\0')
+        || password.encode_utf16().count() * 2
+            > windows_sys::Win32::Security::Credentials::CRED_MAX_CREDENTIAL_BLOB_SIZE as usize
+    {
+        return Err(error::AppError::Rdp(
+            "Invalid RDP password or Windows credential blob limit exceeded".into(),
+        ));
+    }
+    save(&password)?;
+    Ok(Some(password))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn missing_rdp_password_is_prompted_and_saved_for_reuse() {
+        let mut saved = None;
+        let password = remember_rdp_password(
+            None,
+            || Ok("instance-password".into()),
+            |value| {
+                saved = Some(value.to_owned());
+                Ok(())
+            },
+        )
+        .unwrap();
+        assert_eq!(password.as_deref(), Some("instance-password"));
+        assert_eq!(saved, password);
+    }
+
+    #[test]
+    fn existing_rdp_password_does_not_prompt_or_overwrite() {
+        assert_eq!(
+            remember_rdp_password(
+                Some("saved-password".into()),
+                || panic!("Saved passwords must be reused"),
+                |_| panic!("Saved passwords must not be overwritten"),
+            )
+            .unwrap()
+            .as_deref(),
+            Some("saved-password")
+        );
+    }
+
+    #[test]
+    fn cancelled_or_invalid_passwords_are_not_saved() {
+        assert!(remember_rdp_password(
+            None,
+            || Err(error::AppError::Rdp("Cancelled".into())),
+            |_| panic!("Cancelled passwords must not be saved"),
+        )
+        .is_err());
+        assert!(remember_rdp_password(
+            None,
+            || Ok("invalid\0password".into()),
+            |_| panic!("Invalid passwords must not be saved"),
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn credential_store_failure_is_not_reported_as_saved() {
+        assert!(remember_rdp_password(
+            None,
+            || Ok("password".into()),
+            |_| Err(error::AppError::Config("Store unavailable".into())),
+        )
+        .is_err());
+    }
+}
 
 pub async fn run(args: LaunchArgs) -> Result<()> {
     if !cfg!(windows) && !args.ssm_only {
@@ -158,6 +243,23 @@ pub async fn run(args: LaunchArgs) -> Result<()> {
             ));
         }
     }
+    if !args.ssm_only && env.rdp_user.is_none() {
+        env.rdp_user = CredentialStore::get_rdp_username(&env_name)?;
+        if env.rdp_user.is_none() {
+            if !console::user_attended() {
+                return Err(error::AppError::Rdp(
+                    "No saved RDP username; run interactively once or configure rdp_user".into(),
+                ));
+            }
+            let username = inquire::Text::new(&format!("RDP username for {env_name}:"))
+                .prompt()
+                .map_err(|error| {
+                    error::AppError::Rdp(format!("Username entry cancelled: {error}"))
+                })?;
+            CredentialStore::set_rdp_username(&env_name, &username)?;
+            env.rdp_user = Some(username);
+        }
+    }
     if !args.ssm_only {
         rdp::LaunchOptions {
             host: "127.0.0.1",
@@ -179,7 +281,21 @@ pub async fn run(args: LaunchArgs) -> Result<()> {
     let rdp_password = if args.ssm_only || env.rdp_user.is_none() {
         None
     } else {
-        env.resolve_rdp_password(&env_name)?
+        remember_rdp_password(
+            env.resolve_rdp_password(&env_name)?,
+            || {
+                if !console::user_attended() {
+                    return Err(error::AppError::Rdp("No saved RDP password; run interactively once to save it in Windows Credential Manager".into()));
+                }
+                inquire::Password::new(&format!(
+                    "RDP password for {env_name} (saved in Windows Credential Manager):"
+                ))
+                .without_confirmation()
+                .prompt()
+                .map_err(|error| error::AppError::Rdp(format!("Password entry cancelled: {error}")))
+            },
+            |password| CredentialStore::set_rdp_password(&env_name, password),
+        )?
     };
 
     if !args.ssm_only {

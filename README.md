@@ -101,6 +101,19 @@ Or launch directly by name:
 mfz launch my-server
 ```
 
+On the first desktop connection, MFZ asks for any missing RDP username/password
+and saves them in Windows Credential Manager for that environment. Later launches
+reuse them, including launches from a `.mfz` file. Configured values take priority;
+passwords entered at launch are not written into profile files. Tunnel-only
+(`--ssm-only`) launches do not ask for RDP credentials.
+
+After updating the executable, run `mfz register` again to update the Explorer
+association. Double-clicking a `.mfz` file then loads that file's complete profile
+without environment selection or trust questions. **Only open files you trust**:
+this is equivalent to `mfz launch --trust-profile -- "path/to/profile.mfz"` and
+allows referenced configs, local credential lookup, and configured shared resources.
+Command-line file launches without `--trust-profile` retain review prompts.
+
 ---
 
 ## 🛠️ Essential Setup

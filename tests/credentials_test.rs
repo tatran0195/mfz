@@ -27,6 +27,21 @@ fn test_aws_secret_keyring_roundtrip() {
     let read_key = CredentialStore::get_aws_secret_key(test_env).unwrap();
     assert_eq!(read_key.as_deref(), Some(test_key));
 
+    CredentialStore::set_rdp_username(test_env, "Administrator").unwrap();
+    CredentialStore::set_rdp_password(test_env, "disposable-test-password").unwrap();
+    assert_eq!(
+        CredentialStore::get_rdp_username(test_env)
+            .unwrap()
+            .as_deref(),
+        Some("Administrator")
+    );
+    assert_eq!(
+        CredentialStore::get_rdp_password(test_env)
+            .unwrap()
+            .as_deref(),
+        Some("disposable-test-password")
+    );
+
     // Delete
     let del_res = CredentialStore::delete_secrets(test_env);
     assert!(del_res.is_ok());
@@ -34,4 +49,6 @@ fn test_aws_secret_keyring_roundtrip() {
     // Verify deleted
     let after_del = CredentialStore::get_aws_secret_key(test_env).unwrap();
     assert_eq!(after_del, None);
+    assert_eq!(CredentialStore::get_rdp_username(test_env).unwrap(), None);
+    assert_eq!(CredentialStore::get_rdp_password(test_env).unwrap(), None);
 }
